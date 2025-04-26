@@ -4,6 +4,7 @@ export * from './azure-storage-container.enum';
 export * from './cache-prefix.enum';
 export * from './cloud-storage.enum';
 export * from './cloudflare-r2-container.enum';
+export * from './hdr-format.enum';
 export * from './imagekit-transform.enum';
 export * from './imgur-scale.enum';
 export * from './language.enum';

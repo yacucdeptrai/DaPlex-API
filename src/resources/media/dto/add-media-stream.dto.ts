@@ -17,5 +17,7 @@ export class AddMediaStreamDto {
 
   quality?: number;
 
+  hdrFormat?: number;
+
   channels?: number;
 }

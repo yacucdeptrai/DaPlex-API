@@ -23,6 +23,9 @@ export class MediaStorageStream {
   @Prop({ required: function () { return [MediaStorageType.STREAM_AUDIO, MediaStorageType.STREAM_VIDEO].includes(this.type) } })
   codec: number;
 
+  @Prop()
+  hdrFormat: number;
+
   @Prop({ required: function () { return this.type === MediaStorageType.STREAM_AUDIO; } })
   channels: number;
 

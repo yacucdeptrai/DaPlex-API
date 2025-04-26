@@ -28,6 +28,9 @@ export class MediaStorage {
   @Prop({ required: function () { return this.type === MediaStorageType.STREAM_VIDEO; } })
   quality: number;
 
+  @Prop()
+  hdrFormat: number;
+
   @Prop({ required: true })
   mimeType: string;
 

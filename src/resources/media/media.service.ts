@@ -1106,8 +1106,10 @@ export class MediaService {
       stream.type = MediaStorageType.MANIFEST;
       stream.name = mediaQueueResultDto.progress.fileName;
       stream.codec = mediaQueueResultDto.progress.codec;
+      stream.hdrFormat = mediaQueueResultDto.progress.hdrFormat || undefined;
       stream.mimeType = fileMimeType;
       stream.size = fileInfo.size;
+      stream.hdrFormat && (source.hdrFormat = stream.hdrFormat);
       const oldManifests = source.streams.filter(s => s.type === MediaStorageType.MANIFEST && s.codec === mediaQueueResultDto.progress.codec);
       if (oldManifests.length) {
         const oldManifestIds = oldManifests.map<bigint>(m => m._id);
@@ -2156,8 +2158,10 @@ export class MediaService {
       stream.type = MediaStorageType.MANIFEST;
       stream.name = mediaQueueResultDto.progress.fileName;
       stream.codec = mediaQueueResultDto.progress.codec;
+      stream.hdrFormat = mediaQueueResultDto.progress.hdrFormat || undefined;
       stream.mimeType = fileMimeType;
       stream.size = fileInfo.size;
+      stream.hdrFormat && (source.hdrFormat = stream.hdrFormat);
       const oldManifests = source.streams.filter(s => s.type === MediaStorageType.MANIFEST && s.codec === mediaQueueResultDto.progress.codec);
       if (oldManifests.length) {
         const oldManifestIds = oldManifests.map<bigint>(m => m._id);
