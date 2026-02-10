@@ -3,6 +3,7 @@ import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 
 import { MediaStorage } from './media-storage.schema';
 import { EXTERNAL_STORAGE_KIND, MEDIA_STORAGE_TYPES } from '../config';
+import { CloudStorage } from '../enums';
 
 export type ExternalStorageDocument = ExternalStorage & Document;
 
@@ -26,7 +27,7 @@ export class ExternalStorage {
   @Prop()
   accessToken: string;
 
-  @Prop({ required: true })
+  @Prop({ required: function () { return this.kind === CloudStorage.ONEDRIVE } })
   refreshToken: string;
 
   @Prop()

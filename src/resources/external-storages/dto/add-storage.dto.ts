@@ -62,6 +62,7 @@ export class AddStorageDto {
     description: 'Api refresh token'
   })
   @Type(() => String)
+  @IsOptionalIf(o => o.kind !== CloudStorage.ONEDRIVE)
   @IsNotEmpty({ context: { code: StatusCode.IS_NOT_EMPTY } })
   @MaxLength(4096, { context: { code: StatusCode.MAX_LENGTH } })
   refreshToken: string;

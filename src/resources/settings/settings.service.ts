@@ -306,7 +306,7 @@ export class SettingsService {
       if (mediaSourceStorages.length) {
         const newStorages = mediaSourceStorages.filter(e => !currentSourceStorages.includes(e));
         const oldStorages = currentSourceStorages.filter(e => !mediaSourceStorages.includes(e));
-        const storageCount = await this.externalStoragesService.countOneDriveStorageByIds(newStorages);
+        const storageCount = await this.externalStoragesService.countFilerStorageByIds(newStorages);
         if (storageCount !== newStorages.length)
           throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Cannot find all the required media sources' }, HttpStatus.BAD_REQUEST);
         await this.externalStoragesService.addSettingStorages(newStorages, MediaStorageType.SOURCE, session);

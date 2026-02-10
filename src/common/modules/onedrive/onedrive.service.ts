@@ -103,9 +103,7 @@ export class OnedriveService {
         return response.data;
       } catch (e) {
         if (e.isAxiosError && e.response) {
-          if (e.response.status === 401 && i < 1)
-            await this.refreshToken(storage);
-          else if (e.response.status === 404)
+          if (e.response.status >= 400 && e.response.status <= 599)
             return;
           else if (i < retry - 1)
             await new Promise(r => setTimeout(r, retryTimeout));

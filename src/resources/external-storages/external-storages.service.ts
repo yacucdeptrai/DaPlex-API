@@ -36,10 +36,10 @@ export class ExternalStoragesService {
       name: addStorageDto.name,
       kind: addStorageDto.kind,
       clientId: addStorageDto.clientId,
-      clientSecret: await stringCrypto.encrypt(addStorageDto.clientSecret),
-      refreshToken: addStorageDto.refreshToken
+      clientSecret: await stringCrypto.encrypt(addStorageDto.clientSecret)
     });
     addStorageDto.accessToken !== undefined && (storage.accessToken = addStorageDto.accessToken);
+    addStorageDto.refreshToken !== undefined && (storage.refreshToken = addStorageDto.refreshToken);
     addStorageDto.expiry !== undefined && (storage.expiry = addStorageDto.expiry);
     const auditLog = new AuditLogBuilder(authUser._id, storage._id, ExternalStorage.name, AuditLogType.EXTERNAL_STORAGE_CREATE);
     auditLog.appendChange('name', addStorageDto.name);
@@ -151,25 +151,25 @@ export class ExternalStoragesService {
     }).finally(() => session.endSession().catch(() => { }));
   }
 
-  @Cron('0 0 */5 * *')
-  async handleInactiveRefreshToken() {
-    // Runs every 5 days
-    // Try to refresh all inactive tokens
-    this.logger.log('Running scheduled token refresh');
-    const odStorages = await this.externalStorageModel.find({ kind: CloudStorage.ONEDRIVE }, { files: 0 }).lean().exec();
-    for (let i = 0; i < odStorages.length; i++) {
-      const storage = await this.decryptToken(odStorages[i]);
-      try {
-        if (!storage.accessToken || storage.expiry < new Date()) {
-          await this.onedriveService.refreshToken(storage);
-          this.logger.log(`Access token for external storage ${storage.name} has been successfully refreshed`);
-        }
-      } catch (e) {
-        this.logger.error(`Failed to request a token refresh for external storage ${storage.name}`, e);
-        continue;
-      }
-    }
-  }
+  // @Cron('0 0 */5 * *')
+  // async handleInactiveRefreshToken() {
+  //   // Runs every 5 days
+  //   // Try to refresh all inactive tokens
+  //   this.logger.log('Running scheduled token refresh');
+  //   const odStorages = await this.externalStorageModel.find({ kind: CloudStorage.ONEDRIVE }, { files: 0 }).lean().exec();
+  //   for (let i = 0; i < odStorages.length; i++) {
+  //     const storage = await this.decryptToken(odStorages[i]);
+  //     try {
+  //       if (!storage.accessToken || storage.expiry < new Date()) {
+  //         await this.onedriveService.refreshToken(storage);
+  //         this.logger.log(`Access token for external storage ${storage.name} has been successfully refreshed`);
+  //       }
+  //     } catch (e) {
+  //       this.logger.error(`Failed to request a token refresh for external storage ${storage.name}`, e);
+  //       continue;
+  //     }
+  //   }
+  // }
 
   findByName(name: string) {
     return this.externalStorageModel.findOne({ name }).lean().exec();
@@ -193,6 +193,14 @@ export class ExternalStoragesService {
 
   countOneDriveStorageByIds(ids: bigint[]) {
     return <Promise<number>><unknown>this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.ONEDRIVE }).lean().exec();
+  }
+
+  countFilerStorageByIds(ids: bigint[]) {
+    return <Promise<number>><unknown>this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.FILER }).lean().exec();
+  }
+
+  countS3StorageByIds(ids: bigint[]) {
+    return <Promise<number>><unknown>this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.S3 }).lean().exec();
   }
 
   addSettingStorage(id: bigint, inStorage: number, session: ClientSession) {

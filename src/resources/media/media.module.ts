@@ -11,6 +11,8 @@ import { MediaConsumerAV1, MediaConsumerH264, MediaConsumerH265, MediaConsumerVP
 import { MediaResultConsumer } from './media-result.consumer';
 import { CloudflareR2Module } from '../../common/modules/cloudflare-r2';
 import { OnedriveModule } from '../../common/modules/onedrive/onedrive.module';
+import { FilerModule } from '../../common/modules/filer/filer.module';
+import { S3Module } from '../../common/modules/s3/s3.module';
 import { HttpEmailModule } from '../../common/modules/http-email/http-email.module';
 import { LocalCacheModule } from '../../common/modules/local-cache/local-cache.module';
 import { RedisPubSubModule } from '../../common/modules/redis-pubsub';
@@ -45,6 +47,8 @@ import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
     HistoryModule,
     CloudflareR2Module,
     OnedriveModule,
+    FilerModule,
+    S3Module,
     HttpEmailModule,
     LocalCacheModule,
     ExternalStoragesModule,

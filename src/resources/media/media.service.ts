@@ -28,6 +28,8 @@ import { RatingsService } from '../ratings/ratings.service';
 import { SettingsService } from '../settings/settings.service';
 import { CloudflareR2Service } from '../../common/modules/cloudflare-r2';
 import { OnedriveService } from '../../common/modules/onedrive/onedrive.service';
+import { FilerService } from '../../common/modules/filer/filer.service';
+import { S3Service } from '../../common/modules/s3/s3.service';
 import { LocalCacheService } from '../../common/modules/local-cache/local-cache.service';
 import { RedisPubSubService } from '../../common/modules/redis-pubsub';
 import { ExternalStoragesService } from '../external-storages/external-storages.service';
@@ -36,7 +38,7 @@ import { HeadersDto } from '../../common/dto';
 import { CursorPaginated, Paginated } from '../../common/entities';
 import { Media as MediaEntity, MediaDetails, MediaSubtitle, MediaStream, TVEpisode as TVEpisodeEntity, TVEpisodeDetails } from './entities';
 import { LookupOptions, MongooseOffsetPagination, convertToLanguage, convertToLanguageArray, createSnowFlakeId, trimSlugFilename, AuditLogBuilder, MongooseCursorPagination, slugMediaTitle, arrayEqualShallow } from '../../utils';
-import { MediaType, MediaVideoSite, StatusCode, MongooseConnection, TaskQueue, MediaStorageType, MediaPStatus, MediaSourceStatus, AuditLogType, MediaFileType, MediaVisibility, SocketMessage, SocketRoom, VideoCodec, CachePrefix, CloudflareR2Container } from '../../enums';
+import { MediaType, MediaVideoSite, StatusCode, MongooseConnection, TaskQueue, MediaStorageType, MediaPStatus, MediaSourceStatus, AuditLogType, MediaFileType, MediaVisibility, SocketMessage, SocketRoom, VideoCodec, CachePrefix, CloudflareR2Container, CloudStorage } from '../../enums';
 import { I18N_DEFAULT_LANGUAGE, STREAM_CODECS, UPLOAD_SUBTITLE_EXT } from '../../config';
 
 @Injectable()
@@ -62,6 +64,8 @@ export class MediaService {
     private auditLogService: AuditLogService,
     private externalStoragesService: ExternalStoragesService, private settingsService: SettingsService,
     private wsAdminGateway: WsAdminGateway, private onedriveService: OnedriveService,
+    private filerService: FilerService,
+    private s3Service: S3Service,
     private cloudflareR2Service: CloudflareR2Service,
     private localCacheService: LocalCacheService) { }
 
@@ -931,10 +935,22 @@ export class MediaService {
       .lean().exec();
     if (!uploadSession)
       throw new HttpException({ code: StatusCode.DRIVE_SESSION_NOT_FOUND, message: 'Upload session not found' }, HttpStatus.NOT_FOUND);
-    const fileInfo = await this.onedriveService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
-    // Validate uploaded file
+    let fileInfo: any;
+    if (uploadSession.storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
+    } else if (uploadSession.storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findId(saveMediaSourceDto.fileId, uploadSession.storage);
+    } else {
+      fileInfo = await this.onedriveService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
+    }
     if (fileInfo.name !== uploadSession.filename || fileInfo.size != uploadSession.size) {
-      await this.onedriveService.deleteFolder(uploadSession._id, uploadSession.storage);
+      if (uploadSession.storage.kind === CloudStorage.FILER) {
+        await this.filerService.deleteFolder(uploadSession._id, uploadSession.storage);
+      } else if (uploadSession.storage.kind === CloudStorage.S3) {
+        await this.s3Service.deleteFolder(uploadSession._id, uploadSession.storage);
+      } else {
+        await this.onedriveService.deleteFolder(uploadSession._id, uploadSession.storage);
+      }
       await this.driveSessionModel.deleteOne({ _id: sessionId }).exec();
       throw new HttpException({ code: StatusCode.DRIVE_FILE_INVALID, message: 'You have uploaded an invalid file' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
@@ -1040,7 +1056,15 @@ export class MediaService {
 
   async addMovieAudioStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
-    const fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
+    let fileInfo: any;
+    if (storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
+    } else if (storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findPath(filePath, mediaQueueResultDto.storage);
+    } else {
+      fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    }
     let source: MediaStorageDocument;
     const session = await this.mongooseConnection.startSession();
     await session.withTransaction(async () => {
@@ -1064,7 +1088,15 @@ export class MediaService {
 
   async addMovieStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
-    const fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
+    let fileInfo: any;
+    if (storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
+    } else if (storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findPath(filePath, mediaQueueResultDto.storage);
+    } else {
+      fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    }
     let source: MediaStorageDocument;
     const session = await this.mongooseConnection.startSession();
     await session.withTransaction(async () => {
@@ -1088,7 +1120,15 @@ export class MediaService {
 
   async addMovieStreamManifest(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
-    const fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
+    let fileInfo: any;
+    if (storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
+    } else if (storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findPath(filePath, mediaQueueResultDto.storage);
+    } else {
+      fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    }
     let media: MediaDocument;
     let source: MediaStorageDocument;
     const session = await this.mongooseConnection.startSession();
@@ -1115,8 +1155,7 @@ export class MediaService {
         const oldManifestIds = oldManifests.map<bigint>(m => m._id);
         source.streams.pull(...oldManifestIds);
         await this.deleteMediaStreams(oldManifestIds, source._id, session);
-        await Promise.all(oldManifests.map(m =>
-          this.onedriveService.getStorageAndDeleteFolder(`${source._id}/${m._id}`, <bigint><unknown>source.storage)));
+        await this.deleteMediaStreamFromStorage(oldManifestIds, source._id, storage);
       }
       source.streams.push(stream);
       media.movie.status !== MediaSourceStatus.DONE && (media.movie.status = MediaSourceStatus.READY);
@@ -1188,7 +1227,7 @@ export class MediaService {
   }
 
   async handleMovieStreamQueueRetry(jobId: number | string, mediaQueueResultDto: MediaQueueResultDto) {
-    const source = await this.mediaStorageModel.findOne({ _id: mediaQueueResultDto._id }).exec();
+    const source = await this.mediaStorageModel.findOne({ _id: mediaQueueResultDto._id }).populate('storage').exec();
     if (!source)
       return;
     const session = await this.mongooseConnection.startSession();
@@ -1202,15 +1241,7 @@ export class MediaService {
       }
       const streamIds = streamsByCodec.map(s => s._id);
       await this.deleteMediaStreams(streamIds, source._id, session);
-      const deleteStreamLimit = pLimit(5);
-      await Promise.all(
-        source.streams.map(s =>
-          deleteStreamLimit(() =>
-            this.onedriveService.getStorageAndDeleteFolder(`${mediaQueueResultDto._id}/${s._id}`,
-              <bigint><unknown>source.storage)
-          )
-        )
-      );
+      await this.deleteMediaStreamFromStorage(source.streams.map(s => s._id), source._id, source.storage);
       source.streams = new Types.DocumentArray<MediaStorageStream>([]);
       await source.save({ session });
     }).finally(() => session.endSession().catch(() => { }));
@@ -1259,7 +1290,7 @@ export class MediaService {
       { $inc: { views: incViews, dailyViews: incViews, weeklyViews: incViews, monthlyViews: incViews } }, { timestamps: false })
       .select({ _id: 1, movie: 1, pStatus: 1, visibility: 1 })
       .populate([
-        { path: 'movie.source', populate: { path: 'storage', select: { _id: 1, publicUrl: 1, secondPublicUrl: 1 } } },
+        { path: 'movie.source', populate: { path: 'storage', select: { _id: 1, kind: 1, folderId: 1, publicUrl: 1, secondPublicUrl: 1 } } },
       ])
       .lean().exec();
     if (!media)
@@ -1271,10 +1302,17 @@ export class MediaService {
     if (!media.movie.source.streams?.length)
       throw new HttpException({ code: StatusCode.MEDIA_STREAM_NOT_FOUND, message: 'Media stream not found' }, HttpStatus.NOT_FOUND);
     const manifestStreams = media.movie.source.streams.filter(s => s.type === MediaStorageType.MANIFEST);
+    const storage = {
+      ...media.movie.source.storage,
+      publicUrl: this.resolveStoragePublicUrl(media.movie.source.storage.kind, media.movie.source.storage.publicUrl, media.movie.source.storage.folderId),
+      secondPublicUrl: media.movie.source.storage.secondPublicUrl ?
+        this.resolveStoragePublicUrl(media.movie.source.storage.kind, media.movie.source.storage.secondPublicUrl, media.movie.source.storage.folderId) :
+        undefined
+    };
     return plainToInstance(MediaStream, {
       _id: media._id,
-      storage: media.movie.source.storage,
-      sourcePath: media.movie.source._id.toString(),
+      storage: storage,
+      sourcePath: storage.folderId ? storage.folderId + '/' + media.movie.source._id.toString() : media.movie.source._id.toString(),
       streams: manifestStreams,
       subtitles: media.movie.subtitles
     });
@@ -1975,10 +2013,22 @@ export class MediaService {
       .lean().exec();
     if (!uploadSession)
       throw new HttpException({ code: StatusCode.DRIVE_SESSION_NOT_FOUND, message: 'Upload session not found' }, HttpStatus.NOT_FOUND);
-    const fileInfo = await this.onedriveService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
-    // Validate uploaded file
+    let fileInfo: any;
+    if (uploadSession.storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
+    } else if (uploadSession.storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findId(saveMediaSourceDto.fileId, uploadSession.storage);
+    } else {
+      fileInfo = await this.onedriveService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
+    }
     if (fileInfo.name !== uploadSession.filename || fileInfo.size != uploadSession.size) {
-      await this.onedriveService.deleteFolder(uploadSession._id, uploadSession.storage);
+      if (uploadSession.storage.kind === CloudStorage.FILER) {
+        await this.filerService.deleteFolder(uploadSession._id, uploadSession.storage);
+      } else if (uploadSession.storage.kind === CloudStorage.S3) {
+        await this.s3Service.deleteFolder(uploadSession._id, uploadSession.storage);
+      } else {
+        await this.onedriveService.deleteFolder(uploadSession._id, uploadSession.storage);
+      }
       await this.driveSessionModel.deleteOne({ _id: sessionId }).exec();
       throw new HttpException({ code: StatusCode.DRIVE_FILE_INVALID, message: 'You have uploaded an invalid file' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
@@ -2086,7 +2136,15 @@ export class MediaService {
 
   async addTVEpisodeAudioStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
-    const fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
+    let fileInfo: any;
+    if (storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
+    } else if (storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findPath(filePath, mediaQueueResultDto.storage);
+    } else {
+      fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    }
     let source: MediaStorageDocument;
     const session = await this.mongooseConnection.startSession();
     await session.withTransaction(async () => {
@@ -2109,7 +2167,15 @@ export class MediaService {
 
   async addTVEpisodeStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
-    const fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
+    let fileInfo: any;
+    if (storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
+    } else if (storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findPath(filePath, mediaQueueResultDto.storage);
+    } else {
+      fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    }
     let source: MediaStorageDocument;
     const session = await this.mongooseConnection.startSession();
     await session.withTransaction(async () => {
@@ -2133,7 +2199,15 @@ export class MediaService {
 
   async addTVEpisodeStreamManifest(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
-    const fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
+    let fileInfo: any;
+    if (storage.kind === CloudStorage.FILER) {
+      fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
+    } else if (storage.kind === CloudStorage.S3) {
+      fileInfo = await this.s3Service.findPath(filePath, mediaQueueResultDto.storage);
+    } else {
+      fileInfo = await this.onedriveService.findPath(filePath, mediaQueueResultDto.storage);
+    }
     const epProjection: { [key: string]: 1 | -1 } = { _id: 1, epNumber: 1 };
     let media: MediaDocument;
     let episode: TVEpisodeDocument;
@@ -2167,8 +2241,7 @@ export class MediaService {
         const oldManifestIds = oldManifests.map<bigint>(m => m._id);
         source.streams.pull(...oldManifestIds);
         await this.deleteMediaStreams(oldManifestIds, source._id, session);
-        await Promise.all(oldManifests.map(m =>
-          this.onedriveService.getStorageAndDeleteFolder(`${source._id}/${m._id}`, <bigint><unknown>source.storage)));
+        await this.deleteMediaStreamFromStorage(oldManifestIds, source._id, storage);
       }
       source.streams.push(stream);
       episode.status !== MediaSourceStatus.DONE && (episode.status = MediaSourceStatus.READY);
@@ -2259,7 +2332,7 @@ export class MediaService {
   }
 
   async handleTVEpisodeStreamQueueRetry(jobId: number | string, mediaQueueResultDto: MediaQueueResultDto) {
-    const source = await this.mediaStorageModel.findOne({ _id: mediaQueueResultDto._id }).exec();
+    const source = await this.mediaStorageModel.findOne({ _id: mediaQueueResultDto._id }).populate('storage').exec();
     if (!source)
       return;
     const session = await this.mongooseConnection.startSession();
@@ -2273,15 +2346,7 @@ export class MediaService {
       }
       const streamIds = streamsByCodec.map(s => s._id);
       await this.deleteMediaStreams(streamIds, source._id, session);
-      const deleteStreamLimit = pLimit(5);
-      await Promise.all(
-        source.streams.map(s =>
-          deleteStreamLimit(() =>
-            this.onedriveService.getStorageAndDeleteFolder(`${mediaQueueResultDto._id}/${s._id}`,
-              <bigint><unknown>source.storage)
-          )
-        )
-      );
+      await this.deleteMediaStreamFromStorage(source.streams.map(s => s._id), source._id, source.storage);
       source.streams = new Types.DocumentArray<MediaStorageStream>([]);
       await source.save({ session });
     }).finally(() => session.endSession().catch(() => { }));
@@ -2346,7 +2411,7 @@ export class MediaService {
       { $inc: { views: 1 } },
       { timestamps: false }
     ).populate([
-      { path: 'source', populate: { path: 'storage', select: { _id: 1, publicUrl: 1, secondPublicUrl: 1 } } }
+      { path: 'source', populate: { path: 'storage', select: { _id: 1, kind: 1, folderId: 1, publicUrl: 1, secondPublicUrl: 1 } } }
     ]).lean().exec();
     if (!episode)
       throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
@@ -2355,11 +2420,17 @@ export class MediaService {
     if (!episode.source.streams?.length)
       throw new HttpException({ code: StatusCode.MEDIA_STREAM_NOT_FOUND, message: 'Media stream not found' }, HttpStatus.NOT_FOUND);
     const manifestStreams = episode.source.streams.filter(s => s.type === MediaStorageType.MANIFEST);
+    const storage = {
+      ...episode.source.storage,
+      publicUrl: this.resolveStoragePublicUrl(episode.source.storage.kind, episode.source.storage.publicUrl, episode.source.storage.folderId),
+      secondPublicUrl: episode.source.storage.secondPublicUrl ?
+        this.resolveStoragePublicUrl(episode.source.storage.kind, episode.source.storage.secondPublicUrl, episode.source.storage.folderId) : undefined
+    };
     return plainToInstance(MediaStream, {
       _id: media._id,
       episode: episode,
-      storage: episode.source.storage,
-      sourcePath: episode.source._id.toString(),
+      storage: storage,
+      sourcePath: storage.folderId ? storage.folderId + '/' + episode.source._id.toString() : episode.source._id.toString(),
       streams: manifestStreams,
       subtitles: episode.subtitles
     });
@@ -2523,7 +2594,14 @@ export class MediaService {
     const uploadSessions = await this.driveSessionModel.find({ expiry: { $lte: new Date() } }).populate('storage').lean().exec();
     await this.driveSessionModel.deleteMany({ expiry: { $lte: new Date() } }).exec();
     for (let i = 0; i < uploadSessions.length; i++) {
-      await this.onedriveService.deleteFolder(uploadSessions[i]._id, uploadSessions[i].storage);
+      const session = uploadSessions[i];
+      if (session.storage.kind === CloudStorage.FILER) {
+        await this.filerService.deleteFolder(session._id, session.storage);
+      } else if (session.storage.kind === CloudStorage.S3) {
+        await this.s3Service.deleteFolder(session._id, session.storage);
+      } else {
+        await this.onedriveService.deleteFolder(session._id, session.storage);
+      }
     }
   }
 
@@ -2774,8 +2852,16 @@ export class MediaService {
     driveSession.mimeType = addMediaSourceDto.mimeType;
     addMediaSourceDto.options && (driveSession.options = this.createMediaSourceOptions(addMediaSourceDto.options));
     driveSession.user = <any>userId;
-    driveSession.expiry = new Date(Date.now() + 86400000);
-    const uploadSession = await this.onedriveService.createUploadSession(trimmedFilename, driveSession._id);
+    driveSession.expiry = new Date(Date.now() + (86400000 * 3));
+    const storage = await this.settingsService.findMediaSourceStorage();
+    let uploadSession: any;
+    if (storage.kind === CloudStorage.FILER) {
+      uploadSession = await this.filerService.createUploadSession(trimmedFilename, driveSession._id.toString(), addMediaSourceDto.size, addMediaSourceDto.mimeType);
+    } else if (storage.kind === CloudStorage.S3) {
+      uploadSession = await this.s3Service.createMultipartUpload(trimmedFilename, addMediaSourceDto.mimeType);
+    } else {
+      uploadSession = await this.onedriveService.createUploadSession(trimmedFilename, driveSession._id);
+    }
     driveSession.storage = <any>uploadSession.storage;
     await driveSession.save();
     return { _id: driveSession._id, url: uploadSession.url };
@@ -2783,7 +2869,20 @@ export class MediaService {
 
   private async createLinkedMediaSource(addMediaSourceDto: AddLinkedMediaSourceDto, mediaId: bigint, episodeId?: bigint) {
     const linkedStorages = await this.settingsService.findLinkedMediaSourceStorages();
-    const linkedFile = await this.onedriveService.findInStorages(path.posix.join(addMediaSourceDto.linkedPath, addMediaSourceDto.filename), linkedStorages);
+
+    let linkedFile: any = null;
+    const filerStorages = linkedStorages.filter(s => s.kind === CloudStorage.FILER);
+    const s3Storages = linkedStorages.filter(s => s.kind === CloudStorage.S3);
+    const onedriveStorages = linkedStorages.filter(s => s.kind === CloudStorage.ONEDRIVE);
+    if (filerStorages.length) {
+      linkedFile = await this.filerService.findInStorages(path.posix.join(addMediaSourceDto.linkedPath, addMediaSourceDto.filename), filerStorages);
+    }
+    if (!linkedFile && s3Storages.length) {
+      linkedFile = await this.s3Service.findInStorages(path.posix.join(addMediaSourceDto.linkedPath, addMediaSourceDto.filename), s3Storages);
+    }
+    if (!linkedFile && onedriveStorages.length) {
+      linkedFile = await this.onedriveService.findInStorages(path.posix.join(addMediaSourceDto.linkedPath, addMediaSourceDto.filename), onedriveStorages);
+    }
     if (!linkedFile)
       throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'Linked file not found' }, HttpStatus.NOT_FOUND);
     const streamStorage = await this.settingsService.findMediaSourceStorage({ decrypt: false });
@@ -2913,7 +3012,13 @@ export class MediaService {
     if (source) {
       const totalSourceSize = source.size + (source.streams?.reduce((a, b) => a + b.size, 0) || 0);
       await this.externalStoragesService.deleteFileFromStorage(source.storage._id, id, totalSourceSize, session);
-      this.onedriveService.deleteFolder(id, source.storage, 5)
+      if (source.storage.kind === CloudStorage.FILER) {
+        await this.filerService.deleteFolder(id, source.storage);
+      } else if (source.storage.kind === CloudStorage.S3) {
+        await this.s3Service.deleteFolder(id, source.storage);
+      } else {
+        await this.onedriveService.deleteFolder(id, source.storage, 5);
+      }
     }
   }
 
@@ -2934,9 +3039,13 @@ export class MediaService {
     const deleteStreamLimit = pLimit(5);
     await Promise.all(
       ids.map(id =>
-        deleteStreamLimit(() =>
-          this.onedriveService.deleteFolder(`${sourceId}/${id}`, storage, 5)
-        )
+        deleteStreamLimit(() => {
+          if (storage.kind === CloudStorage.FILER)
+            return this.filerService.deleteFolder(`${sourceId}/${id}`, storage);
+          if (storage.kind === CloudStorage.S3)
+            return this.s3Service.deleteFolder(`${sourceId}/${id}`, storage);
+          return this.onedriveService.deleteFolder(`${sourceId}/${id}`, storage, 5);
+        })
       )
     );
   }
@@ -2976,6 +3085,17 @@ export class MediaService {
     if (!chapterType)
       throw new HttpException({ code: StatusCode.CHAPTER_TYPE_NOT_FOUND, message: 'Chapter type not found' }, HttpStatus.NOT_FOUND);
     return chapterType;
+  }
+
+  private resolveStoragePublicUrl(kind: number, url: string, folderId?: string): string {
+    let serviceUrl = url;
+    switch (kind) {
+      case CloudStorage.S3:
+        serviceUrl = this.s3Service.resolvePublicUrl(url);
+      case CloudStorage.FILER:
+        serviceUrl = this.s3Service.resolvePublicUrl(url);
+    }
+    return serviceUrl;
   }
 
   deleteGenreMedia(genreId: bigint, mediaIds: bigint[], session?: ClientSession) {
