@@ -131,7 +131,7 @@ export class FilerService {
     if (!storage.accessToken || storage.expiry < new Date())
       await this.refreshToken(storage);
 
-    const filePath = path.posix.join(folderId, name).replace(/^\/+/, '');
+    const filePath = path.posix.join(folderId || '', name).replace(/^\/+/, '');
     const url = this.buildUrl(storage, filePath, 'tus');
 
     const filenameBase64 = Buffer.from(name).toString('base64');
@@ -200,7 +200,7 @@ export class FilerService {
 
   private buildUrl(storage: ExternalStorage, filePath: string, type: 'standard' | 'tus' = 'standard') {
     const cleanPath = filePath.replace(/^\//, '');
-    const fullPath = path.posix.join(storage.folderId, cleanPath);
+    const fullPath = path.posix.join(storage.folderId || '', cleanPath);
     const resolvedUrl = this.resolvePublicUrl(storage.publicUrl, type);
     return resolvedUrl.replace(':path', fullPath);
   }

@@ -101,9 +101,9 @@ export class S3Service {
   async createMultipartUpload(name: string, mimeType: string) {
     const storage = await this.settingsService.findMediaSourceStorage();
     await this.externalStoragesService.decryptToken(storage);
-    const key = path.posix.join(storage.folderId, name).replace(/^\/+/, '');
+    const key = path.posix.join(storage.folderId || '', name).replace(/^\/+/, '');
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
-    const canonicalUri = `/${bucket}/${key}`;
+    const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${key}`);
     const canonicalQuerystring = 'uploads=';
     const payloadHash = this.hash('');
 
@@ -154,7 +154,7 @@ export class S3Service {
     const service = 's3';
     const expiresIn = 3600;
 
-    const canonicalUri = `/${bucket}/${key}`;
+    const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${key}`);
     const algorithm = 'AWS4-HMAC-SHA256';
     const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
     const credential = encodeURIComponent(`${storage.clientId}/${credentialScope}`);
@@ -175,7 +175,7 @@ export class S3Service {
   async completeMultipartUpload(storage: ExternalStorage, key: string, uploadId: string, parts: { partNumber: number; etag: string }[]) {
     await this.externalStoragesService.decryptToken(storage);
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
-    const canonicalUri = `/${bucket}/${key}`;
+    const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${key}`);
     const canonicalQuerystring = `uploadId=${encodeURIComponent(uploadId)}`;
     const body = `<CompleteMultipartUpload>${parts.map(p => `<Part><PartNumber>${p.partNumber}</PartNumber><ETag>${p.etag}</ETag></Part>`).join('')}</CompleteMultipartUpload>`;
     const payloadHash = this.hash(body);
@@ -206,7 +206,7 @@ export class S3Service {
   async abortMultipartUpload(storage: ExternalStorage, key: string, uploadId: string) {
     await this.externalStoragesService.decryptToken(storage);
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
-    const canonicalUri = `/${bucket}/${key}`;
+    const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${key}`);
     const canonicalQuerystring = `uploadId=${encodeURIComponent(uploadId)}`;
     const payloadHash = this.hash('');
 
@@ -230,8 +230,8 @@ export class S3Service {
 
   private async headObject(storage: ExternalStorage, key: string) {
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
-    const fullKey = path.posix.join(storage.folderId, key).replace(/^\/+/, '');
-    const canonicalUri = `/${bucket}/${fullKey}`;
+    const fullKey = path.posix.join(storage.folderId || '', key).replace(/^\/+/, '');
+    const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${fullKey}`);
     const payloadHash = this.hash('');
 
     const authHeader = this.getAuthorizationHeader(
@@ -251,8 +251,8 @@ export class S3Service {
 
   private async deleteObject(storage: ExternalStorage, key: string) {
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
-    const fullKey = path.posix.join(storage.folderId, key).replace(/^\/+/, '');
-    const canonicalUri = `/${bucket}/${fullKey}`;
+    const fullKey = path.posix.join(storage.folderId || '', key).replace(/^\/+/, '');
+    const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${fullKey}`);
     const payloadHash = this.hash('');
 
     const authHeader = this.getAuthorizationHeader(
@@ -328,6 +328,10 @@ export class S3Service {
 
   resolvePublicUrl(url: string) {
     return url.replace(':service_path', 's3');
+  }
+
+  private encodeCanonicalUri(uri: string): string {
+    return '/' + uri.replace(/^\//, '').split('/').map(segment => encodeURIComponent(segment).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())).join('/');
   }
 
   private parsePublicUrl(publicUrl: string): { host: string; bucket: string } {
