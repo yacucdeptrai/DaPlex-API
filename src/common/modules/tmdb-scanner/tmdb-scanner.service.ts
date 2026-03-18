@@ -152,7 +152,7 @@ export class TmdbScannerService {
       result.externalIds.tmdb = data.id;
       result.translations = data.translations.translations
         .filter(t => I18N_LANGUAGES.includes(t.iso_639_1))
-        .map<MediaTranslation>(t => ({
+        .map((t): MediaTranslation => ({
           iso31661: t.iso_3166_1,
           iso6391: t.iso_639_1,
           name: t.name,
@@ -238,7 +238,7 @@ export class TmdbScannerService {
       });
       result.translations = data.translations.translations
         .filter(t => I18N_LANGUAGES.includes(t.iso_639_1))
-        .map<MediaTranslation>(t => ({
+        .map((t): MediaTranslation => ({
           iso31661: t.iso_3166_1,
           iso6391: t.iso_639_1,
           name: t.name,
@@ -278,7 +278,7 @@ export class TmdbScannerService {
       result.backdropPath = data.backdrop_path;
       result.translations = translationResponse.data.translations
         .filter(t => I18N_LANGUAGES.includes(t.iso_639_1))
-        .map<MediaTranslation>(t => ({
+        .map((t): MediaTranslation => ({
           iso31661: t.iso_3166_1,
           iso6391: t.iso_639_1,
           name: t.name,

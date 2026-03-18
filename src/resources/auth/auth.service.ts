@@ -57,10 +57,8 @@ export class AuthService {
     // Generate activation code
     user.activationCode = await nanoid(8);
     // Send a confirmation email and save user
-    await Promise.all([
-      user.save(),
-      this.sendConfirmationEmail(user, user.activationCode)
-    ]);
+    await user.save();
+    this.sendConfirmationEmail(user, user.activationCode).catch(() => {});
     return user.toObject<User>();
   }
 
