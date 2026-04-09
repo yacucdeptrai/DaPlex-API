@@ -6,4 +6,7 @@ export class MediaUploadSession {
 
   @ApiProperty()
   url: string;
+
+  @ApiProperty({ required: false })
+  fileId?: string;
 }

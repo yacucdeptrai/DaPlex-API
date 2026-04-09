@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AxiosError } from 'axios';
 import crypto from 'crypto';
 import fs from 'fs';
 import { firstValueFrom } from 'rxjs';
@@ -9,33 +10,42 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class CloudflareR2Service {
-  cachedSignatureKey: Buffer | null = null;
+  cachedSignatureKey: Uint8Array | null = null;
   cachedSignatureDate: string | null = null;
 
-  constructor(private httpService: HttpService, private configService: ConfigService) { }
+  constructor(
+    private httpService: HttpService,
+    private configService: ConfigService
+  ) {}
 
   async upload(container: string, filename: string, filePath: string, mimeType: string) {
     const apiUrl = this.configService.get<string>('CLOUDFLARE_R2_API_URL');
     const s3Key = this.configService.get<string>('CLOUDFLARE_R2_S3_KEY');
+    const s3Secret = this.configService.get<string>('CLOUDFLARE_R2_S3_SECRET');
     const fullPath = `${container}/${filename}`;
-    const authorizationHeader = this.getAuthorizationHeader(s3Key, apiUrl, fullPath, 'PUT');
+    const authorizationHeader = this.getAuthorizationHeader(s3Key, s3Secret, apiUrl, fullPath, 'PUT');
     const fileInfo = await fs.promises.stat(filePath);
     const stream = fs.createReadStream(filePath);
     try {
-      await firstValueFrom(this.httpService.put(`${apiUrl}/${fullPath}`, stream, {
-        headers: {
-          ...authorizationHeader,
-          'Content-Type': mimeType,
-          'Content-Length': fileInfo.size
-        },
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-        responseType: 'json'
-      }));
+      await firstValueFrom(
+        this.httpService.put(`${apiUrl}/${fullPath}`, stream, {
+          headers: {
+            ...authorizationHeader,
+            'Content-Type': mimeType,
+            'Content-Length': fileInfo.size
+          },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+          responseType: 'json'
+        })
+      );
       return fileInfo;
     } catch (e) {
-      console.error(e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      const err = e as AxiosError;
+      console.error(err.response?.data ?? err.message);
+      const status = err.response?.status ?? HttpStatus.BAD_GATEWAY;
+      const statusText = err.response?.statusText ?? 'Unknown error';
+      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${status} ${statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
     } finally {
       stream.destroy();
     }
@@ -44,39 +54,52 @@ export class CloudflareR2Service {
   async delete(container: string, filename: string) {
     const apiUrl = this.configService.get<string>('CLOUDFLARE_R2_API_URL');
     const s3Key = this.configService.get<string>('CLOUDFLARE_R2_S3_KEY');
+    const s3Secret = this.configService.get<string>('CLOUDFLARE_R2_S3_SECRET');
     const fullPath = `${container}/${filename}`;
-    const authorizationHeader = this.getAuthorizationHeader(s3Key, apiUrl, fullPath, 'DELETE');
+    const authorizationHeader = this.getAuthorizationHeader(s3Key, s3Secret, apiUrl, fullPath, 'DELETE');
     try {
-      const response = await firstValueFrom(this.httpService.delete(`${apiUrl}/${fullPath}`, {
-        headers: {
-          ...authorizationHeader
-        }
-      }));
+      const response = await firstValueFrom(
+        this.httpService.delete(`${apiUrl}/${fullPath}`, {
+          headers: {
+            ...authorizationHeader
+          }
+        })
+      );
       return response.data;
     } catch (e) {
-      console.error(e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      const err = e as AxiosError;
+      console.error(err.response?.data ?? err.message);
+      const status = err.response?.status ?? HttpStatus.BAD_GATEWAY;
+      const statusText = err.response?.statusText ?? 'Unknown error';
+      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${status} ${statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
     }
   }
 
   private getSignatureKey(secretKey: string, dateStamp: string, regionName: string, serviceName: string) {
     // Load from cache
-    if (this.cachedSignatureKey !== null && this.cachedSignatureDate === dateStamp)
-      return this.cachedSignatureKey;
-    const kDate = crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateStamp, 'utf8').digest();
-    const kRegion = crypto.createHmac('sha256', kDate).update(regionName, 'utf8').digest();
-    const kService = crypto.createHmac('sha256', kRegion).update(serviceName, 'utf8').digest();
-    const kSigning = crypto.createHmac('sha256', kService).update('aws4_request', 'utf8').digest();
+    if (this.cachedSignatureKey !== null && this.cachedSignatureDate === dateStamp) return this.cachedSignatureKey;
+    const kDate = new Uint8Array(crypto.createHmac('sha256', `AWS4${secretKey}`).update(dateStamp, 'utf8').digest());
+    const kRegion = new Uint8Array(crypto.createHmac('sha256', kDate).update(regionName, 'utf8').digest());
+    const kService = new Uint8Array(crypto.createHmac('sha256', kRegion).update(serviceName, 'utf8').digest());
+    const kSigning = new Uint8Array(crypto.createHmac('sha256', kService).update('aws4_request', 'utf8').digest());
     // Save to cache
     this.cachedSignatureKey = kSigning;
     this.cachedSignatureDate = dateStamp;
     return kSigning;
   }
 
-  private getAuthorizationHeader(credential: string, url: string, key: string, method: string) {
-    const credentialSplit = credential.split(':');
-    const accessKey = credentialSplit[0];
-    const secretKey = credentialSplit[1];
+  private getAuthorizationHeader(accessKeyRaw: string, secretKeyRaw: string, url: string, key: string, method: string) {
+    // Supports both formats:
+    // 1) CLOUDFLARE_R2_S3_KEY=<access_key> and CLOUDFLARE_R2_S3_SECRET=<secret_key>
+    // 2) CLOUDFLARE_R2_S3_KEY=<access_key>:<secret_key> (legacy)
+    const credentialSplit = accessKeyRaw?.split(':');
+    const accessKey = credentialSplit?.length > 1 ? credentialSplit[0] : accessKeyRaw;
+    const secretKey = credentialSplit?.length > 1 ? credentialSplit.slice(1).join(':') : secretKeyRaw;
+
+    if (!accessKey || !secretKey) {
+      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: 'Cloudflare R2 credentials are not configured correctly' }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     const bucket = url.substring(url.lastIndexOf('/') + 1);
     const region = 'auto';
     const algorithm = 'AWS4-HMAC-SHA256';
@@ -96,10 +119,9 @@ export class CloudflareR2Service {
     const authorizationHeader = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=${signature}`;
 
     return {
-      'Authorization': authorizationHeader,
+      Authorization: authorizationHeader,
       'X-Amz-Date': amzDate,
       'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD'
     };
   }
-
 }

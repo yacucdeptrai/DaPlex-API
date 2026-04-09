@@ -24,12 +24,12 @@ jobs:
           npm run build
           rm -rf node_modules
       - name: Zip artifact
-        run: zip kamplex-api.zip ./* -r
+        run: zip daplex-api.zip ./* -r
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: kamplex-api
-          path: kamplex-api.zip
+          name: daplex-api
+          path: daplex-api.zip
   deploy-a1:
     name: Deploy to Azure (A1)
     runs-on: ubuntu-latest
@@ -39,14 +39,14 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: kamplex-api
-      - name: Deploy (kamplex-api-a1)
+          name: daplex-api
+      - name: Deploy (daplex-api-a1)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: kamplex-api-a1
+          app-name: daplex-api-a1
           slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_A1 }}
-          package: kamplex-api.zip
+          package: daplex-api.zip
   deploy-b2:
     name: Deploy to Azure (B2)
     runs-on: ubuntu-latest
@@ -56,11 +56,11 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: kamplex-api
-      - name: Deploy (kamplex-api-b2)
+          name: daplex-api
+      - name: Deploy (daplex-api-b2)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: kamplex-api-b2
+          app-name: daplex-api-b2
           slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_B2 }}
-          package: kamplex-api.zip
+          package: daplex-api.zip

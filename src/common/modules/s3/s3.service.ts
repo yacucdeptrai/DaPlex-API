@@ -101,47 +101,33 @@ export class S3Service {
   async createMultipartUpload(name: string, mimeType: string) {
     const storage = await this.settingsService.findMediaSourceStorage();
     await this.externalStoragesService.decryptToken(storage);
-    const key = path.posix.join(storage.folderId || '', name).replace(/^\/+/, '');
+    const fileId = name;
+    const key = path.posix.join(storage.folderId || '', fileId).replace(/^\/+/, '');
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
+    const now = new Date();
+    const amzDate = this.toAmzDate(now);
+    const dateStamp = this.toDateStamp(now);
+    const region = 'auto';
+    const service = 's3';
+    const expiresIn = 3600;
+    const algorithm = 'AWS4-HMAC-SHA256';
+    const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+    const credential = encodeURIComponent(`${storage.clientId}/${credentialScope}`);
     const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${key}`);
-    const canonicalQuerystring = 'uploads=';
-    const payloadHash = this.hash('');
-
-    const authHeader = this.getAuthorizationHeader(
-      storage.clientId, storage.clientSecret, host, canonicalUri,
-      'POST', canonicalQuerystring, payloadHash,
-      { 'content-type': mimeType }
-    );
-
-    try {
-      const response = await firstValueFrom(this.httpService.post(
-        `https://${host}${canonicalUri}?${canonicalQuerystring}`,
-        '',
-        {
-          headers: {
-            'Content-Type': mimeType,
-            ...authHeader
-          }
-        }
-      ));
-      const uploadId = this.getXmlValue(response.data, 'UploadId');
-      if (!uploadId) {
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: 'Failed to create multipart upload' }, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-      return {
-        url: `https://${host}${canonicalUri}`,
-        uploadId: uploadId,
-        key: key,
-        storage: storage._id
-      };
-    } catch (e) {
-      if (e.response) {
-        console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
-      }
-      console.error(e);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: 'Error during creating multipart upload' }, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    const canonicalQuerystring = `X-Amz-Algorithm=${algorithm}&X-Amz-Credential=${credential}&X-Amz-Date=${amzDate}&X-Amz-Expires=${expiresIn}&X-Amz-SignedHeaders=host`;
+    const canonicalHeaders = `host:${host}\n`;
+    const signedHeaders = 'host';
+    const payloadHash = 'UNSIGNED-PAYLOAD';
+    const canonicalRequest = `PUT\n${canonicalUri}\n${canonicalQuerystring}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+    const stringToSign = `${algorithm}\n${amzDate}\n${credentialScope}\n${this.hash(canonicalRequest)}`;
+    const signingKey = this.getSignatureKey(storage.clientSecret, dateStamp, region, service);
+    const signature = createHmac('sha256', signingKey).update(stringToSign, 'utf8').digest('hex');
+    return {
+      url: `https://${host}${canonicalUri}?${canonicalQuerystring}&X-Amz-Signature=${signature}`,
+      fileId: fileId,
+      storage: storage._id,
+      mimeType
+    };
   }
 
   async getPresignedPartUrl(storage: ExternalStorage, key: string, uploadId: string, partNumber: number) {

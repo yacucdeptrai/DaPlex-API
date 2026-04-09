@@ -2864,7 +2864,7 @@ export class MediaService {
     }
     driveSession.storage = <any>uploadSession.storage;
     await driveSession.save();
-    return { _id: driveSession._id, url: uploadSession.url };
+    return { _id: driveSession._id, url: uploadSession.url, fileId: uploadSession.fileId };
   }
 
   private async createLinkedMediaSource(addMediaSourceDto: AddLinkedMediaSourceDto, mediaId: bigint, episodeId?: bigint) {
@@ -2950,7 +2950,8 @@ export class MediaService {
 
   private async createTranscodeQueue(mediaId: bigint, queueData: MediaQueueDataDto, streamSettings: Setting, episodeId?: bigint) {
     const basePriority = queueData.advancedOptions?.queuePriority || 10;
-    const videoCodecs = queueData.advancedOptions?.videoCodecs || streamSettings.defaultVideoCodecs;
+    const defaultCodecs = streamSettings.defaultVideoCodecs > 0 ? streamSettings.defaultVideoCodecs : VideoCodec.H264;
+    const videoCodecs = queueData.advancedOptions?.videoCodecs || defaultCodecs;
     // Create transcode queue
     const jobs: Awaited<ReturnType<typeof this.videoTranscodeH264Queue.add>>[] = [];
     for (let i = 0; i < STREAM_CODECS.length; i++) {
@@ -2990,6 +2991,19 @@ export class MediaService {
           break;
         }
       }
+    }
+    if (!jobs.length) {
+      const fallbackData = {
+        ...queueData,
+        media: mediaId,
+        episode: episodeId,
+        codec: VideoCodec.H264,
+        isPrimary: true
+      };
+      const fallbackJob = await this.videoTranscodeH264Queue.add(VideoCodec.H264.toString(), fallbackData, {
+        priority: basePriority
+      });
+      jobs.push(fallbackJob);
     }
     return jobs;
   }

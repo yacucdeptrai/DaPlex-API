@@ -3,7 +3,7 @@ import { CloudStorage, Language, MediaFileType, MediaStorageType, MediaType, Med
 export const PORT = 3000;
 export const ADDRESS = '0.0.0.0';
 export const DATABASE_URL = '';
-export const DOCUMENT_TITLE = 'KamPlex API';
+export const DOCUMENT_TITLE = 'DaPlex API';
 export const DOCUMENT_DESCRIPTION = 'REST API media streaming';
 export const DOCUMENT_VERSION = '0.0.1';
 export const DOCUMENT_AUTHOR = 'Kaigonia';

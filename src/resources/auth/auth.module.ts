@@ -26,17 +26,7 @@ import { MongooseConnection } from '../../enums';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }], MongooseConnection.DATABASE_A)
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    UsernameExistConstraint,
-    EmailExistConstraint,
-    ReCaptchaConstraint
-  ],
-  exports: [
-    AuthService,
-    PermissionsModule,
-    Redis2ndCacheModule,
-    MongooseModule
-  ]
+  providers: [AuthService, UsernameExistConstraint, EmailExistConstraint, ReCaptchaConstraint],
+  exports: [AuthService, PermissionsModule, Redis2ndCacheModule, MongooseModule]
 })
-export class AuthModule { }
+export class AuthModule {}
