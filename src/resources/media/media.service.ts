@@ -2858,7 +2858,7 @@ export class MediaService {
     if (storage.kind === CloudStorage.FILER) {
       uploadSession = await this.filerService.createUploadSession(trimmedFilename, driveSession._id.toString(), addMediaSourceDto.size, addMediaSourceDto.mimeType);
     } else if (storage.kind === CloudStorage.S3) {
-      uploadSession = await this.s3Service.createMultipartUpload(trimmedFilename, addMediaSourceDto.mimeType);
+      uploadSession = await this.s3Service.createMultipartUpload(trimmedFilename, addMediaSourceDto.mimeType, driveSession._id.toString());
     } else {
       uploadSession = await this.onedriveService.createUploadSession(trimmedFilename, driveSession._id);
     }
@@ -3105,9 +3105,9 @@ export class MediaService {
     let serviceUrl = url;
     switch (kind) {
       case CloudStorage.S3:
-        serviceUrl = this.s3Service.resolvePublicUrl(url);
       case CloudStorage.FILER:
         serviceUrl = this.s3Service.resolvePublicUrl(url);
+        break;
     }
     return serviceUrl;
   }

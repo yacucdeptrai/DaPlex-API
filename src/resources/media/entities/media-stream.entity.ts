@@ -48,7 +48,8 @@ export class MediaStream {
   @ApiProperty()
   @Expose()
   get baseUrl(): string {
-    return this.storage.publicUrl.replace(':path', `${this.sourcePath}/:path`);
+    const url = this.storage.secondPublicUrl || this.storage.publicUrl;
+    return url.replace(':path', `${this.sourcePath}/:path`);
   }
 
   @ApiProperty()

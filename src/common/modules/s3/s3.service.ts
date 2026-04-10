@@ -98,10 +98,10 @@ export class S3Service {
     }
   }
 
-  async createMultipartUpload(name: string, mimeType: string) {
+  async createMultipartUpload(name: string, mimeType: string, folderId?: string) {
     const storage = await this.settingsService.findMediaSourceStorage();
     await this.externalStoragesService.decryptToken(storage);
-    const fileId = name;
+    const fileId = folderId ? path.posix.join(folderId, name) : name;
     const key = path.posix.join(storage.folderId || '', fileId).replace(/^\/+/, '');
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
     const now = new Date();
