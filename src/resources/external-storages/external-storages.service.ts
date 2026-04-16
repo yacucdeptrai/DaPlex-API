@@ -20,16 +20,18 @@ import { EXTERNAL_STORAGE_LIMIT } from '../../config';
 export class ExternalStoragesService {
   private readonly logger = new Logger(ExternalStoragesService.name);
 
-  constructor(@InjectModel(ExternalStorage.name, MongooseConnection.DATABASE_A) private externalStorageModel: Model<ExternalStorageDocument>,
-    @InjectConnection(MongooseConnection.DATABASE_A) private mongooseConnection: Connection, private auditLogService: AuditLogService,
+  constructor(
+    @InjectModel(ExternalStorage.name, MongooseConnection.DATABASE_A) private externalStorageModel: Model<ExternalStorageDocument>,
+    @InjectConnection(MongooseConnection.DATABASE_A) private mongooseConnection: Connection,
+    private auditLogService: AuditLogService,
     @Inject(forwardRef(() => OnedriveService)) private onedriveService: OnedriveService,
     @Inject(forwardRef(() => SettingsService)) private settingsService: SettingsService,
-    private configService: ConfigService) { }
+    private configService: ConfigService
+  ) {}
 
   async create(addStorageDto: AddStorageDto, authUser: AuthUserDto) {
     const totalStorage = await this.externalStorageModel.estimatedDocumentCount().exec();
-    if (totalStorage >= EXTERNAL_STORAGE_LIMIT)
-      throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_LIMIT, message: 'External storage limit reached' }, HttpStatus.BAD_REQUEST);
+    if (totalStorage >= EXTERNAL_STORAGE_LIMIT) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_LIMIT, message: 'External storage limit reached' }, HttpStatus.BAD_REQUEST);
     const stringCrypto = new StringCrypto(this.configService.get('CRYPTO_SECRET_KEY'));
     const storage = new this.externalStorageModel({
       _id: await createSnowFlakeId(),
@@ -61,24 +63,18 @@ export class ExternalStoragesService {
       storage.secondPublicUrl = addStorageDto.secondPublicUrl;
       auditLog.appendChange('secondPublicUrl', addStorageDto.secondPublicUrl);
     }
-    await Promise.all([
-      storage.save(),
-      this.auditLogService.createLogFromBuilder(auditLog)
-    ])
+    await Promise.all([storage.save(), this.auditLogService.createLogFromBuilder(auditLog)]);
     return plainToInstance(ExternalStorageEntity, storage.toObject());
   }
 
   async findAll() {
-    const storages = await this.externalStorageModel.find({},
-      { _id: 1, name: 1, kind: 1, folderName: 1, publicUrl: 1, secondPublicUrl: 1, files: 1 }
-    ).lean().exec();
+    const storages = await this.externalStorageModel.find({}, { _id: 1, name: 1, kind: 1, folderName: 1, publicUrl: 1, secondPublicUrl: 1, files: 1 }).lean().exec();
     return plainToInstance(ExternalStorageEntity, storages);
   }
 
   async findOne(id: bigint) {
     const storage = await this.externalStorageModel.findOne({ _id: id }, { _id: 1, name: 1, kind: 1, folderName: 1, publicUrl: 1, files: 1 }).lean().exec();
-    if (!storage)
-      throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
+    if (!storage) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
     // Decrypt client secret
     const stringCrypto = new StringCrypto(this.configService.get('CRYPTO_SECRET_KEY'));
     storage.clientSecret = await stringCrypto.decrypt(storage.clientSecret);
@@ -86,11 +82,9 @@ export class ExternalStoragesService {
   }
 
   async update(id: bigint, updateStorageDto: UpdateStorageDto, authUser: AuthUserDto) {
-    if (!Object.keys(updateStorageDto).length)
-      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (!Object.keys(updateStorageDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const storage = await this.externalStorageModel.findOne({ _id: id }).exec();
-    if (!storage)
-      throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
+    if (!storage) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
     const auditLog = new AuditLogBuilder(authUser._id, storage._id, ExternalStorage.name, AuditLogType.EXTERNAL_STORAGE_UPDATE);
     const stringCrypto = new StringCrypto(this.configService.get('CRYPTO_SECRET_KEY'));
     if (updateStorageDto.name != undefined && storage.name !== updateStorageDto.name) {
@@ -113,19 +107,16 @@ export class ExternalStoragesService {
     if (updateStorageDto.folderName !== undefined) {
       auditLog.appendChange('folderName', updateStorageDto.folderName, storage.folderName);
       storage.folderName = updateStorageDto.folderName;
-    };
+    }
     if (updateStorageDto.publicUrl !== undefined) {
       auditLog.appendChange('publicUrl', updateStorageDto.publicUrl, storage.publicUrl);
       storage.publicUrl = updateStorageDto.publicUrl;
-    };
+    }
     if (updateStorageDto.secondPublicUrl !== undefined) {
       auditLog.appendChange('secondPublicUrl', updateStorageDto.secondPublicUrl, storage.secondPublicUrl);
       storage.secondPublicUrl = updateStorageDto.secondPublicUrl;
-    };
-    await Promise.all([
-      storage.save(),
-      this.auditLogService.createLogFromBuilder(auditLog)
-    ]);
+    }
+    await Promise.all([storage.save(), this.auditLogService.createLogFromBuilder(auditLog)]);
     switch (storage.inStorage) {
       case MediaStorageType.SOURCE:
         await this.settingsService.clearMediaSourceCache();
@@ -136,19 +127,19 @@ export class ExternalStoragesService {
 
   async remove(id: bigint, authUser: AuthUserDto) {
     const session = await this.mongooseConnection.startSession();
-    await session.withTransaction(async () => {
-      const storage = await this.externalStorageModel.findOneAndDelete({ _id: id }, { session }).lean();
-      if (!storage)
-        throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
-      if (storage.files?.length)
-        throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_FILES_EXIST, message: 'You cannot delete a storage that contains files' }, HttpStatus.FORBIDDEN);
-      switch (storage.inStorage) {
-        case MediaStorageType.SOURCE:
-          await this.settingsService.deleteMediaSourceStorage(storage._id, session);
-          break;
-      }
-      await this.auditLogService.createLog(authUser._id, storage._id, ExternalStorage.name, AuditLogType.EXTERNAL_STORAGE_DELETE);
-    }).finally(() => session.endSession().catch(() => { }));
+    await session
+      .withTransaction(async () => {
+        const storage = await this.externalStorageModel.findOneAndDelete({ _id: id }, { session }).lean();
+        if (!storage) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
+        if (storage.files?.length) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_FILES_EXIST, message: 'You cannot delete a storage that contains files' }, HttpStatus.FORBIDDEN);
+        switch (storage.inStorage) {
+          case MediaStorageType.SOURCE:
+            await this.settingsService.deleteMediaSourceStorage(storage._id, session);
+            break;
+        }
+        await this.auditLogService.createLog(authUser._id, storage._id, ExternalStorage.name, AuditLogType.EXTERNAL_STORAGE_DELETE);
+      })
+      .finally(() => session.endSession().catch(() => {}));
   }
 
   // @Cron('0 0 */5 * *')
@@ -180,47 +171,61 @@ export class ExternalStoragesService {
   }
 
   findStoragesByIds(ids: bigint[]) {
-    return this.externalStorageModel.find({ _id: { $in: ids } }).lean().exec();
+    return this.externalStorageModel
+      .find({ _id: { $in: ids } })
+      .lean()
+      .exec();
   }
 
   countGoogleDriveStorageByIds(ids: bigint[]) {
-    return this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.GOOGLE_DRIVE }).lean().exec();
+    return this.externalStorageModel
+      .countDocuments({ _id: { $in: ids }, kind: CloudStorage.GOOGLE_DRIVE })
+      .lean()
+      .exec();
   }
 
   countDropboxStorageByIds(ids: bigint[]) {
-    return this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.DROPBOX }).lean().exec();
+    return this.externalStorageModel
+      .countDocuments({ _id: { $in: ids }, kind: CloudStorage.DROPBOX })
+      .lean()
+      .exec();
   }
 
   countOneDriveStorageByIds(ids: bigint[]) {
-    return <Promise<number>><unknown>this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.ONEDRIVE }).lean().exec();
+    return <Promise<number>>(<unknown>this.externalStorageModel
+      .countDocuments({ _id: { $in: ids }, kind: CloudStorage.ONEDRIVE })
+      .lean()
+      .exec());
   }
 
   countFilerStorageByIds(ids: bigint[]) {
-    return <Promise<number>><unknown>this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.FILER }).lean().exec();
+    return <Promise<number>>(<unknown>this.externalStorageModel
+      .countDocuments({ _id: { $in: ids }, kind: CloudStorage.FILER })
+      .lean()
+      .exec());
   }
 
   countS3StorageByIds(ids: bigint[]) {
-    return <Promise<number>><unknown>this.externalStorageModel.countDocuments({ _id: { $in: ids }, kind: CloudStorage.S3 }).lean().exec();
+    return <Promise<number>>(<unknown>this.externalStorageModel
+      .countDocuments({ _id: { $in: ids }, kind: CloudStorage.S3 })
+      .lean()
+      .exec());
   }
 
   addSettingStorage(id: bigint, inStorage: number, session: ClientSession) {
-    if (id)
-      return this.externalStorageModel.updateOne({ _id: id }, { inStorage }, { session });
+    if (id) return this.externalStorageModel.updateOne({ _id: id }, { inStorage }, { session });
   }
 
   addSettingStorages(ids: bigint[], inStorage: number, session: ClientSession) {
-    if (ids?.length)
-      return this.externalStorageModel.updateMany({ _id: { $in: ids } }, { inStorage }, { session });
+    if (ids?.length) return this.externalStorageModel.updateMany({ _id: { $in: ids } }, { inStorage }, { session });
   }
 
   deleteSettingStorage(id: bigint, session: ClientSession) {
-    if (id)
-      return this.externalStorageModel.updateOne({ _id: id }, { $unset: { inStorage: 1 } }, { session });
+    if (id) return this.externalStorageModel.updateOne({ _id: id }, { $unset: { inStorage: 1 } }, { session });
   }
 
   deleteSettingStorages(ids: bigint[], session: ClientSession) {
-    if (ids?.length)
-      return this.externalStorageModel.updateMany({ _id: { $in: ids } }, { $unset: { inStorage: 1 } }, { session });
+    if (ids?.length) return this.externalStorageModel.updateMany({ _id: { $in: ids } }, { $unset: { inStorage: 1 } }, { session });
   }
 
   addFileToStorage(id: bigint, fileId: bigint, fileSize: number, session: ClientSession) {
@@ -236,8 +241,7 @@ export class ExternalStoragesService {
   }
 
   async decryptToken(storage: ExternalStorageEntity) {
-    if (storage._decrypted)
-      return;
+    if (storage._decrypted) return;
     const stringCrypto = new StringCrypto(this.configService.get('CRYPTO_SECRET_KEY'));
     storage.clientSecret = await stringCrypto.decrypt(storage.clientSecret);
     storage._decrypted = true;

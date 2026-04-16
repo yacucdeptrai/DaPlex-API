@@ -23,10 +23,21 @@ export class UploadImageInterceptor implements NestInterceptor {
   private autoResize: boolean;
 
   constructor(options?: UploadImageOptions) {
-    options = Object.assign({}, {
-      maxSize: DEFAULT_UPLOAD_SIZE, mimeTypes: [], maxWidth: 0, maxHeight: 0,
-      minWidth: 0, minHeight: 0, ratio: [], allowUrl: false, autoResize: false
-    }, options);
+    options = Object.assign(
+      {},
+      {
+        maxSize: DEFAULT_UPLOAD_SIZE,
+        mimeTypes: [],
+        maxWidth: 0,
+        maxHeight: 0,
+        minWidth: 0,
+        minHeight: 0,
+        ratio: [],
+        allowUrl: false,
+        autoResize: false
+      },
+      options
+    );
     this.maxSize = options.maxSize;
     this.mimeTypes = options.mimeTypes;
     this.maxWidth = options.maxWidth;
@@ -46,20 +57,15 @@ export class UploadImageInterceptor implements NestInterceptor {
         const files = await req.saveRequestFiles({ limits: { files: 1, fileSize: this.maxSize } });
         file = files[0];
       } catch (e) {
-        if (e.code === 'FST_REQ_FILE_TOO_LARGE')
-          throw new HttpException({ code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' }, HttpStatus.BAD_REQUEST);
-        else if (e.code === 'FST_FILES_LIMIT')
-          throw new HttpException({ code: StatusCode.FILES_LIMIT_REACHED, message: 'Files limit reached' }, HttpStatus.BAD_REQUEST);
-        else
-          throw e;
+        if (e.code === 'FST_REQ_FILE_TOO_LARGE') throw new HttpException({ code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' }, HttpStatus.BAD_REQUEST);
+        else if (e.code === 'FST_FILES_LIMIT') throw new HttpException({ code: StatusCode.FILES_LIMIT_REACHED, message: 'Files limit reached' }, HttpStatus.BAD_REQUEST);
+        else throw e;
       }
-      if (!file)
-        throw new HttpException({ code: StatusCode.REQUIRE_FILE, message: 'File is required' }, HttpStatus.BAD_REQUEST);
+      if (!file) throw new HttpException({ code: StatusCode.REQUIRE_FILE, message: 'File is required' }, HttpStatus.BAD_REQUEST);
       // We don't need this stream
       file.file.destroy();
       if (this.mimeTypes?.length) {
-        if (!this.mimeTypes.includes(file.mimetype))
-          throw new HttpException({ code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        if (!this.mimeTypes.includes(file.mimetype)) throw new HttpException({ code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
       }
       try {
         //const result = await getAverageColor(file.filepath);
@@ -75,10 +81,9 @@ export class UploadImageInterceptor implements NestInterceptor {
         throw new HttpException({ code: StatusCode.IMAGE_MAX_DIMENSIONS, message: 'Image dimensions are too high' }, HttpStatus.BAD_REQUEST);
       if ((this.minHeight && info.height < this.minHeight) || (this.minWidth && info.width < this.minWidth))
         throw new HttpException({ code: StatusCode.IMAGE_MIN_DIMENSIONS, message: 'Image dimensions are too low' }, HttpStatus.BAD_REQUEST);
-      const targetWidth = Math.ceil(info.height * this.ratio[0] / this.ratio[1]);
+      const targetWidth = Math.ceil((info.height * this.ratio[0]) / this.ratio[1]);
       if (this.ratio && targetWidth !== info.width) {
-        if (!this.autoResize)
-          throw new HttpException({ code: StatusCode.IMAGE_RATIO, message: 'Invalid aspect ratio' }, HttpStatus.BAD_REQUEST);
+        if (!this.autoResize) throw new HttpException({ code: StatusCode.IMAGE_RATIO, message: 'Invalid aspect ratio' }, HttpStatus.BAD_REQUEST);
         const tempFilePath = appendToFilename(file.filepath, '_resized');
         await sharp(file.filepath, { pages: -1 }).resize({ width: targetWidth, height: info.height }).toFile(tempFilePath);
         await fs.promises.rename(tempFilePath, file.filepath);
@@ -108,16 +113,14 @@ export class UploadImageInterceptor implements NestInterceptor {
       }
       const detectedMimetype = mimeTypes.lookup(info.format) || 'application/octet-stream';
       if (this.mimeTypes?.length) {
-        if (!this.mimeTypes.includes(detectedMimetype))
-          throw new HttpException({ code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        if (!this.mimeTypes.includes(detectedMimetype)) throw new HttpException({ code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
       }
-      if (info.size && info.size > this.maxSize)
-        throw new HttpException({ code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' }, HttpStatus.BAD_REQUEST);
+      if (info.size && info.size > this.maxSize) throw new HttpException({ code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' }, HttpStatus.BAD_REQUEST);
       if ((this.maxHeight && info.height > this.maxHeight) || (this.maxWidth && info.width > this.maxWidth))
         throw new HttpException({ code: StatusCode.IMAGE_MAX_DIMENSIONS, message: 'Image dimensions are too high' }, HttpStatus.BAD_REQUEST);
       if ((this.minHeight && info.height < this.minHeight) || (this.minWidth && info.width < this.minWidth))
         throw new HttpException({ code: StatusCode.IMAGE_MIN_DIMENSIONS, message: 'Image dimensions are too low' }, HttpStatus.BAD_REQUEST);
-      if (this.ratio && (info.height * this.ratio[0] / this.ratio[1]) !== info.width)
+      if (this.ratio && (info.height * this.ratio[0]) / this.ratio[1] !== info.width)
         throw new HttpException({ code: StatusCode.IMAGE_RATIO, message: 'Invalid aspect ratio' }, HttpStatus.BAD_REQUEST);
       const thumbhashResult = await this.createThumbhash(imageBuffer, info.width, info.height);
       req.incomingFile.filepath = url;

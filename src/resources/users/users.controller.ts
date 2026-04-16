@@ -1,5 +1,22 @@
 import { Controller, Get, Body, Patch, Param, UseGuards, Query, UseInterceptors, Delete, HttpCode, ClassSerializerInterceptor, Res } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiConsumes, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiServiceUnavailableResponse, ApiTags, ApiUnauthorizedResponse, ApiUnprocessableEntityResponse, ApiUnsupportedMediaTypeResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
+  ApiUnsupportedMediaTypeResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
 import { UsersService } from './users.service';
@@ -19,8 +36,14 @@ import { RateLimitOptions } from '../../decorators/rate-limit-options.decorator'
 import { FileUpload } from '../../decorators/file-upload.decorator';
 import { UserPermission } from '../../enums';
 import {
-  UPLOAD_AVATAR_MAX_SIZE, UPLOAD_AVATAR_TYPES, UPLOAD_AVATAR_MIN_WIDTH, UPLOAD_AVATAR_MIN_HEIGHT,
-  UPLOAD_AVATAR_RATIO, UPLOAD_BANNER_MAX_SIZE, UPLOAD_BANNER_TYPES, UPLOAD_BANNER_MIN_WIDTH,
+  UPLOAD_AVATAR_MAX_SIZE,
+  UPLOAD_AVATAR_TYPES,
+  UPLOAD_AVATAR_MIN_WIDTH,
+  UPLOAD_AVATAR_MIN_HEIGHT,
+  UPLOAD_AVATAR_RATIO,
+  UPLOAD_BANNER_MAX_SIZE,
+  UPLOAD_BANNER_TYPES,
+  UPLOAD_BANNER_MIN_WIDTH,
   UPLOAD_BANNER_MIN_HEIGHT
 } from '../../config';
 import { UserSettings } from './entities/user-settings.entity';
@@ -28,7 +51,7 @@ import { UserSettings } from './entities/user-settings.entity';
 @ApiTags('Users')
 @Controller()
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
@@ -38,7 +61,26 @@ export class UsersController {
     schema: {
       allOf: [
         { $ref: getSchemaPath(Paginated) },
-        { properties: { results: { type: 'array', items: { type: 'object', properties: { _id: { type: 'string' }, username: { type: 'string' }, nickname: { type: 'string' }, createdAt: { type: 'string' }, banned: { type: 'boolean' }, lastActiveAt: { type: 'string' }, avatarUrl: { type: 'string' }, thumbnailAvatarUrl: { type: 'string' } } } } } }
+        {
+          properties: {
+            results: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  _id: { type: 'string' },
+                  username: { type: 'string' },
+                  nickname: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  banned: { type: 'boolean' },
+                  lastActiveAt: { type: 'string' },
+                  avatarUrl: { type: 'string' },
+                  thumbnailAvatarUrl: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
       ]
     }
   })
@@ -56,7 +98,7 @@ export class UsersController {
   @ApiParam({ name: 'id', type: String })
   @ApiOperation({ summary: `Get a user details (optional auth, optional permission: ${UserPermission.MANAGE_USERS})` })
   @ApiOkResponse({
-    description: 'Return user info.<br/>If it\'s your info or you have the required permissions, email, birthdate and verified will be included',
+    description: "Return user info.<br/>If it's your info or you have the required permissions, email, birthdate and verified will be included",
     schema: {
       allOf: [
         { $ref: getSchemaPath(UserDetails) },
@@ -117,14 +159,18 @@ export class UsersController {
 
   @Patch(':id/avatar')
   @UseGuards(AuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, RateLimitInterceptor, new UploadImageInterceptor({
-    maxSize: UPLOAD_AVATAR_MAX_SIZE,
-    mimeTypes: UPLOAD_AVATAR_TYPES,
-    minWidth: UPLOAD_AVATAR_MIN_WIDTH,
-    minHeight: UPLOAD_AVATAR_MIN_HEIGHT,
-    ratio: UPLOAD_AVATAR_RATIO,
-    autoResize: true
-  }))
+  @UseInterceptors(
+    ClassSerializerInterceptor,
+    RateLimitInterceptor,
+    new UploadImageInterceptor({
+      maxSize: UPLOAD_AVATAR_MAX_SIZE,
+      mimeTypes: UPLOAD_AVATAR_TYPES,
+      minWidth: UPLOAD_AVATAR_MIN_WIDTH,
+      minHeight: UPLOAD_AVATAR_MIN_HEIGHT,
+      ratio: UPLOAD_AVATAR_RATIO,
+      autoResize: true
+    })
+  )
   @RateLimitOptions({ catchMode: 'success', ttl: 600, limit: 3 })
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: String })
@@ -165,13 +211,17 @@ export class UsersController {
 
   @Patch(':id/banner')
   @UseGuards(AuthGuard)
-  @UseInterceptors(ClassSerializerInterceptor, RateLimitInterceptor, new UploadImageInterceptor({
-    maxSize: UPLOAD_BANNER_MAX_SIZE,
-    mimeTypes: UPLOAD_BANNER_TYPES,
-    minWidth: UPLOAD_BANNER_MIN_WIDTH,
-    minHeight: UPLOAD_BANNER_MIN_HEIGHT,
-    autoResize: true
-  }))
+  @UseInterceptors(
+    ClassSerializerInterceptor,
+    RateLimitInterceptor,
+    new UploadImageInterceptor({
+      maxSize: UPLOAD_BANNER_MAX_SIZE,
+      mimeTypes: UPLOAD_BANNER_TYPES,
+      minWidth: UPLOAD_BANNER_MIN_WIDTH,
+      minHeight: UPLOAD_BANNER_MIN_HEIGHT,
+      autoResize: true
+    })
+  )
   @RateLimitOptions({ catchMode: 'success', ttl: 600, limit: 3 })
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: String })

@@ -102,9 +102,7 @@ export class PlaylistOptions {
 }
 
 @Schema({ _id: false })
-export class RatingOptions {
-
-}
+export class RatingOptions {}
 
 @Schema({ _id: false })
 export class HistoryListOptions {

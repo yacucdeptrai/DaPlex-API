@@ -8,14 +8,9 @@ import { HttpEmailModule } from '../../common/modules/http-email/http-email.modu
 import { CloudflareR2Module } from '../../common/modules/cloudflare-r2';
 
 @Module({
-  imports: [
-    AuthModule,
-    AuditLogModule,
-    CloudflareR2Module,
-    HttpEmailModule
-  ],
+  imports: [AuthModule, AuditLogModule, CloudflareR2Module, HttpEmailModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService]
 })
-export class UsersModule { }
+export class UsersModule {}

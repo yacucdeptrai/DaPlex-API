@@ -38,7 +38,7 @@ export class AuditLogBuilder {
 
   private resolveModifiedPaths(paths: string[]) {
     return paths.filter((val) => {
-      return !paths.some((v) => val !== v && v.startsWith(val + '.'))
+      return !paths.some((v) => val !== v && v.startsWith(val + '.'));
     });
   }
 
@@ -48,15 +48,13 @@ export class AuditLogBuilder {
       for (let i = 0; i < totalValues; i++) {
         this.resolveValue(`${path}[${i}]`, oldValue?.[i], newValue[i], true);
       }
-    }
-    else if (typeof newValue === 'object') {
+    } else if (typeof newValue === 'object') {
       for (const key in newValue) {
         this.resolveValue(`${path}.${key}`, oldValue?.[key], newValue[key], true);
       }
     } else {
-      if (isDeep && newValue === oldValue)
-        return;
-      this.changes.push({ key: path, newValue, oldValue })
+      if (isDeep && newValue === oldValue) return;
+      this.changes.push({ key: path, newValue, oldValue });
     }
   }
 }

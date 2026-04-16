@@ -182,24 +182,24 @@ export const languageCodes = [
   { iso639_1: 'yo', iso639_2: 'yor', iso3166_1: 'NG', iso3166_3: 'nga' }, // Yoruba - Nigeria
   { iso639_1: 'za', iso639_2: 'zha', iso3166_1: 'CN', iso3166_3: 'chn' }, // Zhuang - China
   { iso639_1: 'zh', iso639_2: 'zho', iso3166_1: 'CN', iso3166_3: 'chn' }, // Chinese - China
-  { iso639_1: 'zu', iso639_2: 'zul', iso3166_1: 'ZA', iso3166_3: 'zaf' }, // Zulu - South Africa
+  { iso639_1: 'zu', iso639_2: 'zul', iso3166_1: 'ZA', iso3166_3: 'zaf' } // Zulu - South Africa
 ];
 
 export class LanguageCodeHelper {
   getByISO63912(code: string) {
-    return languageCodes.find(l => l.iso639_1 === code);
+    return languageCodes.find((l) => l.iso639_1 === code);
   }
 
   getByISO63913(code: string) {
-    return languageCodes.find(l => l.iso639_2 === code);
+    return languageCodes.find((l) => l.iso639_2 === code);
   }
 
   getByISO31661(code: string) {
-    return languageCodes.find(l => l.iso3166_1 === code);
+    return languageCodes.find((l) => l.iso3166_1 === code);
   }
 
   getByISO31663(code: string) {
-    return languageCodes.find(l => l.iso3166_3 === code);
+    return languageCodes.find((l) => l.iso3166_3 === code);
   }
 }
 

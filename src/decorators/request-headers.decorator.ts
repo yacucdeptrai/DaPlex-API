@@ -1,11 +1,10 @@
-import { createParamDecorator, ExecutionContext/*, HttpException, HttpStatus, ValidationError*/ } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext /*, HttpException, HttpStatus, ValidationError*/ } from '@nestjs/common';
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 //import { validate } from 'class-validator';
 
 export const RequestHeaders = createParamDecorator(
   //Removed ClassType<unknown>,, I don't think you need this here
   (value: ClassConstructor<unknown>, ctx: ExecutionContext) => {
-
     // extract headers
     const headers = ctx.switchToHttp().getRequest().headers;
 
@@ -25,5 +24,5 @@ export const RequestHeaders = createParamDecorator(
 
     // return header dto object
     return dto;
-  },
+  }
 );

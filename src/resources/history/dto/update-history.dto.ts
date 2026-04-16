@@ -8,9 +8,12 @@ export class UpdateHistoryDto {
     description: 'Pause this history record to prevent watch time update',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   paused: boolean;
 
@@ -28,9 +31,12 @@ export class UpdateHistoryDto {
     description: 'Request to watch the movie/episode again',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   rewatch: boolean;
 }

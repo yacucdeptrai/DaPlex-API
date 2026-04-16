@@ -6,12 +6,12 @@ import { AzureStorageContainer } from '../../../enums';
 
 @Injectable()
 export class AzureBlobService implements OnModuleInit {
-  constructor(private configService: ConfigService) { }
+  constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
     const connectionString = this.configService.get<string>('AZURE_STORAGE_CONNECTION_STRING');
     const blobClientService = BlobServiceClient.fromConnectionString(connectionString);
-    Object.values(AzureStorageContainer).forEach(async container => {
+    Object.values(AzureStorageContainer).forEach(async (container) => {
       const containerClient = blobClientService.getContainerClient(container);
       try {
         await containerClient.createIfNotExists({ access: 'blob' });
@@ -37,5 +37,4 @@ export class AzureBlobService implements OnModuleInit {
     const blobClient = containerClient.getBlockBlobClient(filename);
     return blobClient.deleteIfExists();
   }
-
 }

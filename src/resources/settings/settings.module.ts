@@ -16,10 +16,10 @@ import { MongooseConnection } from '../../enums';
     AuthModule,
     AuditLogModule,
     LocalCacheModule,
-    MongooseModule.forFeature([{ name: Setting.name, schema: SettingSchema, }], MongooseConnection.DATABASE_A),
+    MongooseModule.forFeature([{ name: Setting.name, schema: SettingSchema }], MongooseConnection.DATABASE_A)
   ],
   controllers: [SettingsController],
   providers: [SettingsService],
   exports: [SettingsService]
 })
-export class SettingsModule { }
+export class SettingsModule {}

@@ -19,9 +19,12 @@ export class AddAllPlaylistItemsDto {
     description: 'Skip already added shows',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   skipAlreadyAdded: boolean;
 }

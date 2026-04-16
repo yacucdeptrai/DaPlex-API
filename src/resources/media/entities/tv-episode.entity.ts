@@ -59,42 +59,36 @@ export class TVEpisode {
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get stillUrl(): string {
-    if (this.still)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`, 480);
+    if (this.still) return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`, 480);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get thumbnailStillUrl(): string {
-    if (this.still)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`, 240);
+    if (this.still) return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`, 240);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get smallStillUrl(): string {
-    if (this.still)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`, 100);
+    if (this.still) return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`, 100);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get fullStillUrl(): string {
-    if (this.still)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`);
+    if (this.still) return createCloudflareR2ProxyUrl(CloudflareR2Container.STILLS, `${this.still._id}/${this.still.name}`);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get stillColor(): number {
-    if (this.still)
-      return this.still.color;
+    if (this.still) return this.still.color;
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get stillPlaceholder(): string {
-    if (this.still)
-      return this.still.placeholder;
+    if (this.still) return this.still.placeholder;
   }
 }

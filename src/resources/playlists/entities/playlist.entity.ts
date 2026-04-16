@@ -41,29 +41,25 @@ export class Playlist {
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get thumbnailUrl(): string {
-    if (this.thumbnail)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`, 720, this.thumbnail.mimeType);
+    if (this.thumbnail) return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`, 720, this.thumbnail.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get thumbnailThumbnailUrl(): string {
-    if (this.thumbnail)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`, 540, this.thumbnail.mimeType);
+    if (this.thumbnail) return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`, 540, this.thumbnail.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get smallThumbnailUrl(): string {
-    if (this.thumbnail)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`, 240, this.thumbnail.mimeType);
+    if (this.thumbnail) return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`, 240, this.thumbnail.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get fullThumbnailUrl(): string {
-    if (this.thumbnail)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`);
+    if (this.thumbnail) return createCloudflareR2ProxyUrl(CloudflareR2Container.PLAYLIST_THUMBNAILS, `${this.thumbnail._id}/${this.thumbnail.name}`);
   }
 
   @ApiProperty()

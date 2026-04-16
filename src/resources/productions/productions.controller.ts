@@ -1,5 +1,18 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, UseInterceptors, ClassSerializerInterceptor, Query } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 
 import { ProductionsService } from './productions.service';
 import { CreateProductionDto, CursorPageMediaDto, CursorPageProductionsDto, RemoveProductionsDto, UpdateProductionDto } from './dto';
@@ -23,7 +36,7 @@ import { UserPermission } from '../../enums';
 @ApiExtraModels(Production)
 @Controller()
 export class ProductionsController {
-  constructor(private readonly productionsService: ProductionsService) { }
+  constructor(private readonly productionsService: ProductionsService) {}
 
   @Post()
   @UseGuards(AuthGuard)
@@ -41,10 +54,7 @@ export class ProductionsController {
   @ApiOkResponse({
     description: 'Return a list of productions',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(Paginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Production) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(Paginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Production) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
@@ -58,10 +68,7 @@ export class ProductionsController {
   @ApiOkResponse({
     description: 'Return a list of productions',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Production) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Production) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
@@ -134,10 +141,7 @@ export class ProductionsController {
   @ApiOkResponse({
     description: 'Return a list of media',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Media) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Media) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })

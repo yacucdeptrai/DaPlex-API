@@ -1,3 +1,3 @@
 import { CursorPaginateDto } from '../../../common/dto';
 
-export class CursorPageGenresDto extends CursorPaginateDto { }
+export class CursorPageGenresDto extends CursorPaginateDto {}

@@ -6,12 +6,8 @@ import { SettingsModule } from '../../../resources/settings/settings.module';
 import { DropboxService } from './dropbox.service';
 
 @Module({
-  imports: [
-    HttpModule,
-    SettingsModule,
-    ExternalStoragesModule
-  ],
+  imports: [HttpModule, SettingsModule, ExternalStoragesModule],
   providers: [DropboxService],
   exports: [DropboxService]
 })
-export class DropboxModule { }
+export class DropboxModule {}

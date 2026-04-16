@@ -24,9 +24,12 @@ export class UpdateMediaDto extends PartialType(OmitType(CreateMediaDto, ['type'
     example: true,
     default: true
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   updateTimestamp: boolean = true;
 }

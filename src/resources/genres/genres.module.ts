@@ -11,15 +11,9 @@ import { Genre, GenreSchema } from '../../schemas';
 import { MongooseConnection } from '../../enums';
 
 @Module({
-  imports: [
-    AuthModule,
-    AuditLogModule,
-    forwardRef(() => MediaModule),
-    WsAdminModule,
-    MongooseModule.forFeature([{ name: Genre.name, schema: GenreSchema }], MongooseConnection.DATABASE_A)
-  ],
+  imports: [AuthModule, AuditLogModule, forwardRef(() => MediaModule), WsAdminModule, MongooseModule.forFeature([{ name: Genre.name, schema: GenreSchema }], MongooseConnection.DATABASE_A)],
   controllers: [GenresController],
   providers: [GenresService],
   exports: [GenresService]
 })
-export class GenresModule { }
+export class GenresModule {}

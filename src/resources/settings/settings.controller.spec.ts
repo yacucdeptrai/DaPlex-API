@@ -8,7 +8,7 @@ describe('SettingsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SettingsController],
-      providers: [SettingsService],
+      providers: [SettingsService]
     }).compile();
 
     controller = module.get<SettingsController>(SettingsController);

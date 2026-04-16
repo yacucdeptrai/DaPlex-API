@@ -1,5 +1,17 @@
 import { Controller, Get, Post, Body, UseGuards, Query, Res, Delete, Param, UseInterceptors, ClassSerializerInterceptor, HttpCode } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 import { FastifyReply } from 'fastify';
 
 import { RatingsService } from './ratings.service';
@@ -18,7 +30,7 @@ import { RequestHeaders } from '../../decorators/request-headers.decorator';
 @ApiTags('Ratings')
 @Controller()
 export class RatingsController {
-  constructor(private readonly ratingService: RatingsService) { }
+  constructor(private readonly ratingService: RatingsService) {}
 
   @Post()
   @UseGuards(AuthGuard)
@@ -41,10 +53,7 @@ export class RatingsController {
   @ApiOkResponse({
     description: 'Return a list of ratings',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Rating) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Rating) } } } }]
     }
   })
   @ApiNotFoundResponse({ description: 'The resource could not be found', type: ErrorMessage })
@@ -63,8 +72,7 @@ export class RatingsController {
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
   async findMedia(@Res() res: FastifyReply, @AuthUser() authUser: AuthUserDto, @Query() findRatingDto: FindRatingDto) {
     const result = await this.ratingService.findMedia(findRatingDto, authUser);
-    if (!result)
-      return res.status(204).send();
+    if (!result) return res.status(204).send();
     res.status(200).send(result);
   }
 

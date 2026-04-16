@@ -22,4 +22,4 @@ import { ChapterType, ChapterTypeSchema } from '../../schemas';
   providers: [ChapterTypeService],
   exports: [ChapterTypeService]
 })
-export class ChapterTypeModule { }
+export class ChapterTypeModule {}

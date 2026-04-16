@@ -22,9 +22,12 @@ class EnvironmentVariables {
   ADDRESS: string = ADDRESS;
 
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsBoolean()
   TRUST_PROXY: boolean = false;
 
@@ -83,9 +86,12 @@ class EnvironmentVariables {
   @IsUrl({ require_protocol: true, require_tld: false })
   ORIGIN_URL: string;
 
-  @Transform(({ value }) => {
-    return (<string>value).split(',');
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return (<string>value).split(',');
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   @IsUrl({ require_protocol: true, require_tld: false }, { each: true })
   EXTRA_ORIGIN_URLS: string[];
@@ -112,11 +118,7 @@ class EnvironmentVariables {
 }
 
 export function validate(config: Record<string, unknown>) {
-  const validatedConfig = plainToInstance(
-    EnvironmentVariables,
-    config,
-    { enableImplicitConversion: true },
-  );
+  const validatedConfig = plainToInstance(EnvironmentVariables, config, { enableImplicitConversion: true });
   const errors = validateSync(validatedConfig, { skipMissingProperties: false });
 
   if (errors.length > 0) {

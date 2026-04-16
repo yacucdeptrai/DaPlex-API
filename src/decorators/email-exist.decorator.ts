@@ -5,11 +5,10 @@ import { AuthService } from '../resources/auth/auth.service';
 @Injectable()
 @ValidatorConstraint({ async: true })
 export class EmailExistConstraint implements ValidatorConstraintInterface {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
   async validate(email: any) {
     const user = await this.authService.findByEmail(email);
-    if (user)
-      return false;
+    if (user) return false;
     return true;
   }
 
@@ -25,7 +24,7 @@ export function EmailExist(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: EmailExistConstraint,
+      validator: EmailExistConstraint
     });
   };
 }

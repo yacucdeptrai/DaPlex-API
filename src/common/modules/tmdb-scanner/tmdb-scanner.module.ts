@@ -8,4 +8,4 @@ import { TmdbScannerService } from './tmdb-scanner.service';
   providers: [TmdbScannerService],
   exports: [TmdbScannerService]
 })
-export class TmdbScannerModule { }
+export class TmdbScannerModule {}

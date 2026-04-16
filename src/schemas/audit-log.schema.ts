@@ -23,17 +23,14 @@ export class AuditLog {
   _id: bigint;
 
   @Prop({ required: true, type: () => BigInt, ref: 'User' })
-  user: User;
+  user: bigint;
 
   @Prop({ required: true, type: () => BigInt, refPath: 'targetRef' })
   target: bigint;
 
   @Prop({
     required: true,
-    enum: [
-      ExternalStorage.name, Genre.name, Production.name, MediaCollection.name, MediaTag.name, ChapterType.name, Media.name,
-      MediaStorage.name, TVEpisode.name, Role.name, Setting.name, User.name
-    ]
+    enum: [ExternalStorage.name, Genre.name, Production.name, MediaCollection.name, MediaTag.name, ChapterType.name, Media.name, MediaStorage.name, TVEpisode.name, Role.name, Setting.name, User.name]
   })
   targetRef: string;
 

@@ -11,9 +11,11 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class OnedriveService {
-  constructor(private httpService: HttpService,
+  constructor(
+    private httpService: HttpService,
     @Inject(forwardRef(() => SettingsService)) private settingsService: SettingsService,
-    @Inject(forwardRef(() => ExternalStoragesService)) private externalStoragesService: ExternalStoragesService) { }
+    @Inject(forwardRef(() => ExternalStoragesService)) private externalStoragesService: ExternalStoragesService
+  ) {}
 
   private baseUrl = 'https://graph.microsoft.com/v1.0';
 
@@ -36,7 +38,10 @@ export class OnedriveService {
     } catch (e) {
       if (e.isAxiosError) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -44,20 +49,25 @@ export class OnedriveService {
 
   async createUploadSession(name: string, folderName: string) {
     const storage = await this.settingsService.findMediaSourceStorage();
-    if (!storage.accessToken || storage.expiry < new Date())
-      await this.refreshToken(storage);
+    if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
     for (let i = 0; i < 2; i++) {
       try {
         const folderId = storage.folderId && storage.folderId.split('#')[1];
         const urlPath = folderId ? `me/drive/items/${folderId}` : 'me/drive/root';
         const encodedFilePath = encodeURIComponent(folderName) + '/' + encodeURIComponent(name);
-        const response = await firstValueFrom(this.httpService.post(`${this.baseUrl}/${urlPath}:/${encodedFilePath}:/createUploadSession`, {}, {
-          headers: {
-            'Authorization': `Bearer ${storage.accessToken}`,
-            'Content-Type': 'application/json',
-            'Origin': '*'
-          }
-        }));
+        const response = await firstValueFrom(
+          this.httpService.post(
+            `${this.baseUrl}/${urlPath}:/${encodedFilePath}:/createUploadSession`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${storage.accessToken}`,
+                'Content-Type': 'application/json',
+                Origin: '*'
+              }
+            }
+          )
+        );
         const uploadSession: UploadSession = {
           url: response.data.uploadUrl,
           storage: storage._id
@@ -69,11 +79,13 @@ export class OnedriveService {
             console.error(e);
             continue;
           }
-          if (e.response.status === 401 && i < 1)
-            await this.refreshToken(storage);
+          if (e.response.status === 401 && i < 1) await this.refreshToken(storage);
           else {
             console.error(e.response);
-            throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+            throw new HttpException(
+              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              HttpStatus.SERVICE_UNAVAILABLE
+            );
           }
         } else {
           console.error(e);
@@ -90,26 +102,28 @@ export class OnedriveService {
 
   async deleteFolder(folder: bigint | string, storage: ExternalStorage, retry: number = 5, retryTimeout: number = 3000) {
     await this.externalStoragesService.decryptToken(storage);
-    if (!storage.accessToken || storage.expiry < new Date())
-      await this.refreshToken(storage);
+    if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
     for (let i = 0; i < retry; i++) {
       try {
         const folderId = storage.folderId && storage.folderId.split('#')[1];
         const urlPath = folderId ? `me/drive/items/${folderId}` : 'me/drive/root';
         const encodedFolder = encodeURIComponent(folder.toString());
-        const response = await firstValueFrom(this.httpService.delete(`${this.baseUrl}/${urlPath}:/${encodedFolder}`, {
-          headers: { 'Authorization': `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' }
-        }));
+        const response = await firstValueFrom(
+          this.httpService.delete(`${this.baseUrl}/${urlPath}:/${encodedFolder}`, {
+            headers: { Authorization: `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' }
+          })
+        );
         return response.data;
       } catch (e) {
         if (e.isAxiosError && e.response) {
-          if (e.response.status >= 400 && e.response.status <= 599)
-            return;
-          else if (i < retry - 1)
-            await new Promise(r => setTimeout(r, retryTimeout));
+          if (e.response.status >= 400 && e.response.status <= 599) return;
+          else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else {
             console.error(e.response);
-            throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+            throw new HttpException(
+              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              HttpStatus.SERVICE_UNAVAILABLE
+            );
           }
         } else {
           console.error(e);
@@ -122,27 +136,29 @@ export class OnedriveService {
   async findPath(path: string, storageId: bigint, retry: number = 5, retryTimeout: number = 0) {
     const storage = await this.externalStoragesService.findStorageById(storageId);
     await this.externalStoragesService.decryptToken(storage);
-    if (!storage.accessToken || storage.expiry < new Date())
-      await this.refreshToken(storage);
+    if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
     for (let i = 0; i < retry; i++) {
       try {
         const folderId = storage.folderId && storage.folderId.split('#')[1];
         const urlPath = folderId ? `me/drive/items/${folderId}` : 'me/drive/root';
         const encodedPath = encodeURIComponent(path);
-        const response = await firstValueFrom(this.httpService.get<DriveFile>(`${this.baseUrl}/${urlPath}:/${encodedPath}`, {
-          headers: { 'Authorization': `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' },
-          params: { select: 'id,name,file,parentReference,size' }
-        }));
+        const response = await firstValueFrom(
+          this.httpService.get<DriveFile>(`${this.baseUrl}/${urlPath}:/${encodedPath}`, {
+            headers: { Authorization: `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' },
+            params: { select: 'id,name,file,parentReference,size' }
+          })
+        );
         return response.data;
       } catch (e) {
         if (e.isAxiosError && e.response) {
-          if (e.response.status === 401 && i < 1)
-            await this.refreshToken(storage);
-          else if (i < retry - 1)
-            await new Promise(r => setTimeout(r, retryTimeout));
+          if (e.response.status === 401 && i < 1) await this.refreshToken(storage);
+          else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else {
             console.error(e.response);
-            throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+            throw new HttpException(
+              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              HttpStatus.SERVICE_UNAVAILABLE
+            );
           }
         } else {
           console.error(e);
@@ -154,26 +170,27 @@ export class OnedriveService {
 
   async findId(fileId: string, storage: ExternalStorage, retry: number = 5, retryTimeout: number = 0) {
     await this.externalStoragesService.decryptToken(storage);
-    if (!storage.accessToken || storage.expiry < new Date())
-      await this.refreshToken(storage);
+    if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
     for (let i = 0; i < retry; i++) {
       try {
-        const response = await firstValueFrom(this.httpService.get<DriveFile>(`${this.baseUrl}/me/drive/items/${fileId}`, {
-          headers: { 'Authorization': `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' },
-          params: { select: 'id,name,file,parentReference,size' }
-        }));
+        const response = await firstValueFrom(
+          this.httpService.get<DriveFile>(`${this.baseUrl}/me/drive/items/${fileId}`, {
+            headers: { Authorization: `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' },
+            params: { select: 'id,name,file,parentReference,size' }
+          })
+        );
         return response.data;
       } catch (e) {
         if (e.isAxiosError && e.response) {
-          if (e.response.status === 401 && i < 1)
-            await this.refreshToken(storage);
-          else if (i < retry - 1)
-            await new Promise(r => setTimeout(r, retryTimeout));
-          else if (e.response?.status === 404)
-            throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
+          if (e.response.status === 401 && i < 1) await this.refreshToken(storage);
+          else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
+          else if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
           else {
             console.error(e.response);
-            throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+            throw new HttpException(
+              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              HttpStatus.SERVICE_UNAVAILABLE
+            );
           }
         } else {
           console.error(e);
@@ -186,29 +203,30 @@ export class OnedriveService {
   async findInStorages(filePath: string, storages: ExternalStorage[], retry: number = 5, retryTimeout: number = 0) {
     for (let i = 0; i < storages.length; i++) {
       const storage = storages[i];
-      if (!storage.accessToken || storage.expiry < new Date())
-        await this.refreshToken(storage);
+      if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
       for (let j = 0; j < retry; j++) {
         try {
           const folderId = storage.folderId && storage.folderId.split('#')[1];
           const urlPath = folderId ? `me/drive/items/${folderId}` : 'me/drive/root';
           const encodedFilePath = encodeURIComponent(filePath);
-          const response = await firstValueFrom(this.httpService.get<DriveFile>(`${this.baseUrl}/${urlPath}:/${encodedFilePath}`, {
-            headers: { 'Authorization': `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' },
-            params: { select: 'id,name,file,parentReference,size' }
-          }));
+          const response = await firstValueFrom(
+            this.httpService.get<DriveFile>(`${this.baseUrl}/${urlPath}:/${encodedFilePath}`, {
+              headers: { Authorization: `Bearer ${storage.accessToken}`, 'Content-Type': 'application/json' },
+              params: { select: 'id,name,file,parentReference,size' }
+            })
+          );
           return { storage: storage, file: response.data };
         } catch (e) {
           if (e.isAxiosError && e.response) {
-            if (e.response.status === 401 && j < 1)
-              await this.refreshToken(storage);
-            else if (j < retry - 1)
-              await new Promise(r => setTimeout(r, retryTimeout));
-            else if (e.response?.status === 404)
-              break;
+            if (e.response.status === 401 && j < 1) await this.refreshToken(storage);
+            else if (j < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
+            else if (e.response?.status === 404) break;
             else {
               console.error(e.response);
-              throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+              throw new HttpException(
+                { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+                HttpStatus.SERVICE_UNAVAILABLE
+              );
             }
           } else {
             console.error(e);

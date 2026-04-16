@@ -6,7 +6,7 @@ describe('ExternalStreamService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ExternalStreamService],
+      providers: [ExternalStreamService]
     }).compile();
 
     service = module.get<ExternalStreamService>(ExternalStreamService);

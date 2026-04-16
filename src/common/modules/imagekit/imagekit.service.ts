@@ -10,7 +10,10 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class ImagekitService {
-  constructor(private httpService: HttpService, private configService: ConfigService) { }
+  constructor(
+    private httpService: HttpService,
+    private configService: ConfigService
+  ) {}
 
   async upload(filePath: string, fileName: string, folder: string) {
     const data = new FormData();
@@ -28,7 +31,10 @@ export class ImagekitService {
       return response.data;
     } catch (e) {
       console.error(e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     } finally {
       stream.destroy();
     }
@@ -43,10 +49,12 @@ export class ImagekitService {
       const response = await firstValueFrom(this.httpService.delete('https://api.imagekit.io/v1/folder', config));
       return response.data;
     } catch (e) {
-      if (e.response.data.reason === 'FOLDER_NOT_FOUND')
-        return;
+      if (e.response.data.reason === 'FOLDER_NOT_FOUND') return;
       console.error(e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 }

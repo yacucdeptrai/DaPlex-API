@@ -1,5 +1,19 @@
 import { Controller, Post, Body, UseGuards, HttpCode, UseInterceptors, ClassSerializerInterceptor, Res, Req } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiCookieAuth, ApiCreatedResponse, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiServiceUnavailableResponse, ApiTags, ApiUnauthorizedResponse, refs } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiCookieAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  refs
+} from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 import { AuthService } from './auth.service';
@@ -14,7 +28,7 @@ import { RateLimitOptions } from '../../decorators/rate-limit-options.decorator'
 @ApiTags('Authentication')
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('sign-in')
   @UseInterceptors(RateLimitInterceptor, ClassSerializerInterceptor)

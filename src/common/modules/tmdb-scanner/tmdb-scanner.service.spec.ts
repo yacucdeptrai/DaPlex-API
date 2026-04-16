@@ -6,7 +6,7 @@ describe('TmdbScannerService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TmdbScannerService],
+      providers: [TmdbScannerService]
     }).compile();
 
     service = module.get<TmdbScannerService>(TmdbScannerService);

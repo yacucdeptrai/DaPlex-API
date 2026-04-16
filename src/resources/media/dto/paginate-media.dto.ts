@@ -45,9 +45,12 @@ export class PaginateMediaDto {
     description: 'Include adult movie/TV show',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   adult: boolean;
 
@@ -121,7 +124,7 @@ export class PaginateMediaDto {
     required: false
   })
   @Type(() => String)
-  @Transform(({ value }) => !Array.isArray(value) ? [value] : value, { toClassOnly: true })
+  @Transform(({ value }) => (!Array.isArray(value) ? [value] : value), { toClassOnly: true })
   @IsOptional()
   presetParams?: string[];
 
@@ -130,9 +133,12 @@ export class PaginateMediaDto {
     description: 'Include hidden shows (unlisted and private, need manage media permission)',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeHidden: boolean;
 
@@ -141,9 +147,12 @@ export class PaginateMediaDto {
     description: 'Include unprocessed shows, need manage media permission',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeUnprocessed: boolean;
 }

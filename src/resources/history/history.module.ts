@@ -10,16 +10,9 @@ import { History, HistorySchema } from '../../schemas';
 import { MongooseConnection } from '../../enums';
 
 @Module({
-  imports: [
-    AuthModule,
-    forwardRef(() => MediaModule),
-    MongooseModule.forFeature([{ name: History.name, schema: HistorySchema }], MongooseConnection.DATABASE_A)
-  ],
+  imports: [AuthModule, forwardRef(() => MediaModule), MongooseModule.forFeature([{ name: History.name, schema: HistorySchema }], MongooseConnection.DATABASE_A)],
   controllers: [HistoryController],
-  providers: [
-    HistoryService,
-    IsISO6391Constraint
-  ],
+  providers: [HistoryService, IsISO6391Constraint],
   exports: [HistoryService]
 })
-export class HistoryModule { }
+export class HistoryModule {}

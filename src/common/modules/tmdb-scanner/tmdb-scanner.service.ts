@@ -26,17 +26,21 @@ export class TmdbScannerService {
   private baseUrl = 'https://api.themoviedb.org/3';
   private headers: any;
 
-  constructor(private httpService: HttpService, private configService: ConfigService) {
-    this.headers = { 'Authorization': `Bearer ${this.configService.get<string>('TMDB_ACCESS_TOKEN')}` };
+  constructor(
+    private httpService: HttpService,
+    private configService: ConfigService
+  ) {
+    this.headers = { Authorization: `Bearer ${this.configService.get<string>('TMDB_ACCESS_TOKEN')}` };
   }
 
   async searchMovie(query: string, page: number, year: number, language: string, includeAdult: boolean) {
     try {
-      const response = await firstValueFrom(this.httpService.get<Search<Movie>>(`${this.baseUrl}/search/movie`,
-        {
+      const response = await firstValueFrom(
+        this.httpService.get<Search<Movie>>(`${this.baseUrl}/search/movie`, {
           params: { query, page, primary_release_year: year, language, include_adult: includeAdult },
           headers: this.headers
-        }));
+        })
+      );
       const data = response.data;
       const results = new Paginated<Media>();
       results.page = data.page;
@@ -58,7 +62,10 @@ export class TmdbScannerService {
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -66,10 +73,12 @@ export class TmdbScannerService {
 
   async searchTv(query: string, page: number, year: number, language: string, includeAdult: boolean) {
     try {
-      const response = await firstValueFrom(this.httpService.get<Search<TV>>(`${this.baseUrl}/search/tv`, {
-        params: { query, page, primary_release_year: year, language, include_adult: includeAdult },
-        headers: this.headers
-      }));
+      const response = await firstValueFrom(
+        this.httpService.get<Search<TV>>(`${this.baseUrl}/search/tv`, {
+          params: { query, page, primary_release_year: year, language, include_adult: includeAdult },
+          headers: this.headers
+        })
+      );
       const data = response.data;
       const results = new Paginated<Media>();
       results.page = data.page;
@@ -91,7 +100,10 @@ export class TmdbScannerService {
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -99,23 +111,28 @@ export class TmdbScannerService {
 
   async movieDetails(id: string, language: string) {
     try {
-      const response = await firstValueFrom(this.httpService.get<MovieDetails &
-      {
-        videos: { results: Video[] }, alternative_titles: { titles: Title[] }, translations: { translations: Translation[] },
-        keywords: { keywords: MediaKeyword[] }
-      }>(`${this.baseUrl}/movie/${id}`, {
-        params: { language, append_to_response: 'videos,alternative_titles,translations,keywords' },
-        headers: this.headers
-      }));
+      const response = await firstValueFrom(
+        this.httpService.get<
+          MovieDetails & {
+            videos: { results: Video[] };
+            alternative_titles: { titles: Title[] };
+            translations: { translations: Translation[] };
+            keywords: { keywords: MediaKeyword[] };
+          }
+        >(`${this.baseUrl}/movie/${id}`, {
+          params: { language, append_to_response: 'videos,alternative_titles,translations,keywords' },
+          headers: this.headers
+        })
+      );
       const data = response.data;
-      const origLangTranslation = data.translations.translations.find(t => t.iso_639_1 === data.original_language);
+      const origLangTranslation = data.translations.translations.find((t) => t.iso_639_1 === data.original_language);
       const result = new MediaDetails();
       result.id = data.id;
       result.title = data.title;
       result.originalTitle = data.original_title;
       result.altTitles = data.alternative_titles.titles
-        .filter(t => origLangTranslation ? t.iso_3166_1 === origLangTranslation.iso_3166_1 : true)
-        .map<MediaAltTitle>(t => ({
+        .filter((t) => (origLangTranslation ? t.iso_3166_1 === origLangTranslation.iso_3166_1 : true))
+        .map<MediaAltTitle>((t) => ({
           iso31661: t.iso_3166_1,
           iso6391: origLangTranslation?.iso_639_1 || undefined,
           title: t.title,
@@ -128,16 +145,16 @@ export class TmdbScannerService {
       if (data.belongs_to_collection) {
         result.collection = await this.collectionDetails(data.belongs_to_collection.id, language);
       }
-      result.genres = data.genres.map(g => g.name);
+      result.genres = data.genres.map((g) => g.name);
       result.studios = [];
-      result.productions = data.production_companies.map<Production>(p => ({
+      result.productions = data.production_companies.map<Production>((p) => ({
         name: p.name,
         country: p.origin_country
       }));
-      result.tags = data.keywords.keywords.map(k => apStyleTitleCase(k.name));
+      result.tags = data.keywords.keywords.map((k) => apStyleTitleCase(k.name));
       result.videos = data.videos.results
-        .filter(v => v.site === 'YouTube' && ['Teaser', 'Trailer'].includes(v.type))
-        .map<MediaVideo>(v => ({
+        .filter((v) => v.site === 'YouTube' && ['Teaser', 'Trailer'].includes(v.type))
+        .map<MediaVideo>((v) => ({
           name: v.name,
           key: v.key,
           type: v.type,
@@ -151,22 +168,27 @@ export class TmdbScannerService {
       result.externalIds.imdb = data.imdb_id;
       result.externalIds.tmdb = data.id;
       result.translations = data.translations.translations
-        .filter(t => I18N_LANGUAGES.includes(t.iso_639_1))
-        .map((t): MediaTranslation => ({
-          iso31661: t.iso_3166_1,
-          iso6391: t.iso_639_1,
-          name: t.name,
-          englishName: t.english_name,
-          data: {
-            title: t.data.title,
-            overview: t.data.overview
-          }
-        }));
+        .filter((t) => I18N_LANGUAGES.includes(t.iso_639_1))
+        .map(
+          (t): MediaTranslation => ({
+            iso31661: t.iso_3166_1,
+            iso6391: t.iso_639_1,
+            name: t.name,
+            englishName: t.english_name,
+            data: {
+              title: t.data.title,
+              overview: t.data.overview
+            }
+          })
+        );
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -174,23 +196,29 @@ export class TmdbScannerService {
 
   async tvDetails(id: string, language: string) {
     try {
-      const response = await firstValueFrom(this.httpService.get<TvShowDetails &
-      {
-        external_ids: ExternalIds, videos: { results: Video[] }, alternative_titles: { results: Title[] },
-        translations: { translations: Translation[] }, keywords: { results: MediaKeyword[] }
-      }>(`${this.baseUrl}/tv/${id}`, {
-        params: { language, append_to_response: 'external_ids,videos,alternative_titles,translations,keywords' },
-        headers: this.headers
-      }));
+      const response = await firstValueFrom(
+        this.httpService.get<
+          TvShowDetails & {
+            external_ids: ExternalIds;
+            videos: { results: Video[] };
+            alternative_titles: { results: Title[] };
+            translations: { translations: Translation[] };
+            keywords: { results: MediaKeyword[] };
+          }
+        >(`${this.baseUrl}/tv/${id}`, {
+          params: { language, append_to_response: 'external_ids,videos,alternative_titles,translations,keywords' },
+          headers: this.headers
+        })
+      );
       const data = response.data;
-      const origLangTranslation = data.translations.translations.find(t => t.iso_639_1 === data.original_language);
+      const origLangTranslation = data.translations.translations.find((t) => t.iso_639_1 === data.original_language);
       const result = new MediaDetails();
       result.id = data.id;
       result.title = data.name;
       result.originalTitle = data.original_name;
       result.altTitles = data.alternative_titles.results
-        .filter(t => origLangTranslation ? t.iso_3166_1 === origLangTranslation.iso_3166_1 : true)
-        .map<MediaAltTitle>(t => ({
+        .filter((t) => (origLangTranslation ? t.iso_3166_1 === origLangTranslation.iso_3166_1 : true))
+        .map<MediaAltTitle>((t) => ({
           iso31661: t.iso_3166_1,
           iso6391: origLangTranslation?.iso_639_1 || undefined,
           title: t.title,
@@ -200,16 +228,16 @@ export class TmdbScannerService {
       result.posterPath = data.poster_path;
       result.backdropPath = data.backdrop_path;
       result.originalLanguage = data.original_language;
-      result.genres = data.genres.map(g => g.name);
+      result.genres = data.genres.map((g) => g.name);
       result.studios = [];
-      result.productions = data.production_companies.map<Production>(p => ({
+      result.productions = data.production_companies.map<Production>((p) => ({
         name: p.name,
         country: p.origin_country
       }));
-      result.tags = data.keywords.results.map(k => apStyleTitleCase(k.name));
+      result.tags = data.keywords.results.map((k) => apStyleTitleCase(k.name));
       result.videos = data.videos.results
-        .filter(v => v.site === 'YouTube' && ['Teaser', 'Trailer'].includes(v.type))
-        .map<MediaVideo>(v => ({
+        .filter((v) => v.site === 'YouTube' && ['Teaser', 'Trailer'].includes(v.type))
+        .map<MediaVideo>((v) => ({
           name: v.name,
           key: v.key,
           type: v.type,
@@ -226,7 +254,7 @@ export class TmdbScannerService {
       result.externalIds = new MediaExternalIds();
       result.externalIds.imdb = data.external_ids.imdb_id;
       result.externalIds.tmdb = data.id;
-      result.seasons = data.seasons.map(s => {
+      result.seasons = data.seasons.map((s) => {
         const season = new TVSeason();
         season.name = s.name;
         season.overview = s.overview;
@@ -237,22 +265,27 @@ export class TmdbScannerService {
         return season;
       });
       result.translations = data.translations.translations
-        .filter(t => I18N_LANGUAGES.includes(t.iso_639_1))
-        .map((t): MediaTranslation => ({
-          iso31661: t.iso_3166_1,
-          iso6391: t.iso_639_1,
-          name: t.name,
-          englishName: t.english_name,
-          data: {
-            title: t.data.name,
-            overview: t.data.overview
-          }
-        }));
+        .filter((t) => I18N_LANGUAGES.includes(t.iso_639_1))
+        .map(
+          (t): MediaTranslation => ({
+            iso31661: t.iso_3166_1,
+            iso6391: t.iso_639_1,
+            name: t.name,
+            englishName: t.english_name,
+            data: {
+              title: t.data.name,
+              overview: t.data.overview
+            }
+          })
+        );
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -261,13 +294,17 @@ export class TmdbScannerService {
   async collectionDetails(id: string, language: string) {
     try {
       const [detailsResponse, translationResponse] = await Promise.all([
-        firstValueFrom(this.httpService.get<CollectionDetails>(`${this.baseUrl}/collection/${id}`, {
-          params: { language },
-          headers: this.headers
-        })),
-        firstValueFrom(this.httpService.get<{ translations: Translation[] }>(`${this.baseUrl}/collection/${id}/translations`, {
-          headers: this.headers
-        }))
+        firstValueFrom(
+          this.httpService.get<CollectionDetails>(`${this.baseUrl}/collection/${id}`, {
+            params: { language },
+            headers: this.headers
+          })
+        ),
+        firstValueFrom(
+          this.httpService.get<{ translations: Translation[] }>(`${this.baseUrl}/collection/${id}/translations`, {
+            headers: this.headers
+          })
+        )
       ]);
       const data = detailsResponse.data;
       const result = new MediaCollection();
@@ -277,22 +314,27 @@ export class TmdbScannerService {
       result.posterPath = data.poster_path;
       result.backdropPath = data.backdrop_path;
       result.translations = translationResponse.data.translations
-        .filter(t => I18N_LANGUAGES.includes(t.iso_639_1))
-        .map((t): MediaTranslation => ({
-          iso31661: t.iso_3166_1,
-          iso6391: t.iso_639_1,
-          name: t.name,
-          englishName: t.english_name,
-          data: {
-            title: t.data.title,
-            overview: t.data.overview
-          }
-        }));
+        .filter((t) => I18N_LANGUAGES.includes(t.iso_639_1))
+        .map(
+          (t): MediaTranslation => ({
+            iso31661: t.iso_3166_1,
+            iso6391: t.iso_639_1,
+            name: t.name,
+            englishName: t.english_name,
+            data: {
+              title: t.data.title,
+              overview: t.data.overview
+            }
+          })
+        );
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -300,11 +342,12 @@ export class TmdbScannerService {
 
   async episodeDetails(id: string, season: string, episode: string, language: string) {
     try {
-      const response = await firstValueFrom(this.httpService.get<EpisodeDetails &
-      { translations: { translations: Translation[] } }>(`${this.baseUrl}/tv/${id}/season/${season}/episode/${episode}`, {
-        params: { language, append_to_response: 'translations' },
-        headers: this.headers
-      }));
+      const response = await firstValueFrom(
+        this.httpService.get<EpisodeDetails & { translations: { translations: Translation[] } }>(`${this.baseUrl}/tv/${id}/season/${season}/episode/${episode}`, {
+          params: { language, append_to_response: 'translations' },
+          headers: this.headers
+        })
+      );
       const data = response.data;
       const result = new TVEpisode();
       result.episodeNumber = data.episode_number;
@@ -314,8 +357,8 @@ export class TmdbScannerService {
       result.stillPath = data.still_path;
       result.airDate = data.air_date;
       result.translations = data.translations.translations
-        .filter(t => I18N_LANGUAGES.includes(t.iso_639_1))
-        .map<EpisodeTranslation>(t => ({
+        .filter((t) => I18N_LANGUAGES.includes(t.iso_639_1))
+        .map<EpisodeTranslation>((t) => ({
           iso31661: t.iso_3166_1,
           iso6391: t.iso_639_1,
           name: t.name,
@@ -329,7 +372,10 @@ export class TmdbScannerService {
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -337,16 +383,21 @@ export class TmdbScannerService {
 
   async movieImages(id: string, language: string) {
     try {
-      const response = await firstValueFrom(this.httpService.get<TMDBImages>(`${this.baseUrl}/movie/${id}/images`, {
-        params: { language },
-        headers: this.headers
-      }));
+      const response = await firstValueFrom(
+        this.httpService.get<TMDBImages>(`${this.baseUrl}/movie/${id}/images`, {
+          params: { language },
+          headers: this.headers
+        })
+      );
       const data = response.data;
       return this.parseTMDbImageList(data);
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -354,16 +405,21 @@ export class TmdbScannerService {
 
   async tvImages(id: string, language: string) {
     try {
-      const response = await firstValueFrom(this.httpService.get<TMDBImages>(`${this.baseUrl}/tv/${id}/images`, {
-        params: { language },
-        headers: this.headers
-      }));
+      const response = await firstValueFrom(
+        this.httpService.get<TMDBImages>(`${this.baseUrl}/tv/${id}/images`, {
+          params: { language },
+          headers: this.headers
+        })
+      );
       const data = response.data;
       return this.parseTMDbImageList(data);
     } catch (e) {
       if (e.isAxiosError && e.response) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }
@@ -371,7 +427,7 @@ export class TmdbScannerService {
 
   parseTMDbImageList(data: TMDBImages) {
     const result = new MediaImages();
-    result.posters = data.posters.map(p => {
+    result.posters = data.posters.map((p) => {
       const poster = new MediaImageItem();
       poster.width = p.width;
       poster.height = p.height;
@@ -379,7 +435,7 @@ export class TmdbScannerService {
       poster.filePath = p.file_path;
       return poster;
     });
-    result.backdrops = data.backdrops.map(b => {
+    result.backdrops = data.backdrops.map((b) => {
       const backdrop = new MediaImageItem();
       backdrop.width = b.width;
       backdrop.height = b.height;

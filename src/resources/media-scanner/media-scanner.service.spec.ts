@@ -6,7 +6,7 @@ describe('MediaScannerService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MediaScannerService],
+      providers: [MediaScannerService]
     }).compile();
 
     service = module.get<MediaScannerService>(MediaScannerService);

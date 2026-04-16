@@ -1,10 +1,9 @@
-import { User } from '../../users';
 import { AuditLogChange } from './audit-log-change.entity';
 
 export class AuditLog {
   _id: bigint;
 
-  user: User;
+  user: bigint;
 
   target: bigint;
 

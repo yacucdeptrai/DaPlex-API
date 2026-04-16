@@ -15,4 +15,4 @@ import { CACHE_MEMORY_MAX, CACHE_MEMORY_TTL } from '../../../config';
   providers: [LocalCacheService],
   exports: [CacheModule, LocalCacheService]
 })
-export class LocalCacheModule { }
+export class LocalCacheModule {}

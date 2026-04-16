@@ -6,7 +6,7 @@ describe('WsAdminGateway', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WsAdminGateway],
+      providers: [WsAdminGateway]
     }).compile();
 
     gateway = module.get<WsAdminGateway>(WsAdminGateway);

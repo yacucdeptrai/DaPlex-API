@@ -28,7 +28,6 @@ export interface MovieDetails {
   vote_count: number;
 }
 
-
 export interface ReleaseDate {
   certification: string;
   iso_639_1: string;
@@ -46,7 +45,6 @@ export interface ReleaseDates {
   id: number;
   results: ReleaseDateResult[];
 }
-
 
 export interface SimilarMovies {
   page: number;
@@ -73,7 +71,6 @@ export interface MovieLists {
   total_pages: number;
   total_results: number;
 }
-
 
 export interface MovieChangeItem {
   id: string;
@@ -120,7 +117,6 @@ export interface LatestMovie {
   vote_average: number;
   vote_count: number;
 }
-
 
 export interface Dates {
   maximum: string;

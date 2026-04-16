@@ -14,9 +14,11 @@ export class S3Service {
   cachedSignatureKey: Buffer | null = null;
   cachedSignatureDate: string | null = null;
 
-  constructor(private httpService: HttpService,
+  constructor(
+    private httpService: HttpService,
     @Inject(forwardRef(() => SettingsService)) private settingsService: SettingsService,
-    @Inject(forwardRef(() => ExternalStoragesService)) private externalStoragesService: ExternalStoragesService) { }
+    @Inject(forwardRef(() => ExternalStoragesService)) private externalStoragesService: ExternalStoragesService
+  ) {}
 
   async findInStorages(filePath: string, storages: ExternalStorage[], retry: number = 3, retryTimeout: number = 0) {
     for (let i = 0; i < storages.length; i++) {
@@ -27,13 +29,14 @@ export class S3Service {
           const fileInfo = await this.headObject(storage, filePath);
           return { storage: storage, file: { id: filePath, name: filePath.split('/').pop(), size: fileInfo.contentLength, file: { mimeType: fileInfo.contentType } } };
         } catch (e) {
-          if (j < retry - 1)
-            await new Promise(r => setTimeout(r, retryTimeout));
-          else if (e.response?.status === 404)
-            break;
+          if (j < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
+          else if (e.response?.status === 404) break;
           else {
             console.error(e.response);
-            throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+            throw new HttpException(
+              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              HttpStatus.SERVICE_UNAVAILABLE
+            );
           }
         }
       }
@@ -50,10 +53,13 @@ export class S3Service {
         return { id: path, name: path.split('/').pop(), size: fileInfo.contentLength, file: { mimeType: fileInfo.contentType } };
       } catch (e) {
         if (i < retry - 1) {
-          await new Promise(r => setTimeout(r, retryTimeout));
+          await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
           console.error(e.response);
-          throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+          throw new HttpException(
+            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            HttpStatus.SERVICE_UNAVAILABLE
+          );
         }
       }
     }
@@ -66,13 +72,15 @@ export class S3Service {
         const fileInfo = await this.headObject(storage, fileId);
         return { id: fileId, name: fileId.split('/').pop(), size: fileInfo.contentLength, file: { mimeType: fileInfo.contentType } };
       } catch (e) {
-        if (e.response?.status === 404)
-          throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
+        if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
         if (i < retry - 1) {
-          await new Promise(r => setTimeout(r, retryTimeout));
+          await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
           console.error(e.response);
-          throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+          throw new HttpException(
+            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            HttpStatus.SERVICE_UNAVAILABLE
+          );
         }
       }
     }
@@ -86,13 +94,15 @@ export class S3Service {
         await this.deleteObject(storage, path);
         return;
       } catch (e) {
-        if (e.response?.status === 404)
-          return;
+        if (e.response?.status === 404) return;
         if (i < retry - 1) {
-          await new Promise(r => setTimeout(r, retryTimeout));
+          await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
           console.error(e.response);
-          throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+          throw new HttpException(
+            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            HttpStatus.SERVICE_UNAVAILABLE
+          );
         }
       }
     }
@@ -163,29 +173,26 @@ export class S3Service {
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
     const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${key}`);
     const canonicalQuerystring = `uploadId=${encodeURIComponent(uploadId)}`;
-    const body = `<CompleteMultipartUpload>${parts.map(p => `<Part><PartNumber>${p.partNumber}</PartNumber><ETag>${p.etag}</ETag></Part>`).join('')}</CompleteMultipartUpload>`;
+    const body = `<CompleteMultipartUpload>${parts.map((p) => `<Part><PartNumber>${p.partNumber}</PartNumber><ETag>${p.etag}</ETag></Part>`).join('')}</CompleteMultipartUpload>`;
     const payloadHash = this.hash(body);
 
-    const authHeader = this.getAuthorizationHeader(
-      storage.clientId, storage.clientSecret, host, canonicalUri,
-      'POST', canonicalQuerystring, payloadHash,
-      { 'content-type': 'application/xml' }
-    );
+    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'POST', canonicalQuerystring, payloadHash, { 'content-type': 'application/xml' });
 
     try {
-      await firstValueFrom(this.httpService.post(
-        `https://${host}${canonicalUri}?${canonicalQuerystring}`,
-        body,
-        {
+      await firstValueFrom(
+        this.httpService.post(`https://${host}${canonicalUri}?${canonicalQuerystring}`, body, {
           headers: {
             'Content-Type': 'application/xml',
             ...authHeader
           }
-        }
-      ));
+        })
+      );
     } catch (e) {
       console.error(e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 
@@ -196,20 +203,17 @@ export class S3Service {
     const canonicalQuerystring = `uploadId=${encodeURIComponent(uploadId)}`;
     const payloadHash = this.hash('');
 
-    const authHeader = this.getAuthorizationHeader(
-      storage.clientId, storage.clientSecret, host, canonicalUri,
-      'DELETE', canonicalQuerystring, payloadHash
-    );
+    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'DELETE', canonicalQuerystring, payloadHash);
 
     try {
-      await firstValueFrom(this.httpService.delete(
-        `https://${host}${canonicalUri}?${canonicalQuerystring}`,
-        { headers: authHeader }
-      ));
+      await firstValueFrom(this.httpService.delete(`https://${host}${canonicalUri}?${canonicalQuerystring}`, { headers: authHeader }));
     } catch (e) {
       if (e.response?.status !== 404) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
     }
   }
@@ -220,15 +224,9 @@ export class S3Service {
     const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${fullKey}`);
     const payloadHash = this.hash('');
 
-    const authHeader = this.getAuthorizationHeader(
-      storage.clientId, storage.clientSecret, host, canonicalUri,
-      'HEAD', '', payloadHash
-    );
+    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'HEAD', '', payloadHash);
 
-    const response = await firstValueFrom(this.httpService.head(
-      `https://${host}${canonicalUri}`,
-      { headers: authHeader }
-    ));
+    const response = await firstValueFrom(this.httpService.head(`https://${host}${canonicalUri}`, { headers: authHeader }));
     return {
       contentLength: parseInt(response.headers['content-length'] || '0', 10),
       contentType: response.headers['content-type'] || 'application/octet-stream'
@@ -241,20 +239,19 @@ export class S3Service {
     const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${fullKey}`);
     const payloadHash = this.hash('');
 
-    const authHeader = this.getAuthorizationHeader(
-      storage.clientId, storage.clientSecret, host, canonicalUri,
-      'DELETE', '', payloadHash
-    );
+    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'DELETE', '', payloadHash);
 
-    await firstValueFrom(this.httpService.delete(
-      `https://${host}${canonicalUri}`,
-      { headers: authHeader }
-    ));
+    await firstValueFrom(this.httpService.delete(`https://${host}${canonicalUri}`, { headers: authHeader }));
   }
 
   private getAuthorizationHeader(
-    accessKey: string, secretKey: string, host: string, canonicalUri: string,
-    method: string, queryString: string, payloadHash: string,
+    accessKey: string,
+    secretKey: string,
+    host: string,
+    canonicalUri: string,
+    method: string,
+    queryString: string,
+    payloadHash: string,
     extraHeaders: Record<string, string> = {}
   ): Record<string, string> {
     const now = new Date();
@@ -265,7 +262,7 @@ export class S3Service {
     const algorithm = 'AWS4-HMAC-SHA256';
 
     const allHeaders: Record<string, string> = {
-      'host': host,
+      host: host,
       'x-amz-content-sha256': payloadHash,
       'x-amz-date': amzDate,
       ...extraHeaders
@@ -273,7 +270,7 @@ export class S3Service {
 
     const sortedHeaderKeys = Object.keys(allHeaders).sort();
     const signedHeaders = sortedHeaderKeys.join(';');
-    const canonicalHeaders = sortedHeaderKeys.map(k => `${k}:${allHeaders[k]}`).join('\n') + '\n';
+    const canonicalHeaders = sortedHeaderKeys.map((k) => `${k}:${allHeaders[k]}`).join('\n') + '\n';
 
     const canonicalRequest = `${method}\n${canonicalUri}\n${queryString}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
     const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
@@ -283,17 +280,18 @@ export class S3Service {
     const signature = createHmac('sha256', signingKey).update(stringToSign, 'utf8').digest('hex');
 
     return {
-      'Host': host,
+      Host: host,
       'x-amz-content-sha256': payloadHash,
       'x-amz-date': amzDate,
-      'Authorization': `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
+      Authorization: `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
     };
   }
 
   private getSignatureKey(secretKey: string, dateStamp: string, region: string, service: string): Buffer {
-    if (this.cachedSignatureKey !== null && this.cachedSignatureDate === dateStamp)
-      return this.cachedSignatureKey;
-    const kDate = createHmac('sha256', 'AWS4' + secretKey).update(dateStamp, 'utf8').digest();
+    if (this.cachedSignatureKey !== null && this.cachedSignatureDate === dateStamp) return this.cachedSignatureKey;
+    const kDate = createHmac('sha256', 'AWS4' + secretKey)
+      .update(dateStamp, 'utf8')
+      .digest();
     const kRegion = createHmac('sha256', kDate).update(region, 'utf8').digest();
     const kService = createHmac('sha256', kRegion).update(service, 'utf8').digest();
     const kSigning = createHmac('sha256', kService).update('aws4_request', 'utf8').digest();
@@ -317,7 +315,14 @@ export class S3Service {
   }
 
   private encodeCanonicalUri(uri: string): string {
-    return '/' + uri.replace(/^\//, '').split('/').map(segment => encodeURIComponent(segment).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())).join('/');
+    return (
+      '/' +
+      uri
+        .replace(/^\//, '')
+        .split('/')
+        .map((segment) => encodeURIComponent(segment).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()))
+        .join('/')
+    );
   }
 
   private parsePublicUrl(publicUrl: string): { host: string; bucket: string } {

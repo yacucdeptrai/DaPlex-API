@@ -75,9 +75,12 @@ export class CursorPageHistoryDto extends OmitType(CursorPaginateDto, ['search',
     description: 'Include adult movie/TV show',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   mediaAdult: boolean;
 

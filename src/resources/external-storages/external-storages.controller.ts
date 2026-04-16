@@ -1,5 +1,16 @@
 import { Controller, Get, Post, Body, Patch, Delete, UseGuards, Param, HttpCode, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiCreatedResponse, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags
+} from '@nestjs/swagger';
 
 import { AddStorageDto, UpdateStorageDto } from './dto';
 import { ExternalStorage } from './entities';
@@ -15,7 +26,7 @@ import { AuthUserDto } from '../users';
 @ApiTags('External Storages')
 @Controller()
 export class ExternalStoragesController {
-  constructor(private readonly externalStoragesService: ExternalStoragesService) { }
+  constructor(private readonly externalStoragesService: ExternalStoragesService) {}
 
   @Post()
   @UseInterceptors(ClassSerializerInterceptor)

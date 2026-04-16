@@ -58,9 +58,7 @@ export interface Season {
   episodes: Episode[];
 }
 
-export interface SeasonDetails extends Season {
-
-}
+export interface SeasonDetails extends Season {}
 
 export interface TvShowDetails {
   backdrop_path: string;
@@ -147,7 +145,6 @@ export interface ScreenedTheatrically {
   results: ScreenedTheatricallyResult[];
 }
 
-
 export interface SimilarTvShow {
   backdrop_path: string;
   first_air_date: string;
@@ -200,7 +197,6 @@ export interface LatestTvShows {
   vote_count: number;
 }
 
-
 export interface OnTheAirResult {
   poster_path: string;
   popularity: number;
@@ -223,7 +219,6 @@ export interface OnTheAir {
   total_results: number;
   total_pages: number;
 }
-
 
 export interface AiringTodayResult {
   poster_path: string;
@@ -248,7 +243,6 @@ export interface TvShowsAiringToday {
   total_pages: number;
 }
 
-
 export interface PopularTvShowResult {
   poster_path: string;
   popularity: number;
@@ -272,7 +266,6 @@ export interface PopularTvShows {
   total_pages: number;
 }
 
-
 export interface TopRatedTvShowResult {
   poster_path: string;
   popularity: number;
@@ -295,5 +288,3 @@ export interface TopRatedTvShows {
   total_results: number;
   total_pages: number;
 }
-
-

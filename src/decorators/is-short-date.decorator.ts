@@ -5,11 +5,9 @@ import { ShortDate } from '../common/entities';
 @ValidatorConstraint()
 export class IsShortDateConstraint implements ValidatorConstraintInterface {
   validate(value: ShortDate) {
-    if (!value || !value.day || !value.month || !value.year)
-      return false;
+    if (!value || !value.day || !value.month || !value.year) return false;
     const date = new Date(`${value.year}-${value.month}-${value.day}`);
-    if (date instanceof Date && !isNaN(date.getTime()))
-      return true;
+    if (date instanceof Date && !isNaN(date.getTime())) return true;
     return false;
   }
 
@@ -25,7 +23,7 @@ export function IsShortDate(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: IsShortDateConstraint,
+      validator: IsShortDateConstraint
     });
   };
 }

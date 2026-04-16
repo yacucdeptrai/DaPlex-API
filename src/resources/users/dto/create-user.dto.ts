@@ -50,7 +50,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     type: String,
-    description: 'A valid password (matches regex ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]+$)',
+    description: 'A valid password (matches regex ^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Zd]+$)',
     minLength: 8,
     maxLength: 128,
     required: false
@@ -70,7 +70,7 @@ export class CreateUserDto {
   })
   @Type(() => String)
   @IsOptional()
-  @ValidateIf(o => !!o.password)
+  @ValidateIf((o) => !!o.password)
   @Length(8, 128, { context: { code: StatusCode.LENGTH } })
   @PropertyMatches('password', { context: { code: StatusCode.PASSWORDS_NOT_MATCH } })
   confirmPassword: string;

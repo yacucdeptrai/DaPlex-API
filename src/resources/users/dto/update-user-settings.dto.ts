@@ -2,10 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional, ValidateNested } from 'class-validator';
 
-import {
-  MediaPlayerOptions, SubtitleOptions, HistoryOptions, HistoryListOptions, PlaylistListOptions,
-  RatingListOptions, PlaylistOptions
-} from './user-settings-options.dto';
+import { MediaPlayerOptions, SubtitleOptions, HistoryOptions, HistoryListOptions, PlaylistListOptions, RatingListOptions, PlaylistOptions } from './user-settings-options.dto';
 
 export class UpdateUserSettingsDto {
   @ApiProperty({

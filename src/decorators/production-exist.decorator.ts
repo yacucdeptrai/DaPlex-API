@@ -6,11 +6,10 @@ import { ProductionsService } from '../resources/productions/productions.service
 @Injectable()
 @ValidatorConstraint({ async: true })
 export class ProductionExistConstraint implements ValidatorConstraintInterface {
-  constructor(private productionsService: ProductionsService) { }
+  constructor(private productionsService: ProductionsService) {}
   async validate(name: any) {
     const production = await this.productionsService.findByName(name);
-    if (production)
-      return false;
+    if (production) return false;
     return true;
   }
 
@@ -26,7 +25,7 @@ export function ProductionExist(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: ProductionExistConstraint,
+      validator: ProductionExistConstraint
     });
   };
 }

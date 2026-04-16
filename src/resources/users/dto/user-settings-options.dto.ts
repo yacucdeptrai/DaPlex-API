@@ -13,9 +13,12 @@ export class MediaPlayerOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   muted: boolean;
 
   @ApiProperty({
@@ -48,9 +51,12 @@ export class MediaPlayerOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   audioSurround: boolean;
 
   @ApiProperty({
@@ -87,9 +93,12 @@ export class MediaPlayerOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   subtitle: boolean;
 
   @ApiProperty({
@@ -109,9 +118,12 @@ export class MediaPlayerOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   autoNext: boolean;
 
   @ApiProperty({
@@ -120,9 +132,12 @@ export class MediaPlayerOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   prefAudioLang: boolean;
 
   @ApiProperty({
@@ -133,7 +148,7 @@ export class MediaPlayerOptions {
   @Type(() => String)
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(s => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((s) => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
   prefAudioLangList: string[];
 
   @ApiProperty({
@@ -142,9 +157,12 @@ export class MediaPlayerOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   prefSubtitleLang: boolean;
 
   @ApiProperty({
@@ -155,7 +173,7 @@ export class MediaPlayerOptions {
   @Type(() => String)
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(s => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((s) => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
   prefSubtitleLangList: string[];
 
   @ApiProperty({
@@ -166,7 +184,7 @@ export class MediaPlayerOptions {
   @Type(() => Number)
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(s => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((s) => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
   enabledVideoCodecs: number[];
 }
 
@@ -312,9 +330,12 @@ export class SubtitleOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   override: boolean;
 }
 
@@ -340,9 +361,12 @@ export class HistoryOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   paused: boolean;
 }
 
@@ -368,9 +392,7 @@ export class PlaylistOptions {
   recentId: string;
 }
 
-export class RatingOptions {
-
-}
+export class RatingOptions {}
 
 export class HistoryListOptions {
   @ApiProperty({
@@ -389,7 +411,7 @@ export class HistoryListOptions {
 
   @ApiProperty({
     type: Number,
-    description: 'Visibility of user\'s history list',
+    description: "Visibility of user's history list",
     required: false,
     enum: USER_VISIBILITY_TYPES,
     example: UserVisibility.PRIVATE
@@ -437,14 +459,17 @@ export class RatingListOptions {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   editMode: boolean;
 
   @ApiProperty({
     type: Number,
-    description: 'Visibility of user\'s rating list',
+    description: "Visibility of user's rating list",
     required: false,
     enum: USER_VISIBILITY_TYPES,
     example: UserVisibility.PRIVATE

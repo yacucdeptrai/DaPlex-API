@@ -1,5 +1,18 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ClassSerializerInterceptor, HttpCode, Query, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiOkResponse, ApiUnauthorizedResponse, ApiForbiddenResponse, ApiBadRequestResponse, getSchemaPath, ApiNotFoundResponse, ApiNoContentResponse, ApiExtraModels, ApiTags, ApiParam } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiOkResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+  ApiBadRequestResponse,
+  getSchemaPath,
+  ApiNotFoundResponse,
+  ApiNoContentResponse,
+  ApiExtraModels,
+  ApiTags,
+  ApiParam
+} from '@nestjs/swagger';
 
 import { TagsService } from './tags.service';
 import { CreateTagDto, CursorPageMediaDto, CursorPageTagsDto, PaginateTagsDto, RemoveTagsDto, UpdateTagDto } from './dto';
@@ -22,7 +35,7 @@ import { UserPermission } from '../../enums';
 @ApiExtraModels(Tag)
 @Controller()
 export class TagsController {
-  constructor(private readonly tagsService: TagsService) { }
+  constructor(private readonly tagsService: TagsService) {}
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
@@ -46,10 +59,7 @@ export class TagsController {
   @ApiOkResponse({
     description: 'Return a list of tags',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(Paginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Tag) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(Paginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Tag) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
@@ -67,10 +77,7 @@ export class TagsController {
   @ApiOkResponse({
     description: 'Return a list of tags',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Tag) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Tag) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
@@ -148,10 +155,7 @@ export class TagsController {
   @ApiOkResponse({
     description: 'Return a list of media',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Media) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Media) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })

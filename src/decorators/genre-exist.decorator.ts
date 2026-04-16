@@ -5,11 +5,10 @@ import { GenresService } from '../resources/genres/genres.service';
 @Injectable()
 @ValidatorConstraint({ async: true })
 export class GenreExistConstraint implements ValidatorConstraintInterface {
-  constructor(private genresService: GenresService) { }
+  constructor(private genresService: GenresService) {}
   async validate(name: any, args: ValidationArguments) {
     const genre = await this.genresService.findByName(name, (<any>args.object).language);
-    if (genre)
-      return false;
+    if (genre) return false;
     return true;
   }
 
@@ -25,7 +24,7 @@ export function GenreExist(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: GenreExistConstraint,
+      validator: GenreExistConstraint
     });
   };
 }

@@ -65,7 +65,7 @@ export class CreateMediaDto {
   @IsOptional()
   @IsString({ each: true, context: { code: StatusCode.IS_STRING_ARRAY } })
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(value => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((value) => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
   genres: string[];
 
   @ApiProperty({
@@ -76,7 +76,7 @@ export class CreateMediaDto {
   @Type(() => String)
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(value => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((value) => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
   studios: string[];
 
   @ApiProperty({
@@ -88,7 +88,7 @@ export class CreateMediaDto {
   @IsOptional()
   @IsString({ each: true, context: { code: StatusCode.IS_STRING_ARRAY } })
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(value => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((value) => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
   producers: string[];
 
   @ApiProperty({
@@ -100,7 +100,7 @@ export class CreateMediaDto {
   @IsOptional()
   @IsString({ each: true, context: { code: StatusCode.IS_STRING_ARRAY } })
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(value => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((value) => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
   tags: string[];
 
   @ApiProperty({
@@ -132,15 +132,18 @@ export class CreateMediaDto {
     description: 'Is an adult movie/TV show?',
     example: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsBoolean({ context: { code: StatusCode.IS_BOOLEAN } })
   adult: boolean;
 
   @ApiProperty({
     type: ShortDate,
-    description: 'Release date',
+    description: 'Release date'
   })
   @Type(() => ShortDate)
   @ValidateNested()
@@ -188,7 +191,7 @@ export class CreateMediaDto {
 
   @ApiProperty({
     type: MediaExternalIds,
-    description: 'Show\'s ids from external sites',
+    description: "Show's ids from external sites",
     required: false
   })
   @Type(() => MediaExternalIds)

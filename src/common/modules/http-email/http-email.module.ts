@@ -8,4 +8,4 @@ import { HttpEmailService } from './http-email.service';
   providers: [HttpEmailService],
   exports: [HttpEmailService]
 })
-export class HttpEmailModule { }
+export class HttpEmailModule {}

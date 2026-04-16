@@ -26,7 +26,7 @@ export class ResetPasswordDto {
 
   @ApiProperty({
     type: String,
-    description: 'A valid password (matches regex ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]+$)',
+    description: 'A valid password (matches regex ^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Zd]+$)',
     minLength: 8,
     maxLength: 128,
     example: 'Abcxyz123'

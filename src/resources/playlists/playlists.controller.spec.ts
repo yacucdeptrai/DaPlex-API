@@ -8,7 +8,7 @@ describe('PlaylistsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PlaylistsController],
-      providers: [PlaylistsService],
+      providers: [PlaylistsService]
     }).compile();
 
     controller = module.get<PlaylistsController>(PlaylistsController);

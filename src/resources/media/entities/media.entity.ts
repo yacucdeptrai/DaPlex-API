@@ -87,84 +87,72 @@ export class Media {
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get posterUrl(): string {
-    if (this.poster)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`, 750, this.poster.mimeType);
+    if (this.poster) return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`, 750, this.poster.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get thumbnailPosterUrl(): string {
-    if (this.poster)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`, 450, this.poster.mimeType);
+    if (this.poster) return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`, 450, this.poster.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get smallPosterUrl(): string {
-    if (this.poster)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`, 250, this.poster.mimeType);
+    if (this.poster) return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`, 250, this.poster.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get fullPosterUrl(): string {
-    if (this.poster)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`);
+    if (this.poster) return createCloudflareR2ProxyUrl(CloudflareR2Container.POSTERS, `${this.poster._id}/${this.poster.name}`);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get posterColor(): number {
-    if (this.poster)
-      return this.poster.color;
+    if (this.poster) return this.poster.color;
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get posterPlaceholder(): string {
-    if (this.poster)
-      return this.poster.placeholder;
+    if (this.poster) return this.poster.placeholder;
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get backdropUrl(): string {
-    if (this.backdrop)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`, 1200, this.backdrop.mimeType);
+    if (this.backdrop) return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`, 1200, this.backdrop.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get thumbnailBackdropUrl(): string {
-    if (this.backdrop)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`, 800, this.backdrop.mimeType);
+    if (this.backdrop) return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`, 800, this.backdrop.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get smallBackdropUrl(): string {
-    if (this.backdrop)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`, 500, this.backdrop.mimeType);
+    if (this.backdrop) return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`, 500, this.backdrop.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get fullBackdropUrl(): string {
-    if (this.backdrop)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`);
+    if (this.backdrop) return createCloudflareR2ProxyUrl(CloudflareR2Container.BACKDROPS, `${this.backdrop._id}/${this.backdrop.name}`);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get backdropColor(): number {
-    if (this.backdrop)
-      return this.backdrop.color;
+    if (this.backdrop) return this.backdrop.color;
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get backdropPlaceholder(): string {
-    if (this.backdrop)
-      return this.backdrop.placeholder;
+    if (this.backdrop) return this.backdrop.placeholder;
   }
 }

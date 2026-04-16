@@ -8,4 +8,4 @@ import { ExternalStreamService } from './external-stream.service';
   providers: [ExternalStreamService],
   exports: [ExternalStreamService]
 })
-export class ExternalStreamModule { }
+export class ExternalStreamModule {}

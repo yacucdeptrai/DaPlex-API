@@ -22,28 +22,21 @@ export class RedisPubSubModule {
     };
   }
 
-  static registerAsync(options: {
-    useFactory: (...args: any[]) => Promise<RedisPubSubConfig> | RedisPubSubConfig;
-    imports?: any[];
-    inject?: any[];
-  }): DynamicModule {
+  static registerAsync(options: { useFactory: (...args: any[]) => Promise<RedisPubSubConfig> | RedisPubSubConfig; imports?: any[]; inject?: any[] }): DynamicModule {
     const redisServiceProvider: Provider = {
       inject: options.inject || [],
       provide: REDIS_PUBSUB_CONFIG,
       useFactory: async (...args: any[]) => {
         const config = await options.useFactory(...args);
         return config;
-      },
+      }
     };
 
     return {
       module: RedisPubSubModule,
       imports: options.imports ? [DiscoveryModule, ...options.imports] : [DiscoveryModule],
-      providers: [
-        redisServiceProvider,
-        RedisPubSubService
-      ],
-      exports: [RedisPubSubService],
+      providers: [redisServiceProvider, RedisPubSubService],
+      exports: [RedisPubSubService]
     };
   }
 }

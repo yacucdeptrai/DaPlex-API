@@ -8,14 +8,8 @@ import { SettingsModule } from '../../../resources/settings/settings.module';
 import { ExternalStoragesModule } from '../../../resources/external-storages/external-storages.module';
 
 @Module({
-  imports: [
-    HttpModule,
-    ConfigModule,
-    JwtModule.register({}),
-    forwardRef(() => SettingsModule),
-    forwardRef(() => ExternalStoragesModule)
-  ],
+  imports: [HttpModule, ConfigModule, JwtModule.register({}), forwardRef(() => SettingsModule), forwardRef(() => ExternalStoragesModule)],
   providers: [FilerService],
   exports: [FilerService]
 })
-export class FilerModule { }
+export class FilerModule {}

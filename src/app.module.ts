@@ -27,7 +27,7 @@ import { MongooseConnection } from './enums';
         useBigInt64: true
       }),
       connectionName: MongooseConnection.DATABASE_A,
-      inject: [ConfigService],
+      inject: [ConfigService]
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -37,7 +37,7 @@ import { MongooseConnection } from './enums';
         useBigInt64: true
       }),
       connectionName: MongooseConnection.DATABASE_B,
-      inject: [ConfigService],
+      inject: [ConfigService]
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -53,7 +53,7 @@ import { MongooseConnection } from './enums';
           }
         };
       },
-      inject: [ConfigService],
+      inject: [ConfigService]
     }),
     ScheduleModule.forRoot(),
     AppRoutingModule,
@@ -62,4 +62,4 @@ import { MongooseConnection } from './enums';
   controllers: [AppController],
   providers: [AppService]
 })
-export class AppModule { }
+export class AppModule {}

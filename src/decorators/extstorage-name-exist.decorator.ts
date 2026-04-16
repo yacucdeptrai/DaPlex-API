@@ -6,11 +6,10 @@ import { ExternalStoragesService } from '../resources/external-storages/external
 @Injectable()
 @ValidatorConstraint({ async: true })
 export class ExtStorageNameExistConstraint implements ValidatorConstraintInterface {
-  constructor(private externalStoragesService: ExternalStoragesService) { }
+  constructor(private externalStoragesService: ExternalStoragesService) {}
   async validate(name: any) {
     const storage = await this.externalStoragesService.findByName(name);
-    if (storage)
-      return false;
+    if (storage) return false;
     return true;
   }
 
@@ -26,7 +25,7 @@ export function ExtStorageNameExist(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: ExtStorageNameExistConstraint,
+      validator: ExtStorageNameExistConstraint
     });
   };
 }

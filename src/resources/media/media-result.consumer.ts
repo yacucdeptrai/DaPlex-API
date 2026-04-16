@@ -7,8 +7,7 @@ import { MediaService } from './media.service';
 import { TaskQueue } from '../../enums';
 import { MediaQueueResultDto } from './dto';
 
-type JobNameType = 'update-source' | 'add-stream-video' | 'add-stream-audio' | 'add-stream-manifest' | 'finished-encoding' |
-  'cancelled-encoding' | 'retry-encoding' | 'failed-encoding';
+type JobNameType = 'update-source' | 'add-stream-video' | 'add-stream-audio' | 'add-stream-manifest' | 'finished-encoding' | 'cancelled-encoding' | 'retry-encoding' | 'failed-encoding';
 
 @Processor(TaskQueue.VIDEO_TRANSCODE_RESULT, { concurrency: 1 })
 export class MediaResultConsumer extends WorkerHost {
@@ -24,8 +23,7 @@ export class MediaResultConsumer extends WorkerHost {
       switch (job.name) {
         case 'update-source': {
           let message = `Updating source ${jobData.progress.quality} of media ${jobData.media}`;
-          if (jobData.episode)
-            message += `, episode ${jobData.episode}`;
+          if (jobData.episode) message += `, episode ${jobData.episode}`;
           this.logger.log(message);
           await this.mediaService.updateMediaSourceData(jobData);
           break;

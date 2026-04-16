@@ -41,7 +41,7 @@ export class AddTVEpisodeDto {
   })
   @Type(() => String)
   @IsOptional()
-  @ValidateIf(o => o.overview !== '')
+  @ValidateIf((o) => o.overview !== '')
   @MinLength(10, { context: { code: StatusCode.MIN_LENGTH } })
   @MaxLength(2000, { context: { code: StatusCode.MAX_LENGTH } })
   overview: string;

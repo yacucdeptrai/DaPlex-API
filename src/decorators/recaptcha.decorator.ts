@@ -7,19 +7,27 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 @ValidatorConstraint({ async: true })
 export class ReCaptchaConstraint implements ValidatorConstraintInterface {
-  constructor(private httpService: HttpService, private configService: ConfigService) { }
+  constructor(
+    private httpService: HttpService,
+    private configService: ConfigService
+  ) {}
   async validate(value: any) {
     const reCaptchaSecret = this.configService.get<string>('RECAPTCHA_SECRET');
     if (!reCaptchaSecret) return true;
     try {
-      const response = await firstValueFrom(this.httpService.post('https://www.google.com/recaptcha/api/siteverify', {}, {
-        params: {
-          secret: reCaptchaSecret,
-          response: value
-        }
-      }));
-      if (response.data.success)
-        return true;
+      const response = await firstValueFrom(
+        this.httpService.post(
+          'https://www.google.com/recaptcha/api/siteverify',
+          {},
+          {
+            params: {
+              secret: reCaptchaSecret,
+              response: value
+            }
+          }
+        )
+      );
+      if (response.data.success) return true;
       return false;
     } catch {
       return false;
@@ -38,7 +46,7 @@ export function ReCaptcha(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: ReCaptchaConstraint,
+      validator: ReCaptchaConstraint
     });
   };
 }

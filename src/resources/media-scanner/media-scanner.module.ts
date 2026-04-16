@@ -7,12 +7,8 @@ import { TvdbScannerModule } from '../../common/modules/tvdb-scanner/tvdb-scanne
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    AuthModule,
-    TmdbScannerModule,
-    TvdbScannerModule
-  ],
+  imports: [AuthModule, TmdbScannerModule, TvdbScannerModule],
   controllers: [MediaScannerController],
   providers: [MediaScannerService]
 })
-export class MediaScannerModule { }
+export class MediaScannerModule {}

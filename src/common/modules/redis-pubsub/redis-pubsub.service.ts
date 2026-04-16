@@ -7,12 +7,12 @@ import { RedisPubSubConfig } from './redis-pubsub-config.interface';
 
 @Injectable()
 export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
-  redis: Redis
+  redis: Redis;
 
   constructor(
     @Inject(REDIS_PUBSUB_CONFIG) public config: RedisPubSubConfig,
     private readonly discoveryService: DiscoveryService,
-    private readonly metadataScanner: MetadataScanner,
+    private readonly metadataScanner: MetadataScanner
   ) {
     this.redis = config.redisInstance;
   }

@@ -6,7 +6,7 @@ describe('RedisPubsubService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RedisPubSubService],
+      providers: [RedisPubSubService]
     }).compile();
 
     service = module.get<RedisPubSubService>(RedisPubSubService);

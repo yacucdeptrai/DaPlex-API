@@ -8,7 +8,7 @@ describe('HistoryController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HistoryController],
-      providers: [HistoryService],
+      providers: [HistoryService]
     }).compile();
 
     controller = module.get<HistoryController>(HistoryController);

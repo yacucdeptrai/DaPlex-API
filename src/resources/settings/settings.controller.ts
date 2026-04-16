@@ -15,7 +15,7 @@ import { RolesGuardOptions } from '../../decorators/roles-guard-options.decorato
 @ApiTags('Settings')
 @Controller()
 export class SettingsController {
-  constructor(private readonly settingsService: SettingsService) { }
+  constructor(private readonly settingsService: SettingsService) {}
 
   @Post()
   @UseInterceptors(ClassSerializerInterceptor)

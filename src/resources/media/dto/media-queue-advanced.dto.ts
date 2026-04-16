@@ -62,9 +62,12 @@ export class MediaQueueAdvancedDto {
     description: 'Encode only audio, keep current video tracks if available (re-encode only)',
     default: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   @IsBoolean({ context: { code: StatusCode.IS_BOOLEAN } })
   @IsNotBothEqual('videoOnly', true, { context: { code: StatusCode.IS_NOT_BOTH_EQUAL } })
@@ -75,9 +78,12 @@ export class MediaQueueAdvancedDto {
     description: 'Encode only video, keep current audio tracks if available (re-encode only)',
     default: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   @IsBoolean({ context: { code: StatusCode.IS_BOOLEAN } })
   @IsNotBothEqual('audioOnly', true, { context: { code: StatusCode.IS_NOT_BOTH_EQUAL } })

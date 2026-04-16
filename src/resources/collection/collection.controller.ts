@@ -1,5 +1,23 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ClassSerializerInterceptor, Query, HttpCode } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiConsumes, ApiExtraModels, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiServiceUnavailableResponse, ApiTags, ApiUnauthorizedResponse, ApiUnprocessableEntityResponse, ApiUnsupportedMediaTypeResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiExtraModels,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
+  ApiUnsupportedMediaTypeResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 
 import { RolesGuardOptions } from '../../decorators/roles-guard-options.decorator';
 import { AuthUser } from '../../decorators/auth-user.decorator';
@@ -20,15 +38,22 @@ import { CreateCollectionDto, CursorPageCollectionsDto, CursorPageMediaDto, Find
 import { Collection, CollectionDetails } from './entities';
 import { UserPermission } from '../../enums';
 import {
-  UPLOAD_POSTER_MAX_SIZE, UPLOAD_MEDIA_IMAGE_TYPES, UPLOAD_POSTER_MIN_WIDTH, UPLOAD_POSTER_MIN_HEIGHT, UPLOAD_POSTER_RATIO,
-  UPLOAD_BACKDROP_MAX_SIZE, UPLOAD_BACKDROP_MIN_WIDTH, UPLOAD_BACKDROP_MIN_HEIGHT, UPLOAD_BACKDROP_RATIO
+  UPLOAD_POSTER_MAX_SIZE,
+  UPLOAD_MEDIA_IMAGE_TYPES,
+  UPLOAD_POSTER_MIN_WIDTH,
+  UPLOAD_POSTER_MIN_HEIGHT,
+  UPLOAD_POSTER_RATIO,
+  UPLOAD_BACKDROP_MAX_SIZE,
+  UPLOAD_BACKDROP_MIN_WIDTH,
+  UPLOAD_BACKDROP_MIN_HEIGHT,
+  UPLOAD_BACKDROP_RATIO
 } from '../../config';
 
 @ApiTags('Collections')
 @ApiExtraModels(Collection)
 @Controller()
 export class CollectionController {
-  constructor(private readonly collectionService: CollectionService) { }
+  constructor(private readonly collectionService: CollectionService) {}
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
@@ -52,10 +77,7 @@ export class CollectionController {
   @ApiOkResponse({
     description: 'Return a list of collections',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(Paginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Collection) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(Paginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Collection) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
@@ -73,10 +95,7 @@ export class CollectionController {
   @ApiOkResponse({
     description: 'Return a list of collections',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Collection) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Collection) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
@@ -145,14 +164,16 @@ export class CollectionController {
 
   @Patch(':id/poster')
   @UseGuards(AuthGuard)
-  @UseInterceptors(new UploadImageInterceptor({
-    maxSize: UPLOAD_POSTER_MAX_SIZE,
-    mimeTypes: UPLOAD_MEDIA_IMAGE_TYPES,
-    minWidth: UPLOAD_POSTER_MIN_WIDTH,
-    minHeight: UPLOAD_POSTER_MIN_HEIGHT,
-    ratio: UPLOAD_POSTER_RATIO,
-    autoResize: true
-  }))
+  @UseInterceptors(
+    new UploadImageInterceptor({
+      maxSize: UPLOAD_POSTER_MAX_SIZE,
+      mimeTypes: UPLOAD_MEDIA_IMAGE_TYPES,
+      minWidth: UPLOAD_POSTER_MIN_WIDTH,
+      minHeight: UPLOAD_POSTER_MIN_HEIGHT,
+      ratio: UPLOAD_POSTER_RATIO,
+      autoResize: true
+    })
+  )
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: String })
   @ApiOperation({
@@ -191,14 +212,16 @@ export class CollectionController {
 
   @Patch(':id/backdrop')
   @UseGuards(AuthGuard)
-  @UseInterceptors(new UploadImageInterceptor({
-    maxSize: UPLOAD_BACKDROP_MAX_SIZE,
-    mimeTypes: UPLOAD_MEDIA_IMAGE_TYPES,
-    minWidth: UPLOAD_BACKDROP_MIN_WIDTH,
-    minHeight: UPLOAD_BACKDROP_MIN_HEIGHT,
-    ratio: UPLOAD_BACKDROP_RATIO,
-    autoResize: true
-  }))
+  @UseInterceptors(
+    new UploadImageInterceptor({
+      maxSize: UPLOAD_BACKDROP_MAX_SIZE,
+      mimeTypes: UPLOAD_MEDIA_IMAGE_TYPES,
+      minWidth: UPLOAD_BACKDROP_MIN_WIDTH,
+      minHeight: UPLOAD_BACKDROP_MIN_HEIGHT,
+      ratio: UPLOAD_BACKDROP_RATIO,
+      autoResize: true
+    })
+  )
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: String })
   @ApiOperation({
@@ -245,10 +268,7 @@ export class CollectionController {
   @ApiOkResponse({
     description: 'Return a list of media',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Media) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Media) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })

@@ -15,22 +15,48 @@ import { HeadersDto } from '../../common/dto';
 
 @Injectable()
 export class HistoryService {
-  constructor(@InjectModel(History.name, MongooseConnection.DATABASE_A) private historyModel: Model<HistoryDocument>,
-    @Inject(forwardRef(() => MediaService)) private mediaService: MediaService) { }
+  constructor(
+    @InjectModel(History.name, MongooseConnection.DATABASE_A) private historyModel: Model<HistoryDocument>,
+    @Inject(forwardRef(() => MediaService)) private mediaService: MediaService
+  ) {}
 
   async findAll(cursorPageHistoryDto: CursorPageHistoryDto, headers: HeadersDto, authUser: AuthUserDto) {
-    const {
-      pageToken, limit, startDate, endDate, mediaIds, mediaType, mediaOriginalLanguage, mediaYear, mediaAdult, mediaGenres
-    } = cursorPageHistoryDto;
+    const { pageToken, limit, startDate, endDate, mediaIds, mediaType, mediaOriginalLanguage, mediaYear, mediaAdult, mediaGenres } = cursorPageHistoryDto;
     const fields: { [key: string]: any } = { _id: 1, media: 1, episode: 1, time: 1, date: 1, paused: 1, watched: 1 };
     const mediaFields: { [key: string]: any } = {
-      _id: 1, type: 1, title: 1, originalTitle: 1, overview: 1, runtime: 1, 'movie.status': 1, 'tv.pLastEpisode': 1,
-      poster: 1, backdrop: 1, genres: 1, originalLang: 1, adult: 1, releaseDate: 1, views: 1, visibility: 1,
-      _translations: 1, createdAt: 1, updatedAt: 1
+      _id: 1,
+      type: 1,
+      title: 1,
+      originalTitle: 1,
+      overview: 1,
+      runtime: 1,
+      'movie.status': 1,
+      'tv.pLastEpisode': 1,
+      poster: 1,
+      backdrop: 1,
+      genres: 1,
+      originalLang: 1,
+      adult: 1,
+      releaseDate: 1,
+      views: 1,
+      visibility: 1,
+      _translations: 1,
+      createdAt: 1,
+      updatedAt: 1
     };
     const episodeFields: { [key: string]: any } = {
-      _id: 1, epNumber: 1, name: 1, overview: 1, runtime: 1, airDate: 1, still: 1, views: 1,
-      visibility: 1, _translations: 1, createdAt: 1, updatedAt: 1
+      _id: 1,
+      epNumber: 1,
+      name: 1,
+      overview: 1,
+      runtime: 1,
+      airDate: 1,
+      still: 1,
+      views: 1,
+      visibility: 1,
+      _translations: 1,
+      createdAt: 1,
+      updatedAt: 1
     };
     const sort: { [key: string]: number } = { date: -1 };
     const filters: FilterQuery<HistoryDocument> = { user: authUser._id };
@@ -38,41 +64,46 @@ export class HistoryService {
       filters.date = { $gte: startDate, $lte: endDate };
     }
     if (mediaIds != undefined) {
-      if (Array.isArray(mediaIds))
-        filters.media = { $in: mediaIds };
-      else
-        filters.media = mediaIds;
+      if (Array.isArray(mediaIds)) filters.media = { $in: mediaIds };
+      else filters.media = mediaIds;
     }
     const typeMap = new Map<string, any>([['date', Date]]);
     const aggregation = new MongooseCursorPagination({ pageToken, limit, sort, filters, fields, typeMap });
-    const lookupOptions: LookupOptions[] = [{
-      from: 'media', localField: 'media', foreignField: '_id', as: 'media', isArray: false,
-      pipeline: [{ $project: mediaFields }]
-    }, {
-      from: 'tvepisodes', localField: 'episode', foreignField: '_id', as: 'episode', isArray: false,
-      pipeline: [{ $project: episodeFields }]
-    }];
+    const lookupOptions: LookupOptions[] = [
+      {
+        from: 'media',
+        localField: 'media',
+        foreignField: '_id',
+        as: 'media',
+        isArray: false,
+        pipeline: [{ $project: mediaFields }]
+      },
+      {
+        from: 'tvepisodes',
+        localField: 'episode',
+        foreignField: '_id',
+        as: 'episode',
+        isArray: false,
+        pipeline: [{ $project: episodeFields }]
+      }
+    ];
     const pipeline = aggregation.buildLookup(lookupOptions);
     // Workaround to add group by date field
     pipeline[2]['$facet']['stage2'].push({
       $addFields: { groupByDate: { $dateToString: { date: '$date', format: '%Y-%m-%d' } } }
     });
     // Workaround to filter media
-    const hasMediaFilters = mediaAdult != undefined || mediaGenres != undefined ||
-      mediaOriginalLanguage != undefined || mediaType != undefined || mediaYear != undefined;
+    const hasMediaFilters = mediaAdult != undefined || mediaGenres != undefined || mediaOriginalLanguage != undefined || mediaType != undefined || mediaYear != undefined;
     if (hasMediaFilters) {
       const mediaFilters: { [key: string]: any } = {};
       mediaType != undefined && (mediaFilters['media.type'] = mediaType);
       mediaOriginalLanguage != undefined && (mediaFilters['media.originalLang'] = mediaOriginalLanguage);
       mediaYear != undefined && (mediaFilters['media.releaseDate.year'] = mediaYear);
       mediaAdult != undefined && (mediaFilters['media.adult'] = mediaAdult);
-      if (Array.isArray(mediaGenres))
-        mediaFilters['media.genres'] = { $all: mediaGenres };
-      else if (mediaGenres != undefined)
-        mediaFilters['media.genres'] = mediaGenres;
+      if (Array.isArray(mediaGenres)) mediaFilters['media.genres'] = { $all: mediaGenres };
+      else if (mediaGenres != undefined) mediaFilters['media.genres'] = mediaGenres;
       // Insert media filters
-      const lookupMediaIndex = pipeline[2]['$facet']['stage2'].findIndex((p: PipelineStage) =>
-        p.hasOwnProperty('$lookup') && p['$lookup']['from'] === 'media');
+      const lookupMediaIndex = pipeline[2]['$facet']['stage2'].findIndex((p: PipelineStage) => p.hasOwnProperty('$lookup') && p['$lookup']['from'] === 'media');
       pipeline[2]['$facet']['stage2'].splice(lookupMediaIndex + 2, 0, { $match: mediaFilters });
       // Move limit pipeline to below
       const lookupLimitIndex = pipeline[2]['$facet']['stage2'].findIndex((p: PipelineStage) => p.hasOwnProperty('$limit'));
@@ -83,7 +114,8 @@ export class HistoryService {
     let historyList = new CursorPaginated<HistoryGroupable>();
     if (data) {
       data.results = convertToLanguageArray<HistoryGroupable>(headers.acceptLanguage, data.results, {
-        populate: ['media', 'episode'], ignoreRoot: true
+        populate: ['media', 'episode'],
+        ignoreRoot: true
       });
       historyList = plainToClassFromExist(new CursorPaginated<HistoryGroupable>({ type: HistoryGroupable }), {
         totalResults: data.totalResults,
@@ -98,25 +130,18 @@ export class HistoryService {
 
   async findOneWatchTime(findWatchTimeDto: FindWatchTimeDto, authUser: AuthUserDto) {
     const findHistoryFilters: { [key: string]: any } = { user: authUser._id, media: findWatchTimeDto.media };
-    if (findWatchTimeDto.episode)
-      findHistoryFilters.episode = findWatchTimeDto.episode;
-    const history = await this.historyModel.findOne(findHistoryFilters, { _id: 1, time: 1, date: 1, paused: 1, watched: 1 })
-      .lean().exec();
+    if (findWatchTimeDto.episode) findHistoryFilters.episode = findWatchTimeDto.episode;
+    const history = await this.historyModel.findOne(findHistoryFilters, { _id: 1, time: 1, date: 1, paused: 1, watched: 1 }).lean().exec();
     return history;
   }
 
   async update(id: bigint, updateHistoryDto: UpdateHistoryDto, authUser: AuthUserDto) {
-    if (!Object.keys(updateHistoryDto).length)
-      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (!Object.keys(updateHistoryDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const history = await this.historyModel.findOne({ _id: id, user: authUser._id }, { paused: 1, watched: 1 }).exec();
-    if (!history)
-      throw new HttpException({ code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' }, HttpStatus.NOT_FOUND);
-    if (updateHistoryDto.paused != undefined)
-      history.paused = updateHistoryDto.paused;
-    if (updateHistoryDto.watched === 1)
-      history.watched += 1;
-    else if (updateHistoryDto.watched === 0)
-      history.watched = 0;
+    if (!history) throw new HttpException({ code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' }, HttpStatus.NOT_FOUND);
+    if (updateHistoryDto.paused != undefined) history.paused = updateHistoryDto.paused;
+    if (updateHistoryDto.watched === 1) history.watched += 1;
+    else if (updateHistoryDto.watched === 0) history.watched = 0;
     if (updateHistoryDto.rewatch) {
       history.paused = false;
       history.time = 0;
@@ -127,36 +152,38 @@ export class HistoryService {
 
   async remove(id: bigint, authUser: AuthUserDto) {
     const deletedHistory = await this.historyModel.findOneAndDelete({ _id: id, user: authUser._id }).lean().exec();
-    if (!deletedHistory)
-      throw new HttpException({ code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' }, HttpStatus.NOT_FOUND);
+    if (!deletedHistory) throw new HttpException({ code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' }, HttpStatus.NOT_FOUND);
   }
 
   async updateWatchTime(updateWatchTimeDto: UpdateWatchTimeDto, authUser: AuthUserDto) {
     if (authUser.settings.history.paused) return;
     const media = await this.mediaService.findOneById(updateWatchTimeDto.media, {
-      _id: 1, type: 1, title: 1, createdAt: 1, updatedAt: 1
+      _id: 1,
+      type: 1,
+      title: 1,
+      createdAt: 1,
+      updatedAt: 1
     });
-    if (!media)
-      throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
+    if (!media) throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
     const findHistoryFilters: { [key: string]: any } = { user: authUser._id, media: updateWatchTimeDto.media };
     let episode: TVEpisode;
     let runtime = media.runtime;
     if (media.type === MediaType.TV) {
-      if (updateWatchTimeDto.episode == undefined)
-        throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
+      if (updateWatchTimeDto.episode == undefined) throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
       episode = await this.mediaService.findOneTVEpisodeById(updateWatchTimeDto.media, updateWatchTimeDto.episode, {
-        _id: 1, episode: 1, createdAt: 1, updatedAt: 1
+        _id: 1,
+        episode: 1,
+        createdAt: 1,
+        updatedAt: 1
       });
-      if (!episode)
-        throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
+      if (!episode) throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
       findHistoryFilters.episode = episode._id;
       runtime = episode.runtime;
     }
     let history = await this.historyModel.findOne(findHistoryFilters).exec();
-    if (history?.paused)
-      return history.toObject();
+    if (history?.paused) return history.toObject();
     const historyPercentLimit = authUser.settings.history.limit || 90;
-    const calculatedTime = (updateWatchTimeDto.time / runtime * 100) >= historyPercentLimit ? runtime : updateWatchTimeDto.time;
+    const calculatedTime = (updateWatchTimeDto.time / runtime) * 100 >= historyPercentLimit ? runtime : updateWatchTimeDto.time;
     if (!history) {
       const newHistory = new this.historyModel({
         _id: await createSnowFlakeId(),

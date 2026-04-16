@@ -8,9 +8,12 @@ export class FindTVEpisodesDto {
     description: 'Include hidden shows (unlisted and private, need manage media permission)',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeHidden: boolean;
 
@@ -19,9 +22,12 @@ export class FindTVEpisodesDto {
     description: 'Include unprocessed shows, need manage media permission',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeUnprocessed: boolean;
 }

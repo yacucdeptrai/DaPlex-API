@@ -54,48 +54,57 @@ import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
     ExternalStoragesModule,
     SettingsModule,
     WsAdminModule,
-    MongooseModule.forFeature([
-      { name: Media.name, schema: MediaSchema },
-      { name: MediaStorage.name, schema: MediaStorageSchema },
-      { name: DriveSession.name, schema: DriveSessionSchema },
-      { name: TVEpisode.name, schema: TVEpisodeSchema }
-    ], MongooseConnection.DATABASE_A),
-    BullModule.registerQueue({
-      name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H264}`,
-      defaultJobOptions: {
-        removeOnComplete: { age: 600, count: 100 },
-        removeOnFail: { age: 600, count: 100 },
-        attempts: 3
+    MongooseModule.forFeature(
+      [
+        { name: Media.name, schema: MediaSchema },
+        { name: MediaStorage.name, schema: MediaStorageSchema },
+        { name: DriveSession.name, schema: DriveSessionSchema },
+        { name: TVEpisode.name, schema: TVEpisodeSchema }
+      ],
+      MongooseConnection.DATABASE_A
+    ),
+    BullModule.registerQueue(
+      {
+        name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H264}`,
+        defaultJobOptions: {
+          removeOnComplete: { age: 600, count: 100 },
+          removeOnFail: { age: 600, count: 100 },
+          attempts: 3
+        }
+      },
+      {
+        name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H265}`,
+        defaultJobOptions: {
+          removeOnComplete: { age: 600, count: 100 },
+          removeOnFail: { age: 600, count: 100 },
+          attempts: 3
+        }
+      },
+      {
+        name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.VP9}`,
+        defaultJobOptions: {
+          removeOnComplete: { age: 600, count: 100 },
+          removeOnFail: { age: 600, count: 100 },
+          attempts: 3
+        }
+      },
+      {
+        name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.AV1}`,
+        defaultJobOptions: {
+          removeOnComplete: { age: 600, count: 100 },
+          removeOnFail: { age: 600, count: 100 },
+          attempts: 3
+        }
+      },
+      {
+        name: TaskQueue.VIDEO_TRANSCODE_RESULT,
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: true,
+          attempts: 3
+        }
       }
-    }, {
-      name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H265}`,
-      defaultJobOptions: {
-        removeOnComplete: { age: 600, count: 100 },
-        removeOnFail: { age: 600, count: 100 },
-        attempts: 3
-      }
-    }, {
-      name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.VP9}`,
-      defaultJobOptions: {
-        removeOnComplete: { age: 600, count: 100 },
-        removeOnFail: { age: 600, count: 100 },
-        attempts: 3
-      }
-    }, {
-      name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.AV1}`,
-      defaultJobOptions: {
-        removeOnComplete: { age: 600, count: 100 },
-        removeOnFail: { age: 600, count: 100 },
-        attempts: 3
-      }
-    }, {
-      name: TaskQueue.VIDEO_TRANSCODE_RESULT,
-      defaultJobOptions: {
-        removeOnComplete: true,
-        removeOnFail: true,
-        attempts: 3
-      }
-    }),
+    ),
     RedisPubSubModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -104,15 +113,7 @@ import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
     })
   ],
   controllers: [MediaController],
-  providers: [
-    MediaService,
-    MediaConsumerH264,
-    MediaConsumerH265,
-    MediaConsumerVP9,
-    MediaConsumerAV1,
-    MediaResultConsumer,
-    IsISO6391Constraint
-  ],
+  providers: [MediaService, MediaConsumerH264, MediaConsumerH265, MediaConsumerVP9, MediaConsumerAV1, MediaResultConsumer, IsISO6391Constraint],
   exports: [MediaService]
 })
-export class MediaModule { }
+export class MediaModule {}

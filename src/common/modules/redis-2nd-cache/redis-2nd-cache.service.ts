@@ -4,7 +4,7 @@ import { Cache } from 'cache-manager';
 
 @Injectable()
 export class Redis2ndCacheService {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) { }
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   set(key: string, value: unknown, ttl?: number): Promise<void> {
     return this.cacheManager.set(key, value, ttl);

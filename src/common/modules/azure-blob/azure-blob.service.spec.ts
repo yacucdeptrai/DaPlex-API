@@ -6,7 +6,7 @@ describe('AzureBlobService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AzureBlobService],
+      providers: [AzureBlobService]
     }).compile();
 
     service = module.get<AzureBlobService>(AzureBlobService);

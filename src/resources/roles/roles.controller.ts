@@ -1,5 +1,18 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, HttpCode, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 
 import { RolesService } from './roles.service';
 import { CreateRoleDto, PaginateDto, UpdateRoleDto, UpdateRoleUsersDto } from './dto';
@@ -18,7 +31,7 @@ import { UserPermission } from '../../enums';
 @ApiExtraModels(Paginated, Role, RoleUsers)
 @Controller()
 export class RolesController {
-  constructor(private readonly rolesService: RolesService) { }
+  constructor(private readonly rolesService: RolesService) {}
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
@@ -41,10 +54,7 @@ export class RolesController {
   @ApiOkResponse({
     description: 'Return a list of roles',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(Paginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Role) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(Paginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Role) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
@@ -105,10 +115,7 @@ export class RolesController {
   @ApiOkResponse({
     description: 'Return a list of users',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(Paginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(RoleUsers) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(Paginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(RoleUsers) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })

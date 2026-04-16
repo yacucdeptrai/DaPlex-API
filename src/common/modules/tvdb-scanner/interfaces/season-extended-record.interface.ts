@@ -24,4 +24,4 @@ export interface SeasonExtendedRecord {
   tagOptions?: TagOption[];
   translations?: TranslationExtended;
   year?: string;
-};
+}

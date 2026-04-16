@@ -4,7 +4,7 @@ import ISO6391 from 'iso-639-1';
 @ValidatorConstraint()
 export class IsISO6391Constraint implements ValidatorConstraintInterface {
   validate(value: string) {
-    return ISO6391.validate(value)
+    return ISO6391.validate(value);
   }
 
   defaultMessage(args: ValidationArguments) {
@@ -19,7 +19,7 @@ export function IsISO6391(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: IsISO6391Constraint,
+      validator: IsISO6391Constraint
     });
   };
 }

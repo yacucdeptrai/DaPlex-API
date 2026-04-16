@@ -134,7 +134,6 @@ export interface ContentRatingsResult {
   rating: string;
 }
 
-
 export interface Recommendation {
   adult: boolean;
   backdrop_path?: any;
@@ -151,7 +150,6 @@ export interface Recommendation {
   vote_average: number;
   vote_count: number;
 }
-
 
 export interface Recommendations {
   page: number;
@@ -177,7 +175,6 @@ export interface Reviews {
   total_pages: number;
   total_results: number;
 }
-
 
 export interface TranslationData {
   title?: string;

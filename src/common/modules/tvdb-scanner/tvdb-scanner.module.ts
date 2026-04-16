@@ -5,10 +5,7 @@ import { TvdbScannerService } from './tvdb-scanner.service';
 import { TmdbScannerModule } from '../tmdb-scanner/tmdb-scanner.module';
 
 @Module({
-  imports: [
-    HttpModule,
-    TmdbScannerModule
-  ],
+  imports: [HttpModule, TmdbScannerModule],
   providers: [TvdbScannerService],
   exports: [TvdbScannerService]
 })

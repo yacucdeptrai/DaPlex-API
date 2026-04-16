@@ -1,15 +1,12 @@
 export function transformBigInt(value: Array<any>) {
   if (!Array.isArray(value))
-    if (value == undefined || isNaN(value))
-      return value;
-    else
-      return BigInt(value);
+    if (value == undefined || isNaN(value)) return value;
+    else return BigInt(value);
   const result = [];
-  value.forEach(item => {
+  value.forEach((item) => {
     if (item == undefined || isNaN(item)) {
       result.push(item);
-    }
-    else {
+    } else {
       result.push(BigInt(item));
     }
   });

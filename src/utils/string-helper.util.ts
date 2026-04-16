@@ -34,17 +34,14 @@ export function trimSlugFilename(filename: string, maxLength: number = 80, extHi
 export function slugMediaTitle(title: string, originalTitle?: string | null) {
   const slugTitle = slugify(removeAccents(title), { lower: true });
   const slugOriginalTitle = originalTitle ? slugify(removeAccents(originalTitle), { lower: true }) : null;
-  if (!slugOriginalTitle || slugTitle === slugOriginalTitle)
-    return slugTitle;
-  if (slugTitle.includes(slugOriginalTitle))
-    return slugTitle;
-  if (slugOriginalTitle.includes(slugTitle))
-    return slugOriginalTitle;
+  if (!slugOriginalTitle || slugTitle === slugOriginalTitle) return slugTitle;
+  if (slugTitle.includes(slugOriginalTitle)) return slugTitle;
+  if (slugOriginalTitle.includes(slugTitle)) return slugOriginalTitle;
   return `${slugTitle}-${slugOriginalTitle}`;
 }
 
 // https://github.com/words/ap-style-title-case/blob/master/index.js
-export function apStyleTitleCase(value: string, options?: { stopwords?: string, keepSpaces?: boolean }) {
+export function apStyleTitleCase(value: string, options?: { stopwords?: string; keepSpaces?: boolean }) {
   const defaults = ['a', 'an', 'and', 'at', 'but', 'by', 'for', 'in', 'nor', 'of', 'on', 'or', 'so', 'the', 'to', 'up', 'yet'];
 
   const configuration = options || {};

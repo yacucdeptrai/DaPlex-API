@@ -21,7 +21,7 @@ export function PropertyMatches(property: string, validationOptions?: Validation
       propertyName: propertyName,
       options: validationOptions,
       constraints: [property],
-      validator: PropertyMatchesConstraint,
+      validator: PropertyMatchesConstraint
     });
   };
 }

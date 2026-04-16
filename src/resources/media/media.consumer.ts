@@ -11,8 +11,10 @@ import { TaskQueue, VideoCodec } from '../../enums';
 export class MediaConsumerH264 extends QueueEventsHost {
   private readonly logger = new Logger(MediaConsumerH264.name);
 
-  constructor(@InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H264}`) private videoTranscodeH264Queue: Queue,
-    private readonly mediaService: MediaService) {
+  constructor(
+    @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H264}`) private videoTranscodeH264Queue: Queue,
+    private readonly mediaService: MediaService
+  ) {
     super();
   }
 
@@ -28,7 +30,7 @@ export class MediaConsumerH264 extends QueueEventsHost {
   }
 
   @OnQueueEvent('failed')
-  async onGlobalFailed({ jobId, failedReason }: { jobId: string, failedReason: string }) {
+  async onGlobalFailed({ jobId, failedReason }: { jobId: string; failedReason: string }) {
     this.logger.error(`Found an error on job ${jobId}: ${failedReason}`);
     const job = await this.videoTranscodeH264Queue.getJob(jobId);
     await this.videoTranscodeH264Queue.remove(jobId);
@@ -47,8 +49,10 @@ export class MediaConsumerH264 extends QueueEventsHost {
 export class MediaConsumerH265 extends QueueEventsHost {
   private readonly logger = new Logger(MediaConsumerH265.name);
 
-  constructor(@InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H265}`) private videoTranscodeH265Queue: Queue,
-    private readonly mediaService: MediaService) {
+  constructor(
+    @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H265}`) private videoTranscodeH265Queue: Queue,
+    private readonly mediaService: MediaService
+  ) {
     super();
   }
 
@@ -64,7 +68,7 @@ export class MediaConsumerH265 extends QueueEventsHost {
   }
 
   @OnQueueEvent('failed')
-  async onGlobalFailed({ jobId, failedReason }: { jobId: string, failedReason: string }) {
+  async onGlobalFailed({ jobId, failedReason }: { jobId: string; failedReason: string }) {
     this.logger.error(`Found an error on job ${jobId}: ${failedReason}`);
     const job = await this.videoTranscodeH265Queue.getJob(jobId);
     await this.videoTranscodeH265Queue.remove(jobId);
@@ -83,8 +87,10 @@ export class MediaConsumerH265 extends QueueEventsHost {
 export class MediaConsumerVP9 extends QueueEventsHost {
   private readonly logger = new Logger(MediaConsumerVP9.name);
 
-  constructor(@InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.VP9}`) private videoTranscodeVP9Queue: Queue,
-    private readonly mediaService: MediaService) {
+  constructor(
+    @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.VP9}`) private videoTranscodeVP9Queue: Queue,
+    private readonly mediaService: MediaService
+  ) {
     super();
   }
 
@@ -100,7 +106,7 @@ export class MediaConsumerVP9 extends QueueEventsHost {
   }
 
   @OnQueueEvent('failed')
-  async onGlobalFailed({ jobId, failedReason }: { jobId: string, failedReason: string }) {
+  async onGlobalFailed({ jobId, failedReason }: { jobId: string; failedReason: string }) {
     this.logger.error(`Found an error on job ${jobId}: ${failedReason}`);
     const job = await this.videoTranscodeVP9Queue.getJob(jobId);
     await this.videoTranscodeVP9Queue.remove(jobId);
@@ -119,8 +125,10 @@ export class MediaConsumerVP9 extends QueueEventsHost {
 export class MediaConsumerAV1 extends QueueEventsHost {
   private readonly logger = new Logger(MediaConsumerAV1.name);
 
-  constructor(@InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.AV1}`) private videoTranscodeAV1Queue: Queue,
-    private readonly mediaService: MediaService) {
+  constructor(
+    @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.AV1}`) private videoTranscodeAV1Queue: Queue,
+    private readonly mediaService: MediaService
+  ) {
     super();
   }
 
@@ -136,7 +144,7 @@ export class MediaConsumerAV1 extends QueueEventsHost {
   }
 
   @OnQueueEvent('failed')
-  async onGlobalFailed({ jobId, failedReason }: { jobId: string, failedReason: string }) {
+  async onGlobalFailed({ jobId, failedReason }: { jobId: string; failedReason: string }) {
     this.logger.error(`Found an error on job ${jobId}: ${failedReason}`);
     const job = await this.videoTranscodeAV1Queue.getJob(jobId);
     await this.videoTranscodeAV1Queue.remove(jobId);

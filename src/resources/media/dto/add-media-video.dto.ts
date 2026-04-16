@@ -30,8 +30,11 @@ export class AddMediaVideoDto {
     type: Boolean,
     description: 'True if this video is official'
   })
-  @Transform(({ value }) => {
-    return [true, 'true'].indexOf(value) > -1;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return [true, 'true'].indexOf(value) > -1;
+    },
+    { toClassOnly: true }
+  )
   official: boolean;
 }

@@ -20,10 +20,15 @@ import { MongooseOffsetPagination, LookupOptions, createCloudflareR2Url, createC
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name, MongooseConnection.DATABASE_A) private userModel: Model<UserDocument>,
-    private authService: AuthService, private auditLogService: AuditLogService,
-    private httpEmailService: HttpEmailService, private cloudflareR2Service: CloudflareR2Service,
-    private permissionsService: PermissionsService, private configService: ConfigService) { }
+  constructor(
+    @InjectModel(User.name, MongooseConnection.DATABASE_A) private userModel: Model<UserDocument>,
+    private authService: AuthService,
+    private auditLogService: AuditLogService,
+    private httpEmailService: HttpEmailService,
+    private cloudflareR2Service: CloudflareR2Service,
+    private permissionsService: PermissionsService,
+    private configService: ConfigService
+  ) {}
 
   async findAll(paginateDto: PaginateDto) {
     const sortEnum = ['_id', 'username'];
@@ -31,17 +36,16 @@ export class UsersService {
     const { page, limit, sort, search } = paginateDto;
     const filters = search ? { username: { $regex: escapeRegExp(search), $options: 'i' } } : {};
     const aggregation = new MongooseOffsetPagination({ page, limit, filters, fields, sortQuery: sort, sortEnum });
-    const lookupOptions: LookupOptions[] = [{
-      from: 'roles',
-      localField: 'roles',
-      foreignField: '_id',
-      as: 'roles',
-      pipeline: [
-        { $project: { _id: 1, name: 1, color: 1, permissions: 1, position: 1 } },
-        { $sort: { position: 1 } }
-      ],
-      isArray: true
-    }];
+    const lookupOptions: LookupOptions[] = [
+      {
+        from: 'roles',
+        localField: 'roles',
+        foreignField: '_id',
+        as: 'roles',
+        pipeline: [{ $project: { _id: 1, name: 1, color: 1, permissions: 1, position: 1 } }, { $sort: { position: 1 } }],
+        isArray: true
+      }
+    ];
     const [data] = await this.userModel.aggregate(aggregation.buildLookup(lookupOptions)).exec();
     const users = data ? plainToClassFromExist(new Paginated<UserEntity>({ type: UserEntity }), data) : new Paginated<UserEntity>();
     return users;
@@ -51,35 +55,53 @@ export class UsersService {
     let projection: ProjectionType<UserDocument>;
     if (!authUser.isAnonymous && (authUser._id === id || authUser.hasPermission)) {
       projection = {
-        _id: 1, username: 1, email: 1, nickname: 1, about: 1, birthdate: 1, roles: 1, createdAt: 1, verified: 1, banned: 1,
-        lastActiveAt: 1, avatar: 1, banner: 1, settings: 1
+        _id: 1,
+        username: 1,
+        email: 1,
+        nickname: 1,
+        about: 1,
+        birthdate: 1,
+        roles: 1,
+        createdAt: 1,
+        verified: 1,
+        banned: 1,
+        lastActiveAt: 1,
+        avatar: 1,
+        banner: 1,
+        settings: 1
       };
     } else {
       projection = {
-        _id: 1, username: 1, nickname: 1, about: 1, roles: 1, createdAt: 1, banned: 1,
-        lastActiveAt: 1, avatar: 1, banner: 1, settings: 1
+        _id: 1,
+        username: 1,
+        nickname: 1,
+        about: 1,
+        roles: 1,
+        createdAt: 1,
+        banned: 1,
+        lastActiveAt: 1,
+        avatar: 1,
+        banner: 1,
+        settings: 1
       };
     }
-    const user = await this.userModel.findOne({ _id: id }, projection)
+    const user = await this.userModel
+      .findOne({ _id: id }, projection)
       .populate({ path: 'roles', select: { _id: 1, name: 1, color: 1, permissions: 1, position: 1 }, options: { sort: { position: 1 } } })
-      .lean().exec();
-    if (!user)
-      throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+      .lean()
+      .exec();
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
     return plainToInstance(UserDetails, user);
   }
 
   async update(id: bigint, updateUserDto: UpdateUserDto, authUser: AuthUserDto) {
-    if (authUser._id !== id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user' }, HttpStatus.FORBIDDEN);
-    if (!Object.keys(updateUserDto).length)
-      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (authUser._id !== id && !authUser.hasPermission) throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user' }, HttpStatus.FORBIDDEN);
+    if (!Object.keys(updateUserDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const user = await this.userModel.findOne({ _id: id }).populate('roles', { _id: 1, name: 1, color: 1, permissions: 1, position: 1 }).exec();
-    if (!user)
-      throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
     if (updateUserDto.currentPassword != undefined) {
       const isValidPassword = await this.authService.comparePassword(updateUserDto.currentPassword, user.password);
-      if (!isValidPassword)
-        throw new HttpException({ code: StatusCode.INCORRECT_PASSWORD, message: 'Current password is incorrect' }, HttpStatus.BAD_REQUEST);
+      if (!isValidPassword) throw new HttpException({ code: StatusCode.INCORRECT_PASSWORD, message: 'Current password is incorrect' }, HttpStatus.BAD_REQUEST);
     }
     updateUserDto.nickname !== undefined && (user.nickname = updateUserDto.nickname);
     updateUserDto.birthdate != undefined && (user.birthdate = updateUserDto.birthdate);
@@ -87,16 +109,14 @@ export class UsersService {
     if (!updateUserDto.restoreAccount) {
       // Update password
       if (updateUserDto.password != undefined) {
-        if (authUser._id !== id)
-          throw new HttpException({ code: StatusCode.PASSWORD_UPDATE_RESTRICTED, message: 'Only the account owner can update the password' }, HttpStatus.FORBIDDEN);
+        if (authUser._id !== id) throw new HttpException({ code: StatusCode.PASSWORD_UPDATE_RESTRICTED, message: 'Only the account owner can update the password' }, HttpStatus.FORBIDDEN);
         if (updateUserDto.currentPassword == undefined)
           throw new HttpException({ code: StatusCode.REQUIRE_PASSWORD, message: 'Current password is required to update password' }, HttpStatus.BAD_REQUEST);
         user.password = await this.authService.hashPassword(updateUserDto.password);
       }
     } else {
       // Restore account's password
-      if (!authUser.hasPermission)
-        throw new HttpException({ code: StatusCode.RESTORE_ACCOUNT_RESTRICTED, message: 'You do not have permission to restore this user' }, HttpStatus.FORBIDDEN);
+      if (!authUser.hasPermission) throw new HttpException({ code: StatusCode.RESTORE_ACCOUNT_RESTRICTED, message: 'You do not have permission to restore this user' }, HttpStatus.FORBIDDEN);
       const [randomPassword, recoveryCode] = await Promise.all([nanoid(), nanoid(8)]);
       user.password = await this.authService.hashPassword(randomPassword);
       user.recoveryCode = recoveryCode;
@@ -114,8 +134,7 @@ export class UsersService {
       if (authUser._id === id && updateUserDto.currentPassword == undefined)
         throw new HttpException({ code: StatusCode.REQUIRE_PASSWORD, message: 'Current password is required to update username' }, HttpStatus.BAD_REQUEST);
       const checkNewUsername = await this.authService.findByUsername(updateUserDto.username);
-      if (checkNewUsername)
-        throw new HttpException({ code: StatusCode.EMAIL_EXIST, message: 'Username has already been used' }, HttpStatus.BAD_REQUEST);
+      if (checkNewUsername) throw new HttpException({ code: StatusCode.EMAIL_EXIST, message: 'Username has already been used' }, HttpStatus.BAD_REQUEST);
       user.username = updateUserDto.username;
     }
     const oldEmail = user.email;
@@ -123,8 +142,7 @@ export class UsersService {
       if (authUser._id === id && updateUserDto.currentPassword == undefined)
         throw new HttpException({ code: StatusCode.REQUIRE_PASSWORD, message: 'Current password is required to update email' }, HttpStatus.BAD_REQUEST);
       const checkNewEmail = await this.authService.findByEmail(updateUserDto.email);
-      if (checkNewEmail)
-        throw new HttpException({ code: StatusCode.EMAIL_EXIST, message: 'Email has already been used' }, HttpStatus.BAD_REQUEST);
+      if (checkNewEmail) throw new HttpException({ code: StatusCode.EMAIL_EXIST, message: 'Email has already been used' }, HttpStatus.BAD_REQUEST);
       user.email = updateUserDto.email;
       user.verified = false;
       const activationCode = await nanoid(8);
@@ -133,13 +151,11 @@ export class UsersService {
     const newUser = await user.save();
     if (oldEmail !== newUser.email) {
       await Promise.all([
-        this.httpEmailService.sendEmailSendGrid(newUser.email, newUser.username, 'Confirm your new email',
-          SendgridTemplate.UPDATE_EMAIL, {
+        this.httpEmailService.sendEmailSendGrid(newUser.email, newUser.username, 'Confirm your new email', SendgridTemplate.UPDATE_EMAIL, {
           recipient_name: newUser.username,
           button_url: `${this.configService.get('WEBSITE_URL')}/confirm-email?id=${newUser._id}&code=${newUser.activationCode}`
         }),
-        this.httpEmailService.sendEmailSendGrid(oldEmail, newUser.username, 'Your email has been changed',
-          SendgridTemplate.EMAIL_CHANGED, {
+        this.httpEmailService.sendEmailSendGrid(oldEmail, newUser.username, 'Your email has been changed', SendgridTemplate.EMAIL_CHANGED, {
           recipient_name: newUser.username,
           new_email: newUser.email
         })
@@ -148,8 +164,7 @@ export class UsersService {
     if (authUser._id !== id && authUser.hasPermission) {
       // Send email to notify user
       if (updateUserDto.restoreAccount) {
-        await this.httpEmailService.sendEmailSendGrid(newUser.email, newUser.username, 'We have restored your account',
-          SendgridTemplate.ACCOUNT_MANAGE_RESTORED, {
+        await this.httpEmailService.sendEmailSendGrid(newUser.email, newUser.username, 'We have restored your account', SendgridTemplate.ACCOUNT_MANAGE_RESTORED, {
           recipient_name: newUser.username,
           username: newUser.username,
           email: newUser.email,
@@ -157,10 +172,8 @@ export class UsersService {
           birthdate: `${newUser.birthdate.day}/${newUser.birthdate.month}/${newUser.birthdate.year}`,
           button_url: `${this.configService.get('WEBSITE_URL')}/reset-password?code=${newUser.recoveryCode}`
         });
-      }
-      else {
-        await this.httpEmailService.sendEmailSendGrid(newUser.email, newUser.username, 'We have updated your account',
-          SendgridTemplate.ACCOUNT_MANAGE_UPDATED, {
+      } else {
+        await this.httpEmailService.sendEmailSendGrid(newUser.email, newUser.username, 'We have updated your account', SendgridTemplate.ACCOUNT_MANAGE_UPDATED, {
           recipient_name: newUser.username,
           username: updateUserDto.username ?? '(Not changed)',
           email: updateUserDto.email ?? '(Not changed)',
@@ -178,13 +191,10 @@ export class UsersService {
   }
 
   async updateSettings(id: bigint, updateUserSettingsDto: UpdateUserSettingsDto, authUser: AuthUserDto) {
-    if (authUser._id !== id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user' }, HttpStatus.FORBIDDEN);
-    if (!Object.keys(updateUserSettingsDto).length)
-      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (authUser._id !== id && !authUser.hasPermission) throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user' }, HttpStatus.FORBIDDEN);
+    if (!Object.keys(updateUserSettingsDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const user = await this.userModel.findOne({ _id: id }, { _id: 1, settings: 1 }).exec();
-    if (!user)
-      throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
     const { player, subtitle, history, playlist, historyList, playlistList, ratingList } = updateUserSettingsDto;
     if (player) {
       player.muted !== undefined && (user.settings.player.muted = player.muted);
@@ -241,10 +251,8 @@ export class UsersService {
 
   async findOneAvatar(id: bigint) {
     const user = await this.userModel.findOne({ _id: id }, { avatar: 1 }).lean().exec();
-    if (!user)
-      throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
-    if (!user.avatar)
-      return;
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+    if (!user.avatar) return;
     const uploadedAvatar: Avatar = {
       avatarUrl: createCloudflareR2ProxyUrl(CloudflareR2Container.AVATARS, `${user.avatar._id}/${user.avatar.name}`, 450),
       thumbnailAvatarUrl: createCloudflareR2ProxyUrl(CloudflareR2Container.AVATARS, `${user.avatar._id}/${user.avatar.name}`, 250),
@@ -257,17 +265,14 @@ export class UsersService {
   }
 
   async updateAvatar(id: bigint, file: Storage.MultipartFile, authUser: AuthUserDto) {
-    if (authUser._id !== id)
-      throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user avatar' }, HttpStatus.FORBIDDEN);
+    if (authUser._id !== id) throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user avatar' }, HttpStatus.FORBIDDEN);
     const user = await this.userModel.findOne({ _id: id }, { avatar: 1 }).exec();
-    if (!user)
-      throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
     const avatarId = await createSnowFlakeId();
     const trimmedFilename = trimSlugFilename(file.filename);
     const saveTo = `${avatarId}/${trimmedFilename}`;
     await this.cloudflareR2Service.upload(CloudflareR2Container.AVATARS, saveTo, file.filepath, file.mimetype);
-    if (user.avatar)
-      await this.cloudflareR2Service.delete(CloudflareR2Container.AVATARS, `${user.avatar._id}/${user.avatar.name}`);
+    if (user.avatar) await this.cloudflareR2Service.delete(CloudflareR2Container.AVATARS, `${user.avatar._id}/${user.avatar.name}`);
     const avatar = new UserFile();
     avatar._id = avatarId;
     avatar.name = trimmedFilename;
@@ -285,31 +290,30 @@ export class UsersService {
   }
 
   async deleteAvatar(id: bigint, authUser: AuthUserDto) {
-    if (authUser._id !== id)
-      throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to delete this user avatar' }, HttpStatus.FORBIDDEN);
+    if (authUser._id !== id) throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to delete this user avatar' }, HttpStatus.FORBIDDEN);
     const session = await this.userModel.startSession();
-    await session.withTransaction(async () => {
-      const user = await this.userModel.findOneAndUpdate({ _id: id }, { $unset: { avatar: 1 } }).lean().session(session);
-      if (!user)
-        throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
-      if (!user.avatar)
-        throw new HttpException({ code: StatusCode.AVATAR_NOT_FOUND, message: 'Avatar not found' }, HttpStatus.NOT_FOUND);
-      await this.cloudflareR2Service.delete(CloudflareR2Container.AVATARS, `${user.avatar._id}/${user.avatar.name}`);
-    }).finally(() => session.endSession().catch(() => { }));
+    await session
+      .withTransaction(async () => {
+        const user = await this.userModel
+          .findOneAndUpdate({ _id: id }, { $unset: { avatar: 1 } })
+          .lean()
+          .session(session);
+        if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+        if (!user.avatar) throw new HttpException({ code: StatusCode.AVATAR_NOT_FOUND, message: 'Avatar not found' }, HttpStatus.NOT_FOUND);
+        await this.cloudflareR2Service.delete(CloudflareR2Container.AVATARS, `${user.avatar._id}/${user.avatar.name}`);
+      })
+      .finally(() => session.endSession().catch(() => {}));
   }
 
   async updateBanner(id: bigint, file: Storage.MultipartFile, authUser: AuthUserDto) {
-    if (authUser._id !== id)
-      throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user banner' }, HttpStatus.FORBIDDEN);
+    if (authUser._id !== id) throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to update this user banner' }, HttpStatus.FORBIDDEN);
     const user = await this.userModel.findOne({ _id: id }, { banner: 1 }).exec();
-    if (!user)
-      throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
     const bannerId = await createSnowFlakeId();
     const trimmedFilename = trimSlugFilename(file.filename);
     const saveTo = `${bannerId}/${trimmedFilename}`;
     await this.cloudflareR2Service.upload(CloudflareR2Container.BANNERS, saveTo, file.filepath, file.mimetype);
-    if (user.banner)
-      await this.cloudflareR2Service.delete(CloudflareR2Container.BANNERS, `${user.banner._id}/${user.banner.name}`);
+    if (user.banner) await this.cloudflareR2Service.delete(CloudflareR2Container.BANNERS, `${user.banner._id}/${user.banner.name}`);
     const banner = new UserFile();
     banner._id = bannerId;
     banner.name = trimmedFilename;
@@ -327,17 +331,19 @@ export class UsersService {
   }
 
   async deleteBanner(id: bigint, authUser: AuthUserDto) {
-    if (authUser._id !== id)
-      throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to delete this user banner' }, HttpStatus.FORBIDDEN);
+    if (authUser._id !== id) throw new HttpException({ code: StatusCode.ACCESS_DENIED, message: 'You do not have permission to delete this user banner' }, HttpStatus.FORBIDDEN);
     const session = await this.userModel.startSession();
-    await session.withTransaction(async () => {
-      const user = await this.userModel.findOneAndUpdate({ _id: id }, { $unset: { banner: 1 } }).lean().session(session);
-      if (!user)
-        throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
-      if (!user.banner)
-        throw new HttpException({ code: StatusCode.BANNER_NOT_FOUND, message: 'Banner not found' }, HttpStatus.NOT_FOUND);
-      await this.cloudflareR2Service.delete(CloudflareR2Container.BANNERS, `${user.banner._id}/${user.banner.name}`);
-    }).finally(() => session.endSession().catch(() => { }));
+    await session
+      .withTransaction(async () => {
+        const user = await this.userModel
+          .findOneAndUpdate({ _id: id }, { $unset: { banner: 1 } })
+          .lean()
+          .session(session);
+        if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+        if (!user.banner) throw new HttpException({ code: StatusCode.BANNER_NOT_FOUND, message: 'Banner not found' }, HttpStatus.NOT_FOUND);
+        await this.cloudflareR2Service.delete(CloudflareR2Container.BANNERS, `${user.banner._id}/${user.banner.name}`);
+      })
+      .finally(() => session.endSession().catch(() => {}));
   }
 
   countByIds(ids: bigint[]) {
@@ -345,19 +351,15 @@ export class UsersService {
   }
 
   async updateRoleUsers(id: bigint, newUsers: any[], oldUsers: any[], session: ClientSession) {
-    if (newUsers.length)
-      await this.userModel.updateMany({ _id: { $in: newUsers } }, { $push: { roles: id } }).session(session);
-    if (oldUsers.length)
-      await this.userModel.updateMany({ _id: { $in: oldUsers } }, { $pull: { roles: id } }).session(session);
+    if (newUsers.length) await this.userModel.updateMany({ _id: { $in: newUsers } }, { $push: { roles: id } }).session(session);
+    if (oldUsers.length) await this.userModel.updateMany({ _id: { $in: oldUsers } }, { $pull: { roles: id } }).session(session);
   }
 
   addRoleUsers(id: bigint, users: any[]) {
-    if (users.length)
-      return this.userModel.updateMany({ _id: { $in: users } }, { $push: { roles: id } }).exec();
+    if (users.length) return this.userModel.updateMany({ _id: { $in: users } }, { $push: { roles: id } }).exec();
   }
 
   deleteRoleUsers(id: bigint, users: any[], session: ClientSession) {
-    if (users.length)
-      return this.userModel.updateMany({ _id: { $in: users } }, { $pull: { roles: id } }).session(session);
+    if (users.length) return this.userModel.updateMany({ _id: { $in: users } }, { $pull: { roles: id } }).session(session);
   }
 }

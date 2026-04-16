@@ -21,13 +21,10 @@ import { S3Module } from '../../common/modules/s3/s3.module';
     forwardRef(() => FilerModule),
     forwardRef(() => S3Module),
     AuditLogModule,
-    MongooseModule.forFeature([{ name: ExternalStorage.name, schema: ExternalStorageSchema, }], MongooseConnection.DATABASE_A)
+    MongooseModule.forFeature([{ name: ExternalStorage.name, schema: ExternalStorageSchema }], MongooseConnection.DATABASE_A)
   ],
   controllers: [ExternalStoragesController],
-  providers: [
-    ExternalStoragesService,
-    ExtStorageNameExistConstraint
-  ],
+  providers: [ExternalStoragesService, ExtStorageNameExistConstraint],
   exports: [ExternalStoragesService]
 })
-export class ExternalStoragesModule { }
+export class ExternalStoragesModule {}

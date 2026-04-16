@@ -6,12 +6,8 @@ import { SettingsModule } from '../../../resources/settings/settings.module';
 import { ImgurService } from './imgur.service';
 
 @Module({
-  imports: [
-    HttpModule,
-    SettingsModule,
-    ExternalStoragesModule
-  ],
+  imports: [HttpModule, SettingsModule, ExternalStoragesModule],
   providers: [ImgurService],
   exports: [ImgurService]
 })
-export class ImgurModule { }
+export class ImgurModule {}

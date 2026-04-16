@@ -7,13 +7,15 @@ import { TvdbScannerService } from '../../common/modules/tvdb-scanner/tvdb-scann
 
 @Injectable()
 export class MediaScannerService {
-  constructor(private tmdbScannerService: TmdbScannerService, private tvdbScannerService: TvdbScannerService) { }
+  constructor(
+    private tmdbScannerService: TmdbScannerService,
+    private tvdbScannerService: TvdbScannerService
+  ) {}
 
   findAll(searchMediaDto: SearchMediaDto) {
     const { provider, type, query, page, year, language, includeAdult } = searchMediaDto;
     if (!provider || provider === 'tmdb') {
-      if (type === 'movie')
-        return this.tmdbScannerService.searchMovie(query, page, year, language, includeAdult);
+      if (type === 'movie') return this.tmdbScannerService.searchMovie(query, page, year, language, includeAdult);
       return this.tmdbScannerService.searchTv(query, page, year, language, includeAdult);
     } else {
       const tvdbType = type === 'movie' ? 'movie' : 'series';

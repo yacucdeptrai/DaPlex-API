@@ -27,7 +27,11 @@ export class ExternalStorage {
   @Prop()
   accessToken: string;
 
-  @Prop({ required: function () { return this.kind === CloudStorage.ONEDRIVE } })
+  @Prop({
+    required: function () {
+      return this.kind === CloudStorage.ONEDRIVE;
+    }
+  })
   refreshToken: string;
 
   @Prop()

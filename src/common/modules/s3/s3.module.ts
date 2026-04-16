@@ -7,13 +7,8 @@ import { SettingsModule } from '../../../resources/settings/settings.module';
 import { ExternalStoragesModule } from '../../../resources/external-storages/external-storages.module';
 
 @Module({
-  imports: [
-    HttpModule,
-    ConfigModule,
-    forwardRef(() => SettingsModule),
-    forwardRef(() => ExternalStoragesModule)
-  ],
+  imports: [HttpModule, ConfigModule, forwardRef(() => SettingsModule), forwardRef(() => ExternalStoragesModule)],
   providers: [S3Service],
   exports: [S3Service]
 })
-export class S3Module { }
+export class S3Module {}

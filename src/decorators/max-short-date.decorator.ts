@@ -5,18 +5,14 @@ import { ShortDate } from '../common/entities';
 @ValidatorConstraint()
 export class MaxShortDateConstraint implements ValidatorConstraintInterface {
   validate(value: ShortDate, args: ValidationArguments) {
-    if (!value || !value.day || !value.month || !value.year)
-      return false;
+    if (!value || !value.day || !value.month || !value.year) return false;
     const [target] = args.constraints;
     const year = target.getFullYear();
     const month = target.getMonth() + 1;
     const day = target.getDate();
-    if (value.year < year)
-      return true;
-    else if (value.year === year && value.month < month)
-      return true;
-    else if (value.year === year && value.month === month && value.day <= day)
-      return true;
+    if (value.year < year) return true;
+    else if (value.year === year && value.month < month) return true;
+    else if (value.year === year && value.month === month && value.day <= day) return true;
     return false;
   }
 
@@ -33,7 +29,7 @@ export function MaxShortDate(property: Date, validationOptions?: ValidationOptio
       propertyName: propertyName,
       options: validationOptions,
       constraints: [property],
-      validator: MaxShortDateConstraint,
+      validator: MaxShortDateConstraint
     });
   };
 }

@@ -28,7 +28,7 @@ export class MongooseOffsetPagination {
       stage2: [{ $skip: this.skip }, { $limit: this.limit }]
     };
     !isEmptyObject(this.fields) && facet.stage2.push({ $project: this.fields });
-    (this.search && this.fullTextSearch) && (this.filters.$text = { $search: this.search });
+    this.search && this.fullTextSearch && (this.filters.$text = { $search: this.search });
     const aggregation: PipelineStage[] = [
       { $facet: facet },
       { $unwind: '$stage1' },
@@ -65,12 +65,7 @@ export class MongooseOffsetPagination {
     const sortValue = convertToMongooseSort(this.sortQuery, this.sortEnum, options.as);
     if (!isEmptyObject(sortValue)) this.sort = sortValue;
     const lookupPipeline = this.createLookupOnlyPipeline(options);
-    const aggregation: PipelineStage[] = [
-      { $match: { _id: id } },
-      { $lookup: lookupPipeline },
-      { $unwind: `$${options.as}` },
-      { $replaceRoot: { newRoot: `$${options.as}` } }
-    ];
+    const aggregation: PipelineStage[] = [{ $match: { _id: id } }, { $lookup: lookupPipeline }, { $unwind: `$${options.as}` }, { $replaceRoot: { newRoot: `$${options.as}` } }];
     return aggregation;
   }
 

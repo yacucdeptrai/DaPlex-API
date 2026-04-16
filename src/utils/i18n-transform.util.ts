@@ -1,8 +1,7 @@
 import { I18N_DEFAULT_LANGUAGE, I18N_LANGUAGES } from '../config';
 
 export function convertToLanguage<T>(language: string, doc: T, options?: I18nOptions): T {
-  if (!I18N_LANGUAGES.includes(language))
-    language = I18N_DEFAULT_LANGUAGE;
+  if (!I18N_LANGUAGES.includes(language)) language = I18N_DEFAULT_LANGUAGE;
   options = { ...defaultI18nOptions, ...options };
   const item: any = { ...doc };
   if (!options.ignoreRoot && language && language !== I18N_DEFAULT_LANGUAGE) {
@@ -13,16 +12,13 @@ export function convertToLanguage<T>(language: string, doc: T, options?: I18nOpt
       item._translated = false;
     }
   }
-  if (Array.isArray(options.populate))
-    convertPopulate<T>(language, item, options);
-  if (!options.keepTranslationsObject)
-    item._translations = undefined;
+  if (Array.isArray(options.populate)) convertPopulate<T>(language, item, options);
+  if (!options.keepTranslationsObject) item._translations = undefined;
   return item;
 }
 
 export function convertToLanguageArray<T>(language: string, doc: T[], options?: I18nOptions): T[] {
-  if (!I18N_LANGUAGES.includes(language))
-    language = I18N_DEFAULT_LANGUAGE;
+  if (!I18N_LANGUAGES.includes(language)) language = I18N_DEFAULT_LANGUAGE;
   options = { ...defaultI18nOptions, ...options };
   const docs = [];
   for (let i = 0; i < doc.length; i++) {
@@ -35,10 +31,8 @@ export function convertToLanguageArray<T>(language: string, doc: T[], options?: 
         item._translated = false;
       }
     }
-    if (Array.isArray(options.populate))
-      convertPopulate<T>(language, item, options);
-    if (!options.keepTranslationsObject)
-      item._translations = undefined;
+    if (Array.isArray(options.populate)) convertPopulate<T>(language, item, options);
+    if (!options.keepTranslationsObject) item._translations = undefined;
     docs.push(item);
   }
   return docs;
@@ -57,8 +51,7 @@ function convertPopulate<T>(language: string, item: any, options?: I18nOptions) 
             subItem[j]._translated = false;
           }
         }
-        if (!options.keepTranslationsObject)
-          subItem[j]._translations = undefined;
+        if (!options.keepTranslationsObject) subItem[j]._translations = undefined;
       }
     } else if (subItem) {
       if (language && language !== I18N_DEFAULT_LANGUAGE) {
@@ -69,21 +62,18 @@ function convertPopulate<T>(language: string, item: any, options?: I18nOptions) 
           subItem._translated = false;
         }
       }
-      if (!options.keepTranslationsObject)
-        subItem._translations = undefined;
+      if (!options.keepTranslationsObject) subItem._translations = undefined;
     }
   }
 }
 
 function deepProperties(item: any, value: string) {
   const parts = value.split('.');
-  if (!value || parts.length <= 1)
-    return item[value];
+  if (!value || parts.length <= 1) return item[value];
   let subItem = item;
   for (let i = 0; i < parts.length; i++) {
     subItem = subItem[parts[i]];
-    if (!subItem)
-      break;
+    if (!subItem) break;
   }
   return subItem;
 }

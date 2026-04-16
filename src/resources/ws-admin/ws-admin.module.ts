@@ -8,4 +8,4 @@ import { WsAdminGateway } from './ws-admin.gateway';
   providers: [WsAdminGateway],
   exports: [WsAdminGateway]
 })
-export class WsAdminModule { }
+export class WsAdminModule {}

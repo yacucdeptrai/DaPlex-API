@@ -139,5 +139,8 @@ export enum StatusCode {
   // Chapter type
   CHAPTER_TYPE_NOT_FOUND = 1500,
   CHAPTER_TYPE_EXIST = 1501,
-  CHAPTER_TYPE_IN_USE = 1502
+  CHAPTER_TYPE_IN_USE = 1502,
+
+  // Audit Log
+  AUDIT_LOG_NOT_FOUND = 1700
 }

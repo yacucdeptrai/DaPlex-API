@@ -7,7 +7,7 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class YoutubeService {
-  constructor(private httpService: HttpService) { }
+  constructor(private httpService: HttpService) {}
 
   async getVideoInfo(url: string) {
     try {
@@ -16,7 +16,10 @@ export class YoutubeService {
     } catch (e) {
       if (e.isAxiosError) {
         console.error(e.response);
-        throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new HttpException(
+          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
       }
       throw e;
     }

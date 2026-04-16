@@ -8,9 +8,12 @@ export class FindCollectionDto {
     description: 'Include hidden media (unlisted and private, need manage media permission)',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeHiddenMedia: boolean;
 
@@ -19,9 +22,12 @@ export class FindCollectionDto {
     description: 'Include unprocessed media, need manage media permission',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeUnprocessedMedia: boolean;
 }

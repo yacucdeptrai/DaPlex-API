@@ -10,15 +10,18 @@ export class MediaScannerData {
     description: 'Enable media scanner',
     example: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsBoolean({ context: { code: StatusCode.IS_BOOLEAN } })
   enabled: boolean;
 
   @ApiProperty({
     type: Number,
-    description: 'TV Show\'s season number',
+    description: "TV Show's season number",
     minimum: 0,
     maximum: 10000,
     example: 1

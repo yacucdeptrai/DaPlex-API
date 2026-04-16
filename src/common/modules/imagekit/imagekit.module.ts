@@ -8,4 +8,4 @@ import { ImagekitService } from './imagekit.service';
   providers: [ImagekitService],
   exports: [ImagekitService]
 })
-export class ImagekitModule { }
+export class ImagekitModule {}

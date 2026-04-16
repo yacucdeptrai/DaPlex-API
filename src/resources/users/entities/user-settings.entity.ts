@@ -49,9 +49,7 @@ export class PlaylistOptions {
   recentId: string;
 }
 
-export class RatingOptions {
-
-}
+export class RatingOptions {}
 
 export class HistoryListOptions {
   view: number;

@@ -22,7 +22,7 @@ export class CreateProductionDto {
     example: 'US'
   })
   @Type(() => String)
-  @Transform(({ value }) => typeof value === 'string' ? value.toUpperCase() : value)
+  @Transform(({ value }) => (typeof value === 'string' ? value.toUpperCase() : value))
   @IsOptional()
   @IsISO31661Alpha2({ context: { code: StatusCode.IS_ISO_3166_ALPHA2 } })
   country: string;

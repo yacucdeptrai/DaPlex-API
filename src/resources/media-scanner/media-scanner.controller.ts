@@ -12,7 +12,7 @@ import { UserPermission } from '../../enums';
 @ApiTags('Media Scanner')
 @Controller()
 export class MediaScannerController {
-  constructor(private readonly mediaScannerService: MediaScannerService) { }
+  constructor(private readonly mediaScannerService: MediaScannerService) {}
 
   @Get()
   @UseGuards(AuthGuard, RolesGuard)

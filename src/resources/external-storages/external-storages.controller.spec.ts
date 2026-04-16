@@ -6,7 +6,7 @@ describe('ExternalStoragesController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ExternalStoragesController],
+      controllers: [ExternalStoragesController]
     }).compile();
 
     controller = module.get<ExternalStoragesController>(ExternalStoragesController);

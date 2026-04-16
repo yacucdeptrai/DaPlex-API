@@ -90,8 +90,7 @@ export class MediaDetails extends Media {
   @ApiProperty()
   @Expose()
   get backdropUrl(): string {
-    if (this.backdropPath?.startsWith('/'))
-      return `https://image.tmdb.org/t/p/original${this.backdropPath}`;
+    if (this.backdropPath?.startsWith('/')) return `https://image.tmdb.org/t/p/original${this.backdropPath}`;
     return this.backdropPath;
   }
 }

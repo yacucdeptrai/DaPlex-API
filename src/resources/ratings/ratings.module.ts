@@ -9,13 +9,9 @@ import { RatingsController } from './ratings.controller';
 import { MongooseConnection } from '../../enums';
 
 @Module({
-  imports: [
-    AuthModule,
-    forwardRef(() => MediaModule),
-    MongooseModule.forFeature([{ name: Rating.name, schema: RatingSchema }], MongooseConnection.DATABASE_A)
-  ],
+  imports: [AuthModule, forwardRef(() => MediaModule), MongooseModule.forFeature([{ name: Rating.name, schema: RatingSchema }], MongooseConnection.DATABASE_A)],
   controllers: [RatingsController],
   providers: [RatingsService],
   exports: [RatingsService]
 })
-export class RatingsModule { }
+export class RatingsModule {}

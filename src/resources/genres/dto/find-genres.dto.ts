@@ -14,9 +14,9 @@ export class FindGenresDto extends FindGenreDto {
     example: ['268016436369163264']
   })
   @Transform(({ value }) => transformBigInt(value), { toClassOnly: true })
-  @Transform(({ value }) => !Array.isArray(value) ? [value] : value, { toClassOnly: true })
+  @Transform(({ value }) => (!Array.isArray(value) ? [value] : value), { toClassOnly: true })
   @IsOptional({ context: { code: StatusCode.IS_NOT_EMPTY } })
-  @ArrayUnique(value => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((value) => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
   ids: bigint[];
 
   /*

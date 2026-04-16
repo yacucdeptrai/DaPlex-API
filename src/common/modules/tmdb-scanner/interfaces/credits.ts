@@ -6,10 +6,9 @@ export interface CreditSeason {
   season_number?: number;
 }
 
-
-export interface Media{
+export interface Media {
   i?: number;
-  name?:string;
+  name?: string;
   first_air_date?: string;
   vote_count?: number;
   overview?: string;
@@ -82,7 +81,6 @@ export interface Credits {
   crew: Crew[];
 }
 
-
 export interface Backdrop {
   aspect_ratio: number;
   file_path: string;
@@ -109,7 +107,6 @@ export interface Images {
   posters: Poster[];
 }
 
-
 export interface Video {
   id: string;
   iso_639_1: string;
@@ -132,7 +129,5 @@ export interface Keywords {
   keywords: Array<{
     id: number;
     name: string;
-  }>
-
+  }>;
 }
-

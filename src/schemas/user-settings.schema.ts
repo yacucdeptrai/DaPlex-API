@@ -2,9 +2,22 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 import {
-  MediaPlayerOptions, SubtitleOptions, HistoryOptions, HistoryListOptions, PlaylistListOptions,
-  RatingListOptions, MediaPlayerOptionsSchema, SubtitleOptionsSchema, HistoryOptionsSchema, HistoryListOptionsSchema,
-  PlaylistListOptionsSchema, RatingListOptionsSchema, PlaylistOptionsSchema, PlaylistOptions, RatingOptionsSchema, RatingOptions
+  MediaPlayerOptions,
+  SubtitleOptions,
+  HistoryOptions,
+  HistoryListOptions,
+  PlaylistListOptions,
+  RatingListOptions,
+  MediaPlayerOptionsSchema,
+  SubtitleOptionsSchema,
+  HistoryOptionsSchema,
+  HistoryListOptionsSchema,
+  PlaylistListOptionsSchema,
+  RatingListOptionsSchema,
+  PlaylistOptionsSchema,
+  PlaylistOptions,
+  RatingOptionsSchema,
+  RatingOptions
 } from './user-settings-options.schema';
 
 export type UserSettingsDocument = UserSettings & Document;

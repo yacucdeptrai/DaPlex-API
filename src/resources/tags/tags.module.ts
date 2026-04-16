@@ -11,15 +11,9 @@ import { MediaModule } from '../media/media.module';
 import { WsAdminModule } from '../ws-admin/ws-admin.module';
 
 @Module({
-  imports: [
-    AuthModule,
-    AuditLogModule,
-    forwardRef(() => MediaModule),
-    WsAdminModule,
-    MongooseModule.forFeature([{ name: MediaTag.name, schema: MediaTagSchema }], MongooseConnection.DATABASE_A)
-  ],
+  imports: [AuthModule, AuditLogModule, forwardRef(() => MediaModule), WsAdminModule, MongooseModule.forFeature([{ name: MediaTag.name, schema: MediaTagSchema }], MongooseConnection.DATABASE_A)],
   controllers: [TagsController],
   providers: [TagsService],
   exports: [TagsService]
 })
-export class TagsModule { }
+export class TagsModule {}

@@ -37,7 +37,7 @@ export class MongooseCursorPagination {
       facet.stage2.unshift({ $match: { $expr: pagingQuery } });
     }
     const aggregation: PipelineStage[] = [];
-    (this.search && this.fullTextSearch) && (this.filters.$text = { $search: this.search });
+    this.search && this.fullTextSearch && (this.filters.$text = { $search: this.search });
     !isEmptyObject(this.filters) && aggregation.push({ $match: this.filters });
     // Sort results depend on navigation type (next page, previous page)
     //const targetSortDirection = navType === 1 ? sortDirection : <1 | -1>(sortDirection * -1);
@@ -70,7 +70,9 @@ export class MongooseCursorPagination {
     const sortValue = convertToMongooseSort(this.sortQuery, this.sortEnum);
     if (!isEmptyObject(sortValue)) this.sort = sortValue;
     const [sortTarget, sortDirection] = this.parseSort();
-    const [preProjOptions, postProjOptions] = partition(options, function (o) { return !o.postProjection; });
+    const [preProjOptions, postProjOptions] = partition(options, function (o) {
+      return !o.postProjection;
+    });
     const lookupPipelines = createLookupPipeline(preProjOptions);
     const postLookupPipelines = createLookupPipeline(postProjOptions);
     const facet: PipelineStage.Facet['$facet'] = {
@@ -85,7 +87,7 @@ export class MongooseCursorPagination {
       facet.stage2.unshift({ $match: { $expr: pagingQuery } });
     }
     const aggregation: PipelineStage[] = [];
-    (this.search && this.fullTextSearch) && (this.filters.$text = { $search: this.search });
+    this.search && this.fullTextSearch && (this.filters.$text = { $search: this.search });
     !isEmptyObject(this.filters) && aggregation.push({ $match: this.filters });
     // Sort results depend on navigation type (next page, previous page)
     //const targetSortDirection = navType === 1 ? sortDirection : <1 | -1>(sortDirection * -1);
@@ -119,12 +121,7 @@ export class MongooseCursorPagination {
     const sortValue = convertToMongooseSort(this.sortQuery, this.sortEnum);
     if (!isEmptyObject(sortValue)) this.sort = sortValue;
     const lookupPipeline = this.createLookupOnlyPipeline(options);
-    const aggregation: PipelineStage[] = [
-      { $match: { _id: id } },
-      { $lookup: lookupPipeline },
-      { $unwind: `$${options.as}` },
-      { $replaceRoot: { newRoot: `$${options.as}` } }
-    ];
+    const aggregation: PipelineStage[] = [{ $match: { _id: id } }, { $lookup: lookupPipeline }, { $unwind: `$${options.as}` }, { $replaceRoot: { newRoot: `$${options.as}` } }];
     return aggregation;
   }
 
@@ -133,7 +130,9 @@ export class MongooseCursorPagination {
     let childrenLookupPipelines = [];
     let childrenPostLookupPipelines = [];
     if (options.children) {
-      const [preProjOptions, postProjOptions] = partition(options.children, function (o) { return !o.postProjection; });
+      const [preProjOptions, postProjOptions] = partition(options.children, function (o) {
+        return !o.postProjection;
+      });
       childrenLookupPipelines = createLookupPipeline(preProjOptions);
       childrenPostLookupPipelines = createLookupPipeline(postProjOptions);
     }
@@ -206,21 +205,25 @@ export class MongooseCursorPagination {
       { $replaceRoot: { newRoot: { $ifNull: [`$${parent}`, { '#placeholder#': 1 }] } } },
       { $match: { '#placeholder#': { $ne: 1 } } }
     );
-    (sortTarget && targetSortDirection) && aggregation.push({ $sort: this.sort });
+    sortTarget && targetSortDirection && aggregation.push({ $sort: this.sort });
     aggregation.push({ $facet: facet });
     // Query result depend on navigation type
     //const resultQuery = navType === 1 ? { $slice: ['$stage2', this.limit] } : { $reverseArray: { $slice: ['$stage2', this.limit] } };
-    const [preProjOptions, postProjOptions] = partition(options, function (o) { return !o.postProjection; });
+    const [preProjOptions, postProjOptions] = partition(options, function (o) {
+      return !o.postProjection;
+    });
     const lookupPipelines = createLookupPipeline(preProjOptions);
     const postLookupPipelines = createLookupPipeline(postProjOptions);
     const facet2: PipelineStage.Facet['$facet'] = {
-      stage1: [{
-        $project: {
-          count: '$stage1.count',
-          results: { $slice: ['$stage2', this.limit] },
-          hasNextPage: { $gt: [{ $size: '$stage2' }, this.limit] }
+      stage1: [
+        {
+          $project: {
+            count: '$stage1.count',
+            results: { $slice: ['$stage2', this.limit] },
+            hasNextPage: { $gt: [{ $size: '$stage2' }, this.limit] }
+          }
         }
-      }],
+      ],
       stage2: [{ $project: { [parent]: { $slice: ['$stage2', this.limit] } } }, ...lookupPipelines]
     };
     !isEmptyObject(this.fields) && facet2.stage2.push({ $project: this.fields });
@@ -248,27 +251,31 @@ export class MongooseCursorPagination {
   private getPageQuery(value: string | number, navType: number, sortDirection: number, sortTarget: string) {
     const castValue = this.tryCastToSchemaType(sortTarget, value);
     const convertQuery = [`$${sortTarget}`, castValue];
-    if (navType === 1) { // Next page
-      if (sortDirection === 1) { // Asc
-        return { $gt: convertQuery }
-      } else { // Desc
-        return { $lt: convertQuery }
+    if (navType === 1) {
+      // Next page
+      if (sortDirection === 1) {
+        // Asc
+        return { $gt: convertQuery };
+      } else {
+        // Desc
+        return { $lt: convertQuery };
       }
-    } else { // Previous page
-      if (sortDirection === 1) { // Asc
-        return { $lt: convertQuery }
-      } else { // Desc
-        return { $gt: convertQuery }
+    } else {
+      // Previous page
+      if (sortDirection === 1) {
+        // Asc
+        return { $lt: convertQuery };
+      } else {
+        // Desc
+        return { $gt: convertQuery };
       }
     }
   }
 
   private tryCastToSchemaType(field: string, value: any) {
-    if (!this.typeMap)
-      return value;
+    if (!this.typeMap) return value;
     const ctr = this.typeMap.get(field);
-    if ([String, Number, Boolean, BigInt].includes(ctr))
-      return ctr(value);
+    if ([String, Number, Boolean, BigInt].includes(ctr)) return ctr(value);
     return new ctr(value);
   }
 
@@ -276,7 +283,7 @@ export class MongooseCursorPagination {
     let sortTarget = this.sortEnum?.[0];
     let sortDirection: 1 | -1 = 1;
     if (!isEmptyObject(this.sort)) {
-      let firstSortKey = Object.keys(this.sort)[0];
+      const firstSortKey = Object.keys(this.sort)[0];
       sortTarget = firstSortKey;
       sortDirection = this.sort[firstSortKey];
     }
@@ -303,17 +310,23 @@ export class MongooseCursorPagination {
 
 export function getPageQuery(value: string | number, navType: number, sortDirection: number, sortTarget: string) {
   const convertQuery = [`$${sortTarget}`, value];
-  if (navType === 1) { // Next page
-    if (sortDirection === 1) { // Asc
-      return { $gt: convertQuery }
-    } else { // Desc
-      return { $lt: convertQuery }
+  if (navType === 1) {
+    // Next page
+    if (sortDirection === 1) {
+      // Asc
+      return { $gt: convertQuery };
+    } else {
+      // Desc
+      return { $lt: convertQuery };
     }
-  } else { // Previous page
-    if (sortDirection === 1) { // Asc
-      return { $lt: convertQuery }
-    } else { // Desc
-      return { $gt: convertQuery }
+  } else {
+    // Previous page
+    if (sortDirection === 1) {
+      // Asc
+      return { $lt: convertQuery };
+    } else {
+      // Desc
+      return { $gt: convertQuery };
     }
   }
 }

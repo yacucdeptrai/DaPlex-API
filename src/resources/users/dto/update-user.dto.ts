@@ -66,7 +66,7 @@ export class UpdateUserDto {
 
   @ApiProperty({
     type: String,
-    description: 'A valid password (matches regex ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]+$)',
+    description: 'A valid password (matches regex ^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Zd]+$)',
     minLength: 8,
     maxLength: 128,
     required: false
@@ -90,12 +90,15 @@ export class UpdateUserDto {
 
   @ApiProperty({
     type: Boolean,
-    description: 'Generate a random password and send a reset password link to user\'s email (restore user account)',
+    description: "Generate a random password and send a reset password link to user's email (restore user account)",
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   @IsBoolean()
   restoreAccount: boolean;
@@ -105,9 +108,12 @@ export class UpdateUserDto {
     description: 'Account ban status, for users with granted permissions',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   banned: boolean;
 }

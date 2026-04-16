@@ -5,11 +5,10 @@ import { AuthService } from '../resources/auth/auth.service';
 @Injectable()
 @ValidatorConstraint({ async: true })
 export class UsernameExistConstraint implements ValidatorConstraintInterface {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
   async validate(username: any) {
     const user = await this.authService.findByUsername(username);
-    if (user)
-      return false;
+    if (user) return false;
     return true;
   }
 
@@ -25,7 +24,7 @@ export function UsernameExist(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       constraints: [],
-      validator: UsernameExistConstraint,
+      validator: UsernameExistConstraint
     });
   };
 }

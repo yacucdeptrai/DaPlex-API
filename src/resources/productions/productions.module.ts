@@ -11,15 +11,9 @@ import { ProductionsController } from './productions.controller';
 import { MongooseConnection } from '../../enums';
 
 @Module({
-  imports: [
-    AuthModule,
-    AuditLogModule,
-    forwardRef(() => MediaModule),
-    WsAdminModule,
-    MongooseModule.forFeature([{ name: Production.name, schema: ProductionSchema }], MongooseConnection.DATABASE_A)
-  ],
+  imports: [AuthModule, AuditLogModule, forwardRef(() => MediaModule), WsAdminModule, MongooseModule.forFeature([{ name: Production.name, schema: ProductionSchema }], MongooseConnection.DATABASE_A)],
   controllers: [ProductionsController],
   providers: [ProductionsService],
   exports: [ProductionsService]
 })
-export class ProductionsModule { }
+export class ProductionsModule {}

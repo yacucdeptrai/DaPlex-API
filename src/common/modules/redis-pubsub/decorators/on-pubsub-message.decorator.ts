@@ -6,9 +6,7 @@ export interface OnPubSubMessageEventMetadata {
   channel: string;
 }
 
-export const OnPubSubMessage = (
-  channel: string,
-): MethodDecorator =>
+export const OnPubSubMessage = (channel: string): MethodDecorator =>
   SetMetadata(ON_PUBSUB_MESSAGE_EVENT_METADATA, {
-    channel: channel,
+    channel: channel
   } as OnPubSubMessageEventMetadata);

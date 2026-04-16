@@ -64,9 +64,12 @@ export class SearchMediaDto extends MediaProviderDto {
     required: false
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsBoolean()
   includeAdult: boolean;
 }

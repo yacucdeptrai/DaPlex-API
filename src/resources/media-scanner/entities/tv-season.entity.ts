@@ -23,8 +23,7 @@ export class TVSeason {
 
   @Expose()
   get posterUrl(): string {
-    if (this.posterPath?.startsWith('/'))
-      return `https://image.tmdb.org/t/p/original${this.posterPath}`;
+    if (this.posterPath?.startsWith('/')) return `https://image.tmdb.org/t/p/original${this.posterPath}`;
     return this.posterPath;
   }
 }

@@ -21,7 +21,7 @@ export function PropertyGt(property: string, validationOptions?: ValidationOptio
       propertyName: propertyName,
       options: validationOptions,
       constraints: [property],
-      validator: PropertyGtConstraint,
+      validator: PropertyGtConstraint
     });
   };
 }

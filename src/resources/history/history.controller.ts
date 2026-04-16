@@ -1,5 +1,17 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors, Delete, Param, Patch, HttpCode } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 
 import { UpdateHistoryDto, CursorPageHistoryDto, FindWatchTimeDto, UpdateWatchTimeDto } from './dto';
 import { CursorPaginated } from '../../common/entities';
@@ -17,7 +29,7 @@ import { AuthUserDto } from '../users';
 @ApiExtraModels(CursorPaginated, History, HistoryGroup)
 @Controller()
 export class HistoryController {
-  constructor(private readonly historyService: HistoryService) { }
+  constructor(private readonly historyService: HistoryService) {}
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
@@ -32,11 +44,9 @@ export class HistoryController {
         {
           properties: {
             results: {
-              type: 'array', items: {
-                allOf: [
-                  { $ref: getSchemaPath(HistoryGroup) },
-                  { properties: { historyList: { type: 'array', items: { $ref: getSchemaPath(History) } } } }
-                ]
+              type: 'array',
+              items: {
+                allOf: [{ $ref: getSchemaPath(HistoryGroup) }, { properties: { historyList: { type: 'array', items: { $ref: getSchemaPath(History) } } } }]
               }
             }
           }
@@ -66,7 +76,7 @@ export class HistoryController {
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get watch time of a media ' })
-  @ApiOkResponse({ description: 'Return a watch time of a media', })
+  @ApiOkResponse({ description: 'Return a watch time of a media' })
   @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   findOneWatchTime(@AuthUser() authUser: AuthUserDto, @Query() findWatchTimeDto: FindWatchTimeDto) {
     return this.historyService.findOneWatchTime(findWatchTimeDto, authUser);

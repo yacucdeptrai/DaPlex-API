@@ -1,8 +1,36 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Query, HttpCode, UseInterceptors, ClassSerializerInterceptor, Patch } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiExtraModels, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiServiceUnavailableResponse, ApiTags, ApiUnauthorizedResponse, ApiUnprocessableEntityResponse, ApiUnsupportedMediaTypeResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
+  ApiUnsupportedMediaTypeResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 
 import { PlaylistsService } from './playlists.service';
-import { AddPlaylistItemDto, CreatePlaylistDto, FindAddToPlaylistDto, CursorPagePlaylistItemsDto, CursorPagePlaylistsDto, DeletePlaylistItemDto, UpdatePlaylistDto, AddAllPlaylistItemsDto } from './dto';
+import {
+  AddPlaylistItemDto,
+  CreatePlaylistDto,
+  FindAddToPlaylistDto,
+  CursorPagePlaylistItemsDto,
+  CursorPagePlaylistsDto,
+  DeletePlaylistItemDto,
+  UpdatePlaylistDto,
+  AddAllPlaylistItemsDto
+} from './dto';
 import { Playlist, PlaylistItem, PlaylistToAdd } from './entities';
 import { AuthGuardOptions } from '../../decorators/auth-guard-options.decorator';
 import { RolesGuardOptions } from '../../decorators/roles-guard-options.decorator';
@@ -21,15 +49,18 @@ import { CursorPaginated } from '../../common/entities';
 import { RateLimitInterceptor, UploadImageInterceptor } from '../../common/interceptors';
 import { ParseBigIntPipe } from '../../common/pipes';
 import {
-  UPLOAD_PLAYLIST_THUMBNAIL_MAX_SIZE, UPLOAD_PLAYLIST_THUMBNAIL_MIN_HEIGHT, UPLOAD_PLAYLIST_THUMBNAIL_MIN_WIDTH,
-  UPLOAD_PLAYLIST_THUMBNAIL_RATIO, UPLOAD_PLAYLIST_THUMBNAIL_TYPES
+  UPLOAD_PLAYLIST_THUMBNAIL_MAX_SIZE,
+  UPLOAD_PLAYLIST_THUMBNAIL_MIN_HEIGHT,
+  UPLOAD_PLAYLIST_THUMBNAIL_MIN_WIDTH,
+  UPLOAD_PLAYLIST_THUMBNAIL_RATIO,
+  UPLOAD_PLAYLIST_THUMBNAIL_TYPES
 } from '../../config';
 
 @ApiTags('Playlists')
 @ApiExtraModels(Playlist)
 @Controller()
 export class PlaylistsController {
-  constructor(private readonly playlistsService: PlaylistsService) { }
+  constructor(private readonly playlistsService: PlaylistsService) {}
 
   @Post()
   @UseInterceptors(ClassSerializerInterceptor)
@@ -54,10 +85,7 @@ export class PlaylistsController {
   @ApiOkResponse({
     description: 'Return a list of media in your playlist',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(CursorPaginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Playlist) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(CursorPaginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(Playlist) } } } }]
     }
   })
   @ApiNotFoundResponse({ description: 'The resource could not be found', type: ErrorMessage })
@@ -109,14 +137,18 @@ export class PlaylistsController {
 
   @Patch(':id/thumbnail')
   @UseGuards(AuthGuard)
-  @UseInterceptors(RateLimitInterceptor, ClassSerializerInterceptor, new UploadImageInterceptor({
-    maxSize: UPLOAD_PLAYLIST_THUMBNAIL_MAX_SIZE,
-    mimeTypes: UPLOAD_PLAYLIST_THUMBNAIL_TYPES,
-    minWidth: UPLOAD_PLAYLIST_THUMBNAIL_MIN_WIDTH,
-    minHeight: UPLOAD_PLAYLIST_THUMBNAIL_MIN_HEIGHT,
-    ratio: UPLOAD_PLAYLIST_THUMBNAIL_RATIO,
-    autoResize: true
-  }))
+  @UseInterceptors(
+    RateLimitInterceptor,
+    ClassSerializerInterceptor,
+    new UploadImageInterceptor({
+      maxSize: UPLOAD_PLAYLIST_THUMBNAIL_MAX_SIZE,
+      mimeTypes: UPLOAD_PLAYLIST_THUMBNAIL_TYPES,
+      minWidth: UPLOAD_PLAYLIST_THUMBNAIL_MIN_WIDTH,
+      minHeight: UPLOAD_PLAYLIST_THUMBNAIL_MIN_HEIGHT,
+      ratio: UPLOAD_PLAYLIST_THUMBNAIL_RATIO,
+      autoResize: true
+    })
+  )
   @RateLimitOptions({ catchMode: 'success', ttl: 600, limit: 3 })
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: String })
@@ -216,7 +248,12 @@ export class PlaylistsController {
     }
   })
   @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
-  findAllItems(@AuthUser() authUser: AuthUserDto, @RequestHeaders(HeadersDto) headers: HeadersDto, @Param('id', ParseBigIntPipe) id: bigint, @Query() findPlaylistItemsDto: CursorPagePlaylistItemsDto) {
+  findAllItems(
+    @AuthUser() authUser: AuthUserDto,
+    @RequestHeaders(HeadersDto) headers: HeadersDto,
+    @Param('id', ParseBigIntPipe) id: bigint,
+    @Query() findPlaylistItemsDto: CursorPagePlaylistItemsDto
+  ) {
     return this.playlistsService.findAllItems(id, findPlaylistItemsDto, headers, authUser);
   }
 

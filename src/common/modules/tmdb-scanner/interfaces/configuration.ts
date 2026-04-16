@@ -1,4 +1,3 @@
-
 export interface Images {
   base_url: string;
   secure_base_url: string;
@@ -14,7 +13,6 @@ export interface Configuration {
   change_keys: ChangeKeys[];
 }
 
-
 export const enum BackdropSizes {
   W300 = 'w300',
   W780 = 'w780',
@@ -23,19 +21,19 @@ export const enum BackdropSizes {
 }
 
 export const enum LogoSizes {
-  W45= 'w45',
-  W92= 'w92',
-  W154= 'w154',
-  W185= 'w185',
+  W45 = 'w45',
+  W92 = 'w92',
+  W154 = 'w154',
+  W185 = 'w185',
   W300 = 'w300',
   W500 = 'w500',
   ORIGINAL = 'original'
 }
 
 export const enum PosterSizes {
-  W92= 'w92',
-  W154= 'w154',
-  W185='w185',
+  W92 = 'w92',
+  W154 = 'w154',
+  W185 = 'w185',
   W300 = 'w300',
   W500 = 'w500',
   W780 = 'w780',
@@ -49,9 +47,8 @@ export const enum ProfileSizes {
   ORIGINAL = 'original'
 }
 
-
 export const enum StillSizes {
-  W92= 'w92',
+  W92 = 'w92',
   W185 = 'w185',
   W300 = 'w300',
   ORIGINAL = 'original'

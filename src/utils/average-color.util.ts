@@ -8,7 +8,7 @@ const fac = new FastAverageColor();
 const MIN_SIZE = 10;
 const MAX_SIZE = 100;
 
-function prepareSizeAndPosition(originalSize: { width: number; height: number; }, options: FastAverageColorOptions) {
+function prepareSizeAndPosition(originalSize: { width: number; height: number }, options: FastAverageColorOptions) {
   const srcLeft = options.left ?? 0;
   const srcTop = options.top ?? 0;
   const srcWidth = options.width ?? originalSize.width;
@@ -40,10 +40,7 @@ function prepareSizeAndPosition(originalSize: { width: number; height: number; }
     destWidth = Math.round(destHeight / factor);
   }
 
-  if (
-    destWidth > srcWidth || destHeight > srcHeight ||
-    destWidth < MIN_SIZE || destHeight < MIN_SIZE
-  ) {
+  if (destWidth > srcWidth || destHeight > srcHeight || destWidth < MIN_SIZE || destHeight < MIN_SIZE) {
     destWidth = srcWidth;
     destHeight = srcHeight;
   }
@@ -90,17 +87,22 @@ export async function getAverageColor(resource: string | Buffer, options: FastAv
   const metadata = await pipe.metadata();
 
   if (metadata.width && metadata.height) {
-    const size = prepareSizeAndPosition({
-      width: metadata.width,
-      height: metadata.height,
-    }, options);
+    const size = prepareSizeAndPosition(
+      {
+        width: metadata.width,
+        height: metadata.height
+      },
+      options
+    );
 
-    pipe = pipe.extract({
-      left,
-      top,
-      width: size.srcWidth,
-      height: size.srcHeight,
-    }).resize(size.destWidth, size.destHeight);
+    pipe = pipe
+      .extract({
+        left,
+        top,
+        width: size.srcWidth,
+        height: size.srcHeight
+      })
+      .resize(size.destWidth, size.destHeight);
   }
 
   const buffer = await pipe.ensureAlpha().raw().toBuffer();

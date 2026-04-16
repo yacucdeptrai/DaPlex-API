@@ -10,17 +10,13 @@ export class FirebaseModule {
   static forRoot(options: FirebaseOptions): DynamicModule {
     const optionsProvider: ValueProvider = {
       provide: FIREBASE_OPTIONS,
-      useValue: options,
+      useValue: options
     };
     const logger = new Logger('FirebaseService');
     return {
       module: FirebaseModule,
-      providers: [
-        { provide: Logger, useValue: logger },
-        FirebaseService,
-        optionsProvider
-      ],
-      exports: [FirebaseService],
+      providers: [{ provide: Logger, useValue: logger }, FirebaseService, optionsProvider],
+      exports: [FirebaseService]
     };
   }
 }

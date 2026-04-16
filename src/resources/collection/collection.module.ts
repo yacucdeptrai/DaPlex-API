@@ -24,4 +24,4 @@ import { MongooseConnection } from '../../enums';
   providers: [CollectionService],
   exports: [CollectionService]
 })
-export class CollectionModule { }
+export class CollectionModule {}

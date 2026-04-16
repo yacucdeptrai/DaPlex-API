@@ -1,3 +1,3 @@
 import { OffsetPaginateDto } from '../../../common/dto';
 
-export class OffsetPageChapterTypesDto extends OffsetPaginateDto { };
+export class OffsetPageChapterTypesDto extends OffsetPaginateDto {}

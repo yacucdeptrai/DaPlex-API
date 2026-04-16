@@ -117,4 +117,4 @@ const routes: Routes = [
     ChapterTypeModule
   ]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

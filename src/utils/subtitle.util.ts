@@ -7,7 +7,7 @@ export function readFirstLine(filePath: string) {
     let acc = '';
     let pos = 0;
     let index: number;
-    rs.on('data', chunk => {
+    rs.on('data', (chunk) => {
       index = chunk.indexOf('\n');
       acc += chunk;
       if (index === -1) {
@@ -17,7 +17,7 @@ export function readFirstLine(filePath: string) {
         rs.close();
       }
     })
-      .on('close', () => resolve(acc.slice(acc.charCodeAt(0) === 0xFEFF ? 1 : 0, pos)))
-      .on('error', err => reject(err));
+      .on('close', () => resolve(acc.slice(acc.charCodeAt(0) === 0xfeff ? 1 : 0, pos)))
+      .on('error', (err) => reject(err));
   });
 }

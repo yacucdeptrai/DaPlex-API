@@ -6,7 +6,7 @@ describe('GoogleDriveService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GoogleDriveService],
+      providers: [GoogleDriveService]
     }).compile();
 
     service = module.get<GoogleDriveService>(GoogleDriveService);

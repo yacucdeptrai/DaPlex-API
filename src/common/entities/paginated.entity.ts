@@ -14,18 +14,15 @@ export class Paginated<T> {
   page: number = 0;
 
   @ApiProperty()
-  @Type(options => (options.newObject as Paginated<T>).type)
+  @Type((options) => (options.newObject as Paginated<T>).type)
   results: T[] = [];
 
   @Exclude()
   private type: Function;
 
   constructor(options?: IPaginated<Paginated<T>>) {
-    if (!options)
-      return;
-    else if (options.type)
-      this.type = options.type;
-    else if (options.partial)
-      Object.assign(this, options.partial);
+    if (!options) return;
+    else if (options.type) this.type = options.type;
+    else if (options.partial) Object.assign(this, options.partial);
   }
 }

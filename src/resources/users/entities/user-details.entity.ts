@@ -33,42 +33,36 @@ export class UserDetails extends User {
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get bannerUrl(): string {
-    if (this.banner)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`, 1200, this.banner.mimeType)
+    if (this.banner) return createCloudflareR2ProxyUrl(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`, 1200, this.banner.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get thumbnailBannerUrl(): string {
-    if (this.banner)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`, 800, this.banner.mimeType)
+    if (this.banner) return createCloudflareR2ProxyUrl(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`, 800, this.banner.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get smallBannerUrl(): string {
-    if (this.banner)
-      return createCloudflareR2ProxyUrl(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`, 500, this.banner.mimeType)
+    if (this.banner) return createCloudflareR2ProxyUrl(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`, 500, this.banner.mimeType);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get fullBannerUrl(): string {
-    if (this.banner)
-      return createCloudflareR2Url(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`)
+    if (this.banner) return createCloudflareR2Url(CloudflareR2Container.BANNERS, `${this.banner._id}/${this.banner.name}`);
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get bannerColor(): number {
-    if (this.banner)
-      return this.banner.color;
+    if (this.banner) return this.banner.color;
   }
 
   @ApiProperty()
   @Expose({ toPlainOnly: true })
   get bannerPlaceholder(): string {
-    if (this.banner)
-      return this.banner.placeholder;
+    if (this.banner) return this.banner.placeholder;
   }
 }

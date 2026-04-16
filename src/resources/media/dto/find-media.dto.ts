@@ -10,9 +10,12 @@ export class FindMediaDto {
     description: 'Include hidden episodes (unlisted and private, need manage media permission)',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeHiddenEps: boolean;
 
@@ -21,9 +24,12 @@ export class FindMediaDto {
     description: 'Include unprocessed episodes, need manage media permission',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeUnprocessedEps: boolean;
 
@@ -32,9 +38,12 @@ export class FindMediaDto {
     description: 'Include hidden media when including the inCollections field (unlisted and private, need manage media permission)',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeHiddenMedia: boolean;
 
@@ -43,9 +52,12 @@ export class FindMediaDto {
     description: 'Include unprocessed media when including the inCollections field, need manage media permission',
     required: false
   })
-  @Transform(({ value }) => {
-    return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-  }, { toClassOnly: true })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
   @IsOptional()
   includeUnprocessedMedia: boolean;
 

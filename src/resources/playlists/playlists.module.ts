@@ -10,14 +10,9 @@ import { CloudflareR2Module } from '../../common/modules/cloudflare-r2';
 import { MongooseConnection } from '../../enums';
 
 @Module({
-  imports: [
-    AuthModule,
-    forwardRef(() => MediaModule),
-    CloudflareR2Module,
-    MongooseModule.forFeature([{ name: Playlist.name, schema: PlaylistSchema }], MongooseConnection.DATABASE_A)
-  ],
+  imports: [AuthModule, forwardRef(() => MediaModule), CloudflareR2Module, MongooseModule.forFeature([{ name: Playlist.name, schema: PlaylistSchema }], MongooseConnection.DATABASE_A)],
   controllers: [PlaylistsController],
   providers: [PlaylistsService],
   exports: [PlaylistsService]
 })
-export class PlaylistsModule { }
+export class PlaylistsModule {}

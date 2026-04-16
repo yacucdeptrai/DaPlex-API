@@ -22,10 +22,18 @@ export class MediaStorage {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: function () { return typeof this.path === 'string' ? false : true; } })
+  @Prop({
+    required: function () {
+      return typeof this.path === 'string' ? false : true;
+    }
+  })
   path: string;
 
-  @Prop({ required: function () { return this.type === MediaStorageType.STREAM_VIDEO; } })
+  @Prop({
+    required: function () {
+      return this.type === MediaStorageType.STREAM_VIDEO;
+    }
+  })
   quality: number;
 
   @Prop()

@@ -17,10 +17,14 @@ import { LookupOptions, MongooseOffsetPagination, createSnowFlakeId, escapeRegEx
 
 @Injectable()
 export class RolesService {
-  constructor(@InjectModel(Role.name, MongooseConnection.DATABASE_A) private roleModel: Model<RoleDocument>,
+  constructor(
+    @InjectModel(Role.name, MongooseConnection.DATABASE_A) private roleModel: Model<RoleDocument>,
     @InjectConnection(MongooseConnection.DATABASE_A) private mongooseConnection: Connection,
-    private usersService: UsersService, private authService: AuthService, private auditLogService: AuditLogService,
-    private permissionsService: PermissionsService) { }
+    private usersService: UsersService,
+    private authService: AuthService,
+    private auditLogService: AuditLogService,
+    private permissionsService: PermissionsService
+  ) {}
 
   async create(createRoleDto: CreateRoleDto, authUser: AuthUserDto) {
     const role = new this.roleModel(createRoleDto);
@@ -29,10 +33,7 @@ export class RolesService {
     role.position = latestRole?.position ? latestRole.position + 1 : 1;
     const auditLog = new AuditLogBuilder(authUser._id, role._id, Role.name, AuditLogType.ROLE_CREATE);
     auditLog.getChangesFrom(role, ['users']);
-    await Promise.all([
-      role.save(),
-      this.auditLogService.createLogFromBuilder(auditLog)
-    ]);
+    await Promise.all([role.save(), this.auditLogService.createLogFromBuilder(auditLog)]);
     return role.toObject();
   }
 
@@ -47,19 +48,15 @@ export class RolesService {
   }
 
   async findOne(id: bigint) {
-    const role = await this.roleModel.findOne({ _id: id }, { _id: 1, name: 1, color: 1, permissions: 1, position: 1, createdAt: 1, updatedAt: 1 })
-      .lean().exec();
-    if (!role)
-      throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
+    const role = await this.roleModel.findOne({ _id: id }, { _id: 1, name: 1, color: 1, permissions: 1, position: 1, createdAt: 1, updatedAt: 1 }).lean().exec();
+    if (!role) throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
     return role;
   }
 
   async update(id: bigint, updateRoleDto: UpdateRoleDto, authUser: AuthUserDto) {
-    if (!Object.keys(updateRoleDto).length)
-      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (!Object.keys(updateRoleDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const role = await this.roleModel.findOne({ _id: id }).exec();
-    if (!role)
-      throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
+    if (!role) throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
     if (!this.permissionsService.canEditRole(authUser, role))
       throw new HttpException({ code: StatusCode.ROLE_PRIORITY, message: 'You do not have permission to update this role' }, HttpStatus.FORBIDDEN);
     const auditLog = new AuditLogBuilder(authUser._id, role._id, Role.name, AuditLogType.ROLE_UPDATE);
@@ -71,9 +68,8 @@ export class RolesService {
     }
     if (updateRoleDto.permissions != undefined) {
       if (!this.permissionsService.canEditPermissions(authUser, role.permissions, updateRoleDto.permissions))
-        throw new HttpException({ code: StatusCode.PERMISSION_RESTRICTED, message: 'You cannot edit permissions that you don\'t have' }, HttpStatus.FORBIDDEN);
-      else
-        role.permissions = updateRoleDto.permissions;
+        throw new HttpException({ code: StatusCode.PERMISSION_RESTRICTED, message: "You cannot edit permissions that you don't have" }, HttpStatus.FORBIDDEN);
+      else role.permissions = updateRoleDto.permissions;
     }
     if (updateRoleDto.position != undefined) {
       const latestPosition = await this.roleModel.findOne({}).sort({ position: -1 }).lean().exec();
@@ -108,10 +104,7 @@ export class RolesService {
       }
     }
     auditLog.getChangesFrom(role, ['users']);
-    await Promise.all([
-      role.save(),
-      this.auditLogService.createLogFromBuilder(auditLog)
-    ]);
+    await Promise.all([role.save(), this.auditLogService.createLogFromBuilder(auditLog)]);
     await this.authService.clearCachedAuthUsers(<any[]>role.users);
     const roleLean = role.toObject();
     roleLean.users = undefined;
@@ -120,20 +113,21 @@ export class RolesService {
 
   async remove(id: bigint, authUser: AuthUserDto) {
     const role = await this.roleModel.findOne({ _id: id }).select({ users: 0 }).lean().exec();
-    if (!role)
-      throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
+    if (!role) throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
     if (!this.permissionsService.canEditRole(authUser, role))
       throw new HttpException({ code: StatusCode.ROLE_PRIORITY, message: 'You do not have permission to delete this role' }, HttpStatus.FORBIDDEN);
     const session = await this.mongooseConnection.startSession();
-    await session.withTransaction(async () => {
-      const deletedRole = await this.roleModel.findOneAndDelete({ _id: id }, { session }).lean();
-      // Remove all references and caches
-      await Promise.all([
-        this.usersService.deleteRoleUsers(deletedRole._id, deletedRole.users, session),
-        this.authService.clearCachedAuthUsers(<any[]>role.users),
-        this.auditLogService.createLog(authUser._id, role._id, Role.name, AuditLogType.ROLE_DELETE)
-      ]);
-    }).finally(() => session.endSession().catch(() => { }));
+    await session
+      .withTransaction(async () => {
+        const deletedRole = await this.roleModel.findOneAndDelete({ _id: id }, { session }).lean();
+        // Remove all references and caches
+        await Promise.all([
+          this.usersService.deleteRoleUsers(deletedRole._id, deletedRole.users, session),
+          this.authService.clearCachedAuthUsers(<any[]>role.users),
+          this.auditLogService.createLog(authUser._id, role._id, Role.name, AuditLogType.ROLE_DELETE)
+        ]);
+      })
+      .finally(() => session.endSession().catch(() => {}));
   }
 
   async findAllUsers(id: bigint, paginateDto: PaginateDto) {
@@ -157,35 +151,35 @@ export class RolesService {
 
   async updateRoleUsers(id: bigint, updateRoleUsersDto: UpdateRoleUsersDto, authUser: AuthUserDto) {
     const role = await this.roleModel.findOne({ _id: id }).select({ users: 0 }).lean().exec();
-    if (!role)
-      throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
+    if (!role) throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Role not found' }, HttpStatus.NOT_FOUND);
     if (!this.permissionsService.canEditRole(authUser, role))
       throw new HttpException({ code: StatusCode.ROLE_PRIORITY, message: 'The role you are trying to update is higher than your roles' }, HttpStatus.FORBIDDEN);
     const { userIds } = updateRoleUsersDto;
     if (userIds.length) {
       const userCount = await this.usersService.countByIds(userIds);
-      if (userCount !== userIds.length)
-        throw new HttpException({ code: StatusCode.USERS_NOT_FOUND, message: 'Cannot find all the required users' }, HttpStatus.BAD_REQUEST);
+      if (userCount !== userIds.length) throw new HttpException({ code: StatusCode.USERS_NOT_FOUND, message: 'Cannot find all the required users' }, HttpStatus.BAD_REQUEST);
     }
     const session = await this.mongooseConnection.startSession();
-    await session.withTransaction(async () => {
-      const oldRole = await this.roleModel.findOneAndUpdate({ _id: id }, { users: userIds }).lean().session(session);
-      const roleUsers: bigint[] = <any[]>oldRole.users || [];
-      const newUsers = userIds.filter(e => !roleUsers.includes(e));
-      const oldUsers = roleUsers.filter(e => !userIds.includes(e));
-      await this.usersService.updateRoleUsers(id, newUsers, oldUsers, session);
-      await this.authService.clearCachedAuthUsers([...oldUsers, ...newUsers]);
-      if (newUsers.length || oldUsers.length) {
-        const auditLog = new AuditLogBuilder(authUser._id, role._id, Role.name, AuditLogType.ROLE_MEMBER_UPDATE);
-        newUsers.forEach(user => {
-          auditLog.appendChange('users', user);
-        });
-        oldUsers.forEach(user => {
-          auditLog.appendChange('users', undefined, user);
-        });
-        await this.auditLogService.createLogFromBuilder(auditLog);
-      }
-    }).finally(() => session.endSession().catch(() => { }));
+    await session
+      .withTransaction(async () => {
+        const oldRole = await this.roleModel.findOneAndUpdate({ _id: id }, { users: userIds }).lean().session(session);
+        const roleUsers: bigint[] = <any[]>oldRole.users || [];
+        const newUsers = userIds.filter((e) => !roleUsers.includes(e));
+        const oldUsers = roleUsers.filter((e) => !userIds.includes(e));
+        await this.usersService.updateRoleUsers(id, newUsers, oldUsers, session);
+        await this.authService.clearCachedAuthUsers([...oldUsers, ...newUsers]);
+        if (newUsers.length || oldUsers.length) {
+          const auditLog = new AuditLogBuilder(authUser._id, role._id, Role.name, AuditLogType.ROLE_MEMBER_UPDATE);
+          newUsers.forEach((user) => {
+            auditLog.appendChange('users', user);
+          });
+          oldUsers.forEach((user) => {
+            auditLog.appendChange('users', undefined, user);
+          });
+          await this.auditLogService.createLogFromBuilder(auditLog);
+        }
+      })
+      .finally(() => session.endSession().catch(() => {}));
     return { users: userIds };
   }
 }

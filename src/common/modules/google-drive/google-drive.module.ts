@@ -6,12 +6,8 @@ import { SettingsModule } from '../../../resources/settings/settings.module';
 import { GoogleDriveService } from './google-drive.service';
 
 @Module({
-  imports: [
-    HttpModule,
-    SettingsModule,
-    ExternalStoragesModule
-  ],
+  imports: [HttpModule, SettingsModule, ExternalStoragesModule],
   providers: [GoogleDriveService],
   exports: [GoogleDriveService]
 })
-export class GoogleDriveModule { }
+export class GoogleDriveModule {}

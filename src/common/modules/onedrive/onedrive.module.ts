@@ -6,12 +6,8 @@ import { SettingsModule } from '../../../resources/settings/settings.module';
 import { OnedriveService } from './onedrive.service';
 
 @Module({
-  imports: [
-    HttpModule,
-    forwardRef(() => SettingsModule),
-    forwardRef(() => ExternalStoragesModule)
-  ],
+  imports: [HttpModule, forwardRef(() => SettingsModule), forwardRef(() => ExternalStoragesModule)],
   providers: [OnedriveService],
   exports: [OnedriveService]
 })
-export class OnedriveModule { }
+export class OnedriveModule {}

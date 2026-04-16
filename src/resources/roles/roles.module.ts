@@ -10,13 +10,8 @@ import { Role, RoleSchema } from '../../schemas';
 import { MongooseConnection } from '../../enums';
 
 @Module({
-  imports: [
-    AuthModule,
-    AuditLogModule,
-    UsersModule,
-    MongooseModule.forFeature([{ name: Role.name, schema: RoleSchema }], MongooseConnection.DATABASE_A)
-  ],
+  imports: [AuthModule, AuditLogModule, UsersModule, MongooseModule.forFeature([{ name: Role.name, schema: RoleSchema }], MongooseConnection.DATABASE_A)],
   controllers: [RolesController],
   providers: [RolesService]
 })
-export class RolesModule { }
+export class RolesModule {}

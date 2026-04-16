@@ -62,7 +62,7 @@ export class AddStorageDto {
     description: 'Api refresh token'
   })
   @Type(() => String)
-  @IsOptionalIf(o => o.kind !== CloudStorage.ONEDRIVE)
+  @IsOptionalIf((o) => o.kind !== CloudStorage.ONEDRIVE)
   @IsNotEmpty({ context: { code: StatusCode.IS_NOT_EMPTY } })
   @MaxLength(4096, { context: { code: StatusCode.MAX_LENGTH } })
   refreshToken: string;
@@ -73,7 +73,7 @@ export class AddStorageDto {
     required: false
   })
   @Type(() => Date)
-  @ValidateIf(o => o.accessToken)
+  @ValidateIf((o) => o.accessToken)
   @IsDate({ context: { code: StatusCode.IS_DATE } })
   expiry: Date;
 
@@ -103,7 +103,7 @@ export class AddStorageDto {
     required: false
   })
   @Type(() => String)
-  @IsOptionalIf(o => o.kind !== CloudStorage.ONEDRIVE)
+  @IsOptionalIf((o) => o.kind !== CloudStorage.ONEDRIVE)
   @IsUrl({ require_protocol: true }, { context: { code: StatusCode.IS_URL } })
   publicUrl: string;
 

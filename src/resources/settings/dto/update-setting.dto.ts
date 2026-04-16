@@ -25,7 +25,7 @@ export class UpdateSettingDto {
   @Transform(({ value }) => transformBigInt(value), { toClassOnly: true })
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(s => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((s) => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
   mediaSourceStorages: bigint[];
 
   @ApiProperty({
@@ -36,7 +36,7 @@ export class UpdateSettingDto {
   @Transform(({ value }) => transformBigInt(value), { toClassOnly: true })
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(s => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((s) => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
   linkedMediaSourceStorages: bigint[];
 
   @ApiProperty({
@@ -128,7 +128,7 @@ export class UpdateSettingDto {
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
   @IsNumber({}, { each: true, context: { code: StatusCode.IS_NUMBER_ARRAY } })
-  @ArrayUnique(s => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((s) => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
   videoQualityList: number[];
 
   @ApiProperty({
@@ -139,7 +139,7 @@ export class UpdateSettingDto {
   @IsOptional()
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
   @IsNumber({}, { each: true, context: { code: StatusCode.IS_NUMBER_ARRAY } })
-  @ArrayUnique(s => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((s) => s, { context: { code: StatusCode.ARRAY_UNIQUE } })
   videoNextGenQualityList: number[];
 
   @ApiProperty({
@@ -150,5 +150,5 @@ export class UpdateSettingDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  videoEncodingSettings: EncodingSetting[]
+  videoEncodingSettings: EncodingSetting[];
 }

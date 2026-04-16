@@ -8,7 +8,7 @@ import { MongooseConnection } from '../../enums';
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name, MongooseConnection.DATABASE_B) private notificationModel: Model<NotificationDocument>) { }
+  constructor(@InjectModel(Notification.name, MongooseConnection.DATABASE_B) private notificationModel: Model<NotificationDocument>) {}
 
   create(createNotificationDto: CreateNotificationDto) {
     return 'This action adds a new notification';

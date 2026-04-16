@@ -1,5 +1,17 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ClassSerializerInterceptor, HttpCode, Query } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiForbiddenResponse, ApiNoContentResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  getSchemaPath
+} from '@nestjs/swagger';
 
 import { ChapterTypeService } from './chapter-type.service';
 import { CreateChapterTypeDto, OffsetPageChapterTypesDto, UpdateChapterTypeDto } from './dto';
@@ -20,7 +32,7 @@ import { UserPermission } from '../../enums';
 @ApiTags('Chapter Types')
 @Controller()
 export class ChapterTypeController {
-  constructor(private readonly chapterTypeService: ChapterTypeService) { }
+  constructor(private readonly chapterTypeService: ChapterTypeService) {}
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
@@ -44,10 +56,7 @@ export class ChapterTypeController {
   @ApiOkResponse({
     description: 'Return a list of chapter types',
     schema: {
-      allOf: [
-        { $ref: getSchemaPath(Paginated) },
-        { properties: { results: { type: 'array', items: { $ref: getSchemaPath(ChapterType) } } } }
-      ]
+      allOf: [{ $ref: getSchemaPath(Paginated) }, { properties: { results: { type: 'array', items: { $ref: getSchemaPath(ChapterType) } } } }]
     }
   })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })

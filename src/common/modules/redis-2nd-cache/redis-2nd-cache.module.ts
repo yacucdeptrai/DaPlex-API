@@ -20,4 +20,4 @@ import { Redis2ndCacheService } from './redis-2nd-cache.service';
   providers: [Redis2ndCacheService],
   exports: [CacheModule, Redis2ndCacheService]
 })
-export class Redis2ndCacheModule { }
+export class Redis2ndCacheModule {}

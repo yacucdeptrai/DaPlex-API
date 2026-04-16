@@ -8,7 +8,7 @@ import { AuthService } from '../auth/auth.service';
 export class WsAdminGateway implements OnGatewayConnection {
   @WebSocketServer() public server: ReturnType<typeof Server.prototype.of>;
 
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   async handleConnection(client: Socket) {
     const accessToken = <string>client.handshake.auth['token'];

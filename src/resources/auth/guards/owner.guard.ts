@@ -4,7 +4,7 @@ import { User } from '../../../schemas';
 
 @Injectable()
 export class OwnerGuard implements CanActivate {
-  constructor() { }
+  constructor() {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();

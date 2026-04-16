@@ -14,6 +14,6 @@ export class UpdateMediaGenresDto {
   })
   @Transform(({ value }) => transformBigInt(value), { toClassOnly: true })
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
-  @ArrayUnique(value => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
+  @ArrayUnique((value) => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
   genres: bigint[];
 }

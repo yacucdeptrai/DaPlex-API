@@ -12,4 +12,4 @@ import { MongooseConnection } from '../../enums';
   providers: [NotificationService],
   exports: [NotificationService]
 })
-export class NotificationModule { }
+export class NotificationModule {}

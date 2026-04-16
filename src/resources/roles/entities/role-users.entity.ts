@@ -1,3 +1,3 @@
 import { User } from '../../users';
 
-export class RoleUsers extends User { }
+export class RoleUsers extends User {}

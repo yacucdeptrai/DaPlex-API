@@ -20,6 +20,6 @@ export class UpdatePlaylistItemDto {
     description: 'Reorder before or after another item id'
   })
   @Type(() => String)
-  @IsOptionalIf(o => o.reorderType == undefined)
+  @IsOptionalIf((o) => o.reorderType == undefined)
   reorderInsertTo: string;
 }

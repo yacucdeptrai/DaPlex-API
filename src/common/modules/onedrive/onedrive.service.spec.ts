@@ -6,7 +6,7 @@ describe('OnedriveService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [OnedriveService],
+      providers: [OnedriveService]
     }).compile();
 
     service = module.get<OnedriveService>(OnedriveService);

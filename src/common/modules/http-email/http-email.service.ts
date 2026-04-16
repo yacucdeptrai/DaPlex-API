@@ -8,7 +8,10 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class HttpEmailService {
-  constructor(private httpService: HttpService, private configService: ConfigService) { }
+  constructor(
+    private httpService: HttpService,
+    private configService: ConfigService
+  ) {}
 
   async sendEmailMailgun(email: string, name: string, subject: string, template: string, params: any) {
     const config: AxiosRequestConfig = {
@@ -20,7 +23,7 @@ export class HttpEmailService {
     data.append('to', `${name} <${email}>`);
     data.append('subject', subject);
     data.append('template', template);
-    Object.keys(params).forEach(p => {
+    Object.keys(params).forEach((p) => {
       data.append(`v:${p}`, params[p]);
     });
     try {
@@ -28,7 +31,10 @@ export class HttpEmailService {
       return response.data;
     } catch (e) {
       console.error(e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 
@@ -44,12 +50,15 @@ export class HttpEmailService {
       return response.data;
     } catch (e) {
       console.error(e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 
   async sendEmailSendGrid(email: string, name: string, subject: string, templateId: string, params: any) {
-    const headers = { 'authorization': `Bearer ${this.configService.get('SENDGRID_API_KEY')}` };
+    const headers = { authorization: `Bearer ${this.configService.get('SENDGRID_API_KEY')}` };
     const data = {
       from: { email: this.configService.get('EMAIL_FROM'), name: this.configService.get('EMAIL_SENDER') },
       template_id: templateId,
@@ -62,7 +71,10 @@ export class HttpEmailService {
       return response.data;
     } catch (e) {
       console.error(e.response?.data || e.response);
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 }
