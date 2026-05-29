@@ -9,7 +9,7 @@ describe('ChapterTypeController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ChapterTypeController],
       providers: [ChapterTypeService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     controller = module.get<ChapterTypeController>(ChapterTypeController);
   });

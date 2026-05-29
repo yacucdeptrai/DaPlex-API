@@ -7,7 +7,7 @@ describe('CloudflareR2Service', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [CloudflareR2Service]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<CloudflareR2Service>(CloudflareR2Service);
   });

@@ -9,7 +9,7 @@ describe('MediaScannerController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MediaScannerController],
       providers: [MediaScannerService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     controller = module.get<MediaScannerController>(MediaScannerController);
   });

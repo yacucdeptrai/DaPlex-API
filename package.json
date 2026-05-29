@@ -111,6 +111,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "moduleNameMapper": {
+      "^stream-mmmagic$": "<rootDir>/../test/mocks/stream-mmmagic.js"
+    },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

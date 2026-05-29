@@ -7,7 +7,7 @@ describe('MediaScannerService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [MediaScannerService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<MediaScannerService>(MediaScannerService);
   });

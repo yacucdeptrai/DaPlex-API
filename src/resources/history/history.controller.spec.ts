@@ -9,7 +9,7 @@ describe('HistoryController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HistoryController],
       providers: [HistoryService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     controller = module.get<HistoryController>(HistoryController);
   });

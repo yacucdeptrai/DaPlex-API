@@ -9,7 +9,7 @@ describe('MediaController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MediaController],
       providers: [MediaService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     controller = module.get<MediaController>(MediaController);
   });

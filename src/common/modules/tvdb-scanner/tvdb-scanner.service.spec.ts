@@ -7,7 +7,7 @@ describe('TvdbScannerService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [TvdbScannerService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<TvdbScannerService>(TvdbScannerService);
   });

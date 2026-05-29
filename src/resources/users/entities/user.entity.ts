@@ -3,7 +3,10 @@ import { Exclude, Expose } from 'class-transformer';
 
 import { BaseUser } from './base-user.entity';
 import { UserFile } from './user-file.entity';
-import { Role } from '../../roles';
+// Import Role from its source file rather than the roles barrel: the barrel also
+// re-exports RoleUsers (which extends User), so importing it here created a
+// users<->roles circular dependency that left User undefined at class-extension time.
+import { Role } from '../../roles/entities/role.entity';
 import { createCloudflareR2Url, createCloudflareR2ProxyUrl } from '../../../utils';
 import { CloudflareR2Container } from '../../../enums';
 

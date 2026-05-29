@@ -7,7 +7,7 @@ describe('ImgurService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [ImgurService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<ImgurService>(ImgurService);
   });

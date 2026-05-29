@@ -7,7 +7,7 @@ describe('HistoryService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [HistoryService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<HistoryService>(HistoryService);
   });

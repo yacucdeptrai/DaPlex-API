@@ -7,7 +7,7 @@ describe('FirebaseService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [FirebaseService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<FirebaseService>(FirebaseService);
   });

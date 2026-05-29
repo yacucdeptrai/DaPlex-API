@@ -7,7 +7,7 @@ describe('YoutubeService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [YoutubeService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<YoutubeService>(YoutubeService);
   });

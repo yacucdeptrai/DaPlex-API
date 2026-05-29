@@ -7,7 +7,7 @@ describe('ExternalStoragesController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ExternalStoragesController]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     controller = module.get<ExternalStoragesController>(ExternalStoragesController);
   });

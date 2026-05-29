@@ -7,7 +7,7 @@ describe('GoogleDriveService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [GoogleDriveService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<GoogleDriveService>(GoogleDriveService);
   });

@@ -9,7 +9,7 @@ describe('PlaylistsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PlaylistsController],
       providers: [PlaylistsService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     controller = module.get<PlaylistsController>(PlaylistsController);
   });

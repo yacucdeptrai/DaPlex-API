@@ -7,7 +7,7 @@ describe('ExternalStoragesService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [ExternalStoragesService]
-    }).compile();
+    }).useMocker(() => ({})).compile();
 
     service = module.get<ExternalStoragesService>(ExternalStoragesService);
   });
