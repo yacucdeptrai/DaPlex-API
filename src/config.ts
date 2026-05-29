@@ -1,4 +1,14 @@
-import { CloudStorage, Language, MediaFileType, MediaStorageType, MediaType, MediaVisibility, VideoCodec, UserFileType, UserVisibility } from './enums';
+import {
+  CloudStorage,
+  Language,
+  MediaFileType,
+  MediaStorageType,
+  MediaType,
+  MediaVisibility,
+  VideoCodec,
+  UserFileType,
+  UserVisibility
+} from './enums';
 
 export const PORT = 3000;
 export const ADDRESS = '0.0.0.0';
@@ -54,17 +64,45 @@ export const UPLOAD_PLAYLIST_THUMBNAIL_RATIO = [16, 9];
 export const UPLOAD_PLAYLIST_THUMBNAIL_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 export const UPLOAD_SUBTITLE_MAX_SIZE = 8388608; // 8 MiB
 export const UPLOAD_SUBTITLE_EXT = ['srt', 'vtt', 'ass', 'gz', 'br'];
-export const UPLOAD_SUBTITLE_TYPES = ['text/plain', 'application/gzip', 'application/x-gzip', 'application/br', 'application/x-br'];
+export const UPLOAD_SUBTITLE_TYPES = [
+  'text/plain',
+  'application/gzip',
+  'application/x-gzip',
+  'application/br',
+  'application/x-br'
+];
 export const UPLOAD_MEDIA_SOURCE_EXT = ['mp4', 'mkv', 'webm', 'ts', 'm2ts'];
-export const UPLOAD_MEDIA_SOURCE_TYPES = ['video/mp4', 'video/x-matroska', 'video/webm', 'video/mp2t', 'video/ts', 'video/m2ts'];
+export const UPLOAD_MEDIA_SOURCE_TYPES = [
+  'video/mp4',
+  'video/x-matroska',
+  'video/webm',
+  'video/mp2t',
+  'video/ts',
+  'video/m2ts'
+];
 export const UPLOAD_MEDIA_SOURCE_MAX_SIZE = 107374182400; // 100 GiB
 export const GENRE_LIMIT = 500;
 export const I18N_LANGUAGES: string[] = [Language.EN, Language.VI];
 export const I18N_DEFAULT_LANGUAGE: string = Language.EN;
 export const MEDIA_TYPES: string[] = [MediaType.MOVIE, MediaType.TV];
-export const MEDIA_STORAGE_TYPES: number[] = [MediaStorageType.SOURCE, MediaStorageType.STREAM_AUDIO, MediaStorageType.STREAM_VIDEO, MediaStorageType.MANIFEST];
-export const MEDIA_FILE_TYPES: number[] = [MediaFileType.BACKDROP, MediaFileType.POSTER, MediaFileType.SUBTITLE, MediaFileType.STILL, MediaFileType.PLAYLIST_THUMBNAIL];
-export const MEDIA_VISIBILITY_TYPES: number[] = [MediaVisibility.PUBLIC, MediaVisibility.UNLISTED, MediaVisibility.PRIVATE];
+export const MEDIA_STORAGE_TYPES: number[] = [
+  MediaStorageType.SOURCE,
+  MediaStorageType.STREAM_AUDIO,
+  MediaStorageType.STREAM_VIDEO,
+  MediaStorageType.MANIFEST
+];
+export const MEDIA_FILE_TYPES: number[] = [
+  MediaFileType.BACKDROP,
+  MediaFileType.POSTER,
+  MediaFileType.SUBTITLE,
+  MediaFileType.STILL,
+  MediaFileType.PLAYLIST_THUMBNAIL
+];
+export const MEDIA_VISIBILITY_TYPES: number[] = [
+  MediaVisibility.PUBLIC,
+  MediaVisibility.UNLISTED,
+  MediaVisibility.PRIVATE
+];
 export const USER_VISIBILITY_TYPES: number[] = [UserVisibility.PUBLIC, UserVisibility.PRIVATE];
 export const STREAM_CODECS: number[] = [VideoCodec.H264, VideoCodec.H265, VideoCodec.VP9, VideoCodec.AV1];
 export const PREVIEW_THUMBNAIL_NAME = 'thumbnails/L.json';
