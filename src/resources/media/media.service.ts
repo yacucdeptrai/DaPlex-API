@@ -174,6 +174,14 @@ export class MediaService {
     private localCacheService: LocalCacheService
   ) {}
 
+  /**
+   * Resolve the socket.io emit target: the caller's own socket when its id is
+   * still connected, otherwise the whole admin namespace (broadcast to everyone).
+   */
+  private resolveIoEmitter(socketId?: string) {
+    return (socketId && this.wsAdminGateway.server.sockets.get(socketId)) || this.wsAdminGateway.server;
+  }
+
   async create(createMediaDto: CreateMediaDto, headers: HeadersDto, authUser: AuthUserDto) {
     const {
       type,
@@ -263,8 +271,7 @@ export class MediaService {
       { path: 'producers', select: { _id: 1, name: 1 } },
       { path: 'tags', select: { _id: 1, name: 1 } }
     ]);
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(SocketRoom.ADMIN_MEDIA_LIST).emit(SocketMessage.REFRESH_MEDIA);
     return plainToInstance(MediaDetails, media.toObject());
   }
@@ -737,8 +744,7 @@ export class MediaService {
       this.auditLogService.createLogFromBuilder(auditLog),
       this.localCacheService.del(`${CachePrefix.MEDIA_FIND_FILTER_RELATED}:${id}`)
     ]);
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${translated._id}`])
       .emit(SocketMessage.REFRESH_MEDIA, {
@@ -800,8 +806,7 @@ export class MediaService {
         await this.auditLogService.createLog(authUser._id, deletedMedia._id, Media.name, AuditLogType.MEDIA_DELETE);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${deletedMedia._id}`])
       .emit(SocketMessage.REFRESH_MEDIA, {
@@ -835,8 +840,7 @@ export class MediaService {
     auditLog.getChangesFrom(media);
     await Promise.all([media.save({ timestamps: false }), this.auditLogService.createLogFromBuilder(auditLog)]);
     const videosObject = media.videos.toObject();
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MEDIA_VIDEOS, {
       mediaId: media._id,
       videos: videosObject
@@ -899,8 +903,7 @@ export class MediaService {
     auditLog.getChangesFrom(media);
     await Promise.all([media.save({ timestamps: false }), this.auditLogService.createLogFromBuilder(auditLog)]);
     const videosObject = media.videos.toObject();
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MEDIA_VIDEOS, {
       mediaId: media._id,
       videos: videosObject
@@ -922,8 +925,7 @@ export class MediaService {
     const auditLog = new AuditLogBuilder(authUser._id, media._id, Media.name, AuditLogType.MEDIA_VIDEO_DELETE);
     auditLog.appendChange('_id', undefined, videoId);
     await this.auditLogService.createLogFromBuilder(auditLog);
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MEDIA_VIDEOS, {
       mediaId: media._id,
       videos: media.videos
@@ -954,8 +956,7 @@ export class MediaService {
       auditLog.appendChange('_id', undefined, id);
     });
     await this.auditLogService.createLogFromBuilder(auditLog);
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${deletedMedia._id}`).emit(SocketMessage.REFRESH_MEDIA_VIDEOS, {
       mediaId: deletedMedia._id,
       videos: deletedMedia.videos
@@ -996,8 +997,7 @@ export class MediaService {
       throw e;
     }
     const serializedMedia = instanceToPlain(plainToInstance(MediaDetails, media.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`])
       .emit(SocketMessage.REFRESH_MEDIA, {
@@ -1018,8 +1018,7 @@ export class MediaService {
       media.save({ timestamps: false }),
       this.auditLogService.createLog(authUser._id, media._id, Media.name, AuditLogType.MEDIA_POSTER_DELETE)
     ]);
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`])
       .emit(SocketMessage.REFRESH_MEDIA, {
@@ -1060,8 +1059,7 @@ export class MediaService {
       throw e;
     }
     const serializedMedia = instanceToPlain(plainToInstance(MediaDetails, media.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MEDIA, {
       mediaId: media._id,
       media: serializedMedia
@@ -1080,8 +1078,7 @@ export class MediaService {
       media.save({ timestamps: false }),
       this.auditLogService.createLog(authUser._id, media._id, Media.name, AuditLogType.MEDIA_BACKDROP_DELETE)
     ]);
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MEDIA, {
       mediaId: media._id
     });
@@ -1131,8 +1128,7 @@ export class MediaService {
       throw e;
     }
     const serializedSubtitles = instanceToPlain(plainToInstance(MediaSubtitle, media.movie.subtitles.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MOVIE_SUBTITLES, {
       mediaId: media._id,
       subtitles: serializedSubtitles
@@ -1174,8 +1170,7 @@ export class MediaService {
     auditLog.appendChange('_id', undefined, subtitleId);
     await Promise.all([media.save({ timestamps: false }), this.auditLogService.createLogFromBuilder(auditLog)]);
     const serializedSubtitles = instanceToPlain(plainToInstance(MediaSubtitle, media.movie.subtitles.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MOVIE_SUBTITLES, {
       mediaId: media._id,
       subtitles: serializedSubtitles
@@ -1219,8 +1214,7 @@ export class MediaService {
     const serializedSubtitles = instanceToPlain(
       plainToInstance(MediaSubtitle, updatedMedia.movie.subtitles.toObject())
     );
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${updatedMedia._id}`).emit(SocketMessage.REFRESH_MOVIE_SUBTITLES, {
       mediaId: updatedMedia._id,
       subtitles: serializedSubtitles
@@ -1531,8 +1525,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`])
       .emit(SocketMessage.DELETE_MOVIE_SOURCE, {
@@ -1945,8 +1938,7 @@ export class MediaService {
       .finally(() => session.endSession().catch(() => {}));
     const chapterType = await this.chapterTypeService.findById(addMediaChapterDto.type);
     const populatedChapter: MediaChapter = { ...chapter, type: chapterType };
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MOVIE_CHAPTERS, {
       mediaId: media._id,
       chapter: populatedChapter
@@ -2029,8 +2021,7 @@ export class MediaService {
       .finally(() => session.endSession().catch(() => {}));
     const chapterType = await this.chapterTypeService.findById(<bigint>(<unknown>targetChapter.type));
     const populatedChapter: MediaChapter = { ...targetChapter, type: chapterType };
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MOVIE_CHAPTERS, {
       mediaId: media._id,
       chapter: populatedChapter
@@ -2062,8 +2053,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MOVIE_CHAPTERS, {
       mediaId: media._id,
       chapterId: chapterId,
@@ -2108,8 +2098,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`).emit(SocketMessage.REFRESH_MOVIE_CHAPTERS, {
       mediaId: id,
       chapterIds: deleteChapterIds,
@@ -2165,8 +2154,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`])
       .emit(SocketMessage.REFRESH_MEDIA, {
@@ -2384,8 +2372,7 @@ export class MediaService {
     }
     const serializedEpisode = instanceToPlain(plainToInstance(TVEpisodeEntity, episode.toObject()));
     serializedEpisode.pStatus = undefined;
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`, `${SocketRoom.ADMIN_EPISODE_DETAILS}:${episode._id}`])
       .emit(SocketMessage.REFRESH_TV_EPISODE, {
@@ -2429,8 +2416,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`, `${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`])
       .emit(SocketMessage.REFRESH_TV_EPISODE, {
@@ -2516,8 +2502,7 @@ export class MediaService {
       })
       .finally(() => session.endSession().catch(() => {}));
     const serializedEpisode = instanceToPlain(plainToInstance(TVEpisodeEntity, episode.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`, `${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`])
       .emit(SocketMessage.REFRESH_TV_EPISODE, {
@@ -2547,8 +2532,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`, `${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`])
       .emit(SocketMessage.REFRESH_TV_EPISODE, {
@@ -2616,8 +2600,7 @@ export class MediaService {
       })
       .finally(() => session.endSession().catch(() => {}));
     const serializedSubtitles = instanceToPlain(plainToInstance(MediaSubtitle, episode.subtitles.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`).emit(SocketMessage.REFRESH_TV_SUBTITLES, {
       mediaId: id,
       episodeId: episodeId,
@@ -2682,8 +2665,7 @@ export class MediaService {
       })
       .finally(() => session.endSession().catch(() => {}));
     const serializedSubtitles = instanceToPlain(plainToInstance(MediaSubtitle, episode.subtitles.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`).emit(SocketMessage.REFRESH_TV_SUBTITLES, {
       mediaId: id,
       episodeId: episodeId,
@@ -2730,8 +2712,7 @@ export class MediaService {
     );
     await this.auditLogService.createLogFromBuilder(auditLog);
     const serializedSubtitles = instanceToPlain(plainToInstance(MediaSubtitle, episode.subtitles.toObject()));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${updatedEpisode._id}`).emit(SocketMessage.REFRESH_TV_SUBTITLES, {
       mediaId: updatedEpisode._id,
       episodeId: episodeId,
@@ -3087,8 +3068,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter
       .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`])
       .to(`${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`)
@@ -3535,8 +3515,7 @@ export class MediaService {
       .finally(() => session.endSession().catch(() => {}));
     const chapterType = await this.chapterTypeService.findById(addMediaChapterDto.type);
     const populatedChapter: MediaChapter = { ...chapter, type: chapterType };
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_EPISODE_DETAILS}:${episode._id}`).emit(SocketMessage.REFRESH_TV_CHAPTERS, {
       mediaId: episode.media,
       episodeId: episode._id,
@@ -3629,8 +3608,7 @@ export class MediaService {
       .finally(() => session.endSession().catch(() => {}));
     const chapterType = await this.chapterTypeService.findById(<bigint>(<unknown>targetChapter.type));
     const populatedChapter: MediaChapter = { ...targetChapter, type: chapterType };
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_EPISODE_DETAILS}:${episode._id}`).emit(SocketMessage.REFRESH_TV_CHAPTERS, {
       mediaId: episode.media,
       episodeId: episode._id,
@@ -3674,8 +3652,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_EPISODE_DETAILS}:${episode._id}`).emit(SocketMessage.REFRESH_TV_CHAPTERS, {
       mediaId: episode.media,
       episodeId: episode._id,
@@ -3725,8 +3702,7 @@ export class MediaService {
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter =
-      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter = this.resolveIoEmitter(headers.socketId);
     ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`).emit(SocketMessage.REFRESH_TV_CHAPTERS, {
       mediaId: id,
       episodeId: episodeId,
