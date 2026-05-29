@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import crypto from 'crypto';
@@ -10,6 +10,8 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class CloudflareR2Service {
+  private readonly logger = new Logger(CloudflareR2Service.name);
+
   cachedSignatureKey: Uint8Array | null = null;
   cachedSignatureDate: string | null = null;
 
@@ -42,7 +44,7 @@ export class CloudflareR2Service {
       return fileInfo;
     } catch (e) {
       const err = e as AxiosError;
-      console.error(err.response?.data ?? err.message);
+      this.logger.error(err.response?.data ?? err.message);
       const status = err.response?.status ?? HttpStatus.BAD_GATEWAY;
       const statusText = err.response?.statusText ?? 'Unknown error';
       throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${status} ${statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
@@ -68,7 +70,7 @@ export class CloudflareR2Service {
       return response.data;
     } catch (e) {
       const err = e as AxiosError;
-      console.error(err.response?.data ?? err.message);
+      this.logger.error(err.response?.data ?? err.message);
       const status = err.response?.status ?? HttpStatus.BAD_GATEWAY;
       const statusText = err.response?.statusText ?? 'Unknown error';
       throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${status} ${statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);

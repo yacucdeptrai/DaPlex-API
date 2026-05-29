@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { AxiosRequestConfig } from 'axios';
 import FormData from 'form-data';
@@ -10,6 +10,8 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class ImagekitService {
+  private readonly logger = new Logger(ImagekitService.name);
+
   constructor(
     private httpService: HttpService,
     private configService: ConfigService
@@ -30,7 +32,7 @@ export class ImagekitService {
       const response = await firstValueFrom(this.httpService.post('https://upload.imagekit.io/api/v1/files/upload', data, config));
       return response.data;
     } catch (e) {
-      console.error(e.response);
+      this.logger.error(e.response);
       throw new HttpException(
         { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
         HttpStatus.SERVICE_UNAVAILABLE
@@ -50,7 +52,7 @@ export class ImagekitService {
       return response.data;
     } catch (e) {
       if (e.response.data.reason === 'FOLDER_NOT_FOUND') return;
-      console.error(e.response);
+      this.logger.error(e.response);
       throw new HttpException(
         { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
         HttpStatus.SERVICE_UNAVAILABLE

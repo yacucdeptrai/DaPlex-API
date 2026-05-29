@@ -1,4 +1,4 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { SavedMultipartFile } from '@fastify/multipart';
 import mimeTypes from 'mime-types';
@@ -12,6 +12,7 @@ import { DEFAULT_UPLOAD_SIZE } from '../../config';
 
 @Injectable()
 export class UploadImageInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(UploadImageInterceptor.name);
   private maxSize: number;
   private mimeTypes: string[];
   private maxWidth: number;
@@ -71,7 +72,7 @@ export class UploadImageInterceptor implements NestInterceptor {
         //const result = await getAverageColor(file.filepath);
         var info = await sharp(file.filepath, { pages: 1 }).metadata();
       } catch (e) {
-        console.error(e);
+        this.logger.error(e);
         throw new HttpException({ code: StatusCode.FILE_DETECTION, message: 'Failed to detect file type' }, HttpStatus.UNPROCESSABLE_ENTITY);
       }
       const detectedMimetype = mimeTypes.lookup(info.format) || 'application/octet-stream';

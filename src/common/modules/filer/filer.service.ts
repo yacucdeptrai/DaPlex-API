@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { firstValueFrom } from 'rxjs';
 import path from 'path';
@@ -12,6 +12,8 @@ import { UploadSession } from '../onedrive/interfaces/upload-session.interface';
 
 @Injectable()
 export class FilerService {
+  private readonly logger = new Logger(FilerService.name);
+
   constructor(
     private httpService: HttpService,
     private jwtService: JwtService,
@@ -42,7 +44,7 @@ export class FilerService {
           if (j < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else if (e.response?.status === 404) break;
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -68,7 +70,7 @@ export class FilerService {
         } else if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
-          console.error(e.response);
+          this.logger.error(e.response);
           throw new HttpException(
             { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
             HttpStatus.SERVICE_UNAVAILABLE
@@ -92,7 +94,7 @@ export class FilerService {
         } else if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
-          console.error(e.response);
+          this.logger.error(e.response);
           throw new HttpException(
             { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
             HttpStatus.SERVICE_UNAVAILABLE
@@ -124,7 +126,7 @@ export class FilerService {
         } else if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
-          console.error(e.response);
+          this.logger.error(e.response);
           throw new HttpException(
             { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
             HttpStatus.SERVICE_UNAVAILABLE
@@ -174,20 +176,20 @@ export class FilerService {
       } catch (e) {
         if (e.isAxiosError) {
           if (!e.response) {
-            console.error(e);
+            this.logger.error(e);
             continue;
           }
           if (e.response.status === 401 && i < 1) {
             await this.refreshToken(storage);
           } else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from Filer API` },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
         } else {
-          console.error(e);
+          this.logger.error(e);
           throw e;
         }
       }

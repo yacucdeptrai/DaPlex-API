@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
 import * as fs from 'fs';
@@ -12,6 +12,8 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class ImgurService {
+  private readonly logger = new Logger(ImgurService.name);
+
   constructor(
     private httpService: HttpService,
     private settingsService: SettingsService,
@@ -38,7 +40,7 @@ export class ImgurService {
       return this.externalStoragesService.updateToken(storage._id, access_token, expiry, refresh_token);
     } catch (e) {
       if (e.isAxiosError) {
-        console.error(e.toJSON());
+        this.logger.error(e.toJSON());
         if (!e.response) throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received an unknown error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
@@ -93,7 +95,7 @@ export class ImgurService {
             throw new HttpException({ code: StatusCode.THRID_PARTY_RATE_LIMIT, message: 'Rate limit from third party api, please try again in 1 hour' }, HttpStatus.SERVICE_UNAVAILABLE);
           else if (i < retry - 1) new Promise((r) => setTimeout(r, retryTimeout));
           else {
-            console.error(e.toJSON());
+            this.logger.error(e.toJSON());
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -126,7 +128,7 @@ export class ImgurService {
           else if (e.response.status === 404) return;
           else if (i < retry - 1) new Promise((r) => setTimeout(r, retryTimeout));
           else {
-            console.error(e.toJSON());
+            this.logger.error(e.toJSON());
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE

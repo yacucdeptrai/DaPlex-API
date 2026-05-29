@@ -1,4 +1,4 @@
-import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, PipelineStage } from 'mongoose';
 import { plainToClassFromExist, plainToInstance } from 'class-transformer';
@@ -26,6 +26,8 @@ import { LookupOptions, convertToLanguage, convertToLanguageArray, createSnowFla
 
 @Injectable()
 export class PlaylistsService {
+  private readonly logger = new Logger(PlaylistsService.name);
+
   constructor(
     @InjectModel(Playlist.name, MongooseConnection.DATABASE_A) private playlistModel: Model<PlaylistDocument>,
     @Inject(forwardRef(() => MediaService)) private mediaService: MediaService,
@@ -280,7 +282,7 @@ export class PlaylistsService {
     try {
       await this.playlistModel.updateOne({ _id: playlist._id }, { $set: { items: playlist.items, itemCount: playlist.itemCount } }).exec();
     } catch (e) {
-      console.error(e);
+      this.logger.error(e);
     }
   }
 

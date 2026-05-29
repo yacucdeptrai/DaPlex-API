@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BlobServiceClient } from '@azure/storage-blob';
 
@@ -6,6 +6,8 @@ import { AzureStorageContainer } from '../../../enums';
 
 @Injectable()
 export class AzureBlobService implements OnModuleInit {
+  private readonly logger = new Logger(AzureBlobService.name);
+
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
@@ -16,7 +18,7 @@ export class AzureBlobService implements OnModuleInit {
       try {
         await containerClient.createIfNotExists({ access: 'blob' });
       } catch (error) {
-        console.error(error);
+        this.logger.error(error);
       }
     });
   }

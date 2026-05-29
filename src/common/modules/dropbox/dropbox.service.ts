@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import * as fs from 'fs';
 
@@ -11,6 +11,8 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class DropboxService {
+  private readonly logger = new Logger(DropboxService.name);
+
   constructor(
     private httpService: HttpService,
     private settingsService: SettingsService,
@@ -40,7 +42,7 @@ export class DropboxService {
       return this.externalStoragesService.updateToken(storage._id, access_token, expiry);
     } catch (e) {
       if (e.isAxiosError) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -96,7 +98,7 @@ export class DropboxService {
         if (e.isAxiosError && e.response) {
           if (e.response.status === 401 && i < 1) await this.refreshToken(storage);
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -144,7 +146,7 @@ export class DropboxService {
           else if (e.response.status === 409) return;
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE

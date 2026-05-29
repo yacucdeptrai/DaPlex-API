@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 
 import { DriveFile } from './interfaces/drive-file.interface';
@@ -11,6 +11,8 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class OnedriveService {
+  private readonly logger = new Logger(OnedriveService.name);
+
   constructor(
     private httpService: HttpService,
     @Inject(forwardRef(() => SettingsService)) private settingsService: SettingsService,
@@ -37,7 +39,7 @@ export class OnedriveService {
       return this.externalStoragesService.updateToken(storage._id, access_token, expiry, refresh_token);
     } catch (e) {
       if (e.isAxiosError) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -76,19 +78,19 @@ export class OnedriveService {
       } catch (e) {
         if (e.isAxiosError) {
           if (!e.response) {
-            console.error(e);
+            this.logger.error(e);
             continue;
           }
           if (e.response.status === 401 && i < 1) await this.refreshToken(storage);
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
         } else {
-          console.error(e);
+          this.logger.error(e);
           throw e;
         }
       }
@@ -119,14 +121,14 @@ export class OnedriveService {
           if (e.response.status >= 400 && e.response.status <= 599) return;
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
         } else {
-          console.error(e);
+          this.logger.error(e);
           throw e;
         }
       }
@@ -154,14 +156,14 @@ export class OnedriveService {
           if (e.response.status === 401 && i < 1) await this.refreshToken(storage);
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
         } else {
-          console.error(e);
+          this.logger.error(e);
           throw e;
         }
       }
@@ -186,14 +188,14 @@ export class OnedriveService {
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
         } else {
-          console.error(e);
+          this.logger.error(e);
           throw e;
         }
       }
@@ -222,14 +224,14 @@ export class OnedriveService {
             else if (j < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
             else if (e.response?.status === 404) break;
             else {
-              console.error(e.response);
+              this.logger.error(e.response);
               throw new HttpException(
                 { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
                 HttpStatus.SERVICE_UNAVAILABLE
               );
             }
           } else {
-            console.error(e);
+            this.logger.error(e);
             throw e;
           }
         }

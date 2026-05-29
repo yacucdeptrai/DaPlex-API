@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 
 import { Paginated } from '../../entities/paginated.entity';
@@ -23,6 +23,8 @@ import { I18N_LANGUAGES } from '../../../config';
 
 @Injectable()
 export class TmdbScannerService {
+  private readonly logger = new Logger(TmdbScannerService.name);
+
   private baseUrl = 'https://api.themoviedb.org/3';
   private headers: any;
 
@@ -61,7 +63,7 @@ export class TmdbScannerService {
       return results;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -99,7 +101,7 @@ export class TmdbScannerService {
       return results;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -184,7 +186,7 @@ export class TmdbScannerService {
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -281,7 +283,7 @@ export class TmdbScannerService {
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -330,7 +332,7 @@ export class TmdbScannerService {
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -371,7 +373,7 @@ export class TmdbScannerService {
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -393,7 +395,7 @@ export class TmdbScannerService {
       return this.parseTMDbImageList(data);
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -415,7 +417,7 @@ export class TmdbScannerService {
       return this.parseTMDbImageList(data);
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE

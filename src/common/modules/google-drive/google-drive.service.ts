@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 
@@ -14,6 +14,8 @@ import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class GoogleDriveService {
+  private readonly logger = new Logger(GoogleDriveService.name);
+
   constructor(
     private httpService: HttpService,
     private settingsService: SettingsService,
@@ -40,7 +42,7 @@ export class GoogleDriveService {
       return this.externalStoragesService.updateToken(storage._id, access_token, expiry);
     } catch (e) {
       if (e.isAxiosError) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -82,7 +84,7 @@ export class GoogleDriveService {
         if (e.isAxiosError) {
           if (e.response?.status === 401 && i < 1) await this.refreshToken(storage);
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -135,7 +137,7 @@ export class GoogleDriveService {
           else if (e.response?.status === 404) return;
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -167,7 +169,7 @@ export class GoogleDriveService {
         if (e.isAxiosError) {
           if (e.response?.status === 401 && i < 1) await this.refreshToken(storage);
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -216,7 +218,7 @@ export class GoogleDriveService {
           if (e.response?.status === 401 && i < 1) await this.refreshToken(storage);
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -250,7 +252,7 @@ export class GoogleDriveService {
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE

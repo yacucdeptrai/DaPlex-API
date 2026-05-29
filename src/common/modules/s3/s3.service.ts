@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { createHmac, createHash } from 'crypto';
 import { firstValueFrom } from 'rxjs';
 import path from 'path';
@@ -11,6 +11,8 @@ import { SettingsService } from '../../../resources/settings/settings.service';
 
 @Injectable()
 export class S3Service {
+  private readonly logger = new Logger(S3Service.name);
+
   cachedSignatureKey: Buffer | null = null;
   cachedSignatureDate: string | null = null;
 
@@ -32,7 +34,7 @@ export class S3Service {
           if (j < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else if (e.response?.status === 404) break;
           else {
-            console.error(e.response);
+            this.logger.error(e.response);
             throw new HttpException(
               { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
               HttpStatus.SERVICE_UNAVAILABLE
@@ -55,7 +57,7 @@ export class S3Service {
         if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
-          console.error(e.response);
+          this.logger.error(e.response);
           throw new HttpException(
             { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
             HttpStatus.SERVICE_UNAVAILABLE
@@ -76,7 +78,7 @@ export class S3Service {
         if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
-          console.error(e.response);
+          this.logger.error(e.response);
           throw new HttpException(
             { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
             HttpStatus.SERVICE_UNAVAILABLE
@@ -98,7 +100,7 @@ export class S3Service {
         if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
-          console.error(e.response);
+          this.logger.error(e.response);
           throw new HttpException(
             { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
             HttpStatus.SERVICE_UNAVAILABLE
@@ -188,7 +190,7 @@ export class S3Service {
         })
       );
     } catch (e) {
-      console.error(e.response);
+      this.logger.error(e.response);
       throw new HttpException(
         { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
         HttpStatus.SERVICE_UNAVAILABLE
@@ -209,7 +211,7 @@ export class S3Service {
       await firstValueFrom(this.httpService.delete(`https://${host}${canonicalUri}?${canonicalQuerystring}`, { headers: authHeader }));
     } catch (e) {
       if (e.response?.status !== 404) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE

@@ -1,4 +1,4 @@
-import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import {
   ClientSession,
@@ -133,6 +133,8 @@ import { I18N_DEFAULT_LANGUAGE, STREAM_CODECS, UPLOAD_SUBTITLE_EXT } from '../..
 
 @Injectable()
 export class MediaService {
+  private readonly logger = new Logger(MediaService.name);
+
   constructor(
     @InjectModel(Media.name, MongooseConnection.DATABASE_A) private mediaModel: Model<MediaDocument>,
     @InjectModel(MediaStorage.name, MongooseConnection.DATABASE_A)
@@ -1730,7 +1732,7 @@ export class MediaService {
       recipient_name: infoData.user.username,
       button_url: `${this.configService.get('WEBSITE_URL')}/watch/${infoData.media}`
     }).catch(err => {
-      console.error(err);
+      this.logger.error(err);
     });
     */
   }
@@ -3288,7 +3290,7 @@ export class MediaService {
       recipient_name: infoData.user.username,
       button_url: `${this.configService.get('WEBSITE_URL')}/watch/${infoData.media}?episode=${episode.epNumber}`
     }).catch(err => {
-      console.error(err);
+      this.logger.error(err);
     });
     */
   }

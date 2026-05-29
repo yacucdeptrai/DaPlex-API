@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom, retry, RetryConfig } from 'rxjs';
 import { AxiosError } from 'axios';
@@ -44,6 +44,8 @@ type SearchType = 'movie' | 'series';
 
 @Injectable()
 export class TvdbScannerService {
+  private readonly logger = new Logger(TvdbScannerService.name);
+
   private baseUrl = 'https://api4.thetvdb.com/v4';
   private headers: any = {};
   private tokenExpiry: Date | null = null;
@@ -101,7 +103,7 @@ export class TvdbScannerService {
       return results;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -178,7 +180,7 @@ export class TvdbScannerService {
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -289,7 +291,7 @@ export class TvdbScannerService {
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -360,7 +362,7 @@ export class TvdbScannerService {
       return result;
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -387,7 +389,7 @@ export class TvdbScannerService {
       return this.parseTVDbImageList(data.artworks);
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
@@ -415,7 +417,7 @@ export class TvdbScannerService {
       return this.parseTVDbImageList(data.artworks);
     } catch (e) {
       if (e.isAxiosError && e.response) {
-        console.error(e.response);
+        this.logger.error(e.response);
         throw new HttpException(
           { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
           HttpStatus.SERVICE_UNAVAILABLE
