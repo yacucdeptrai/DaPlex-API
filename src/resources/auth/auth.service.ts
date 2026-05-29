@@ -111,8 +111,11 @@ export class AuthService {
 
   async createJwtToken(user: User) {
     const payload = { _id: user._id.toString() };
-    const accessTokenExpiry = +this.configService.get<string>('ACCESS_TOKEN_EXPIRY');
-    const refreshTokenExpiry = +this.configService.get<string>('REFRESH_TOKEN_EXPIRY');
+    const accessTokenExpiry = parseInt(this.configService.get<string>('ACCESS_TOKEN_EXPIRY'), 10);
+    const refreshTokenExpiry = parseInt(this.configService.get<string>('REFRESH_TOKEN_EXPIRY'), 10);
+    if (Number.isNaN(accessTokenExpiry) || Number.isNaN(refreshTokenExpiry)) {
+      throw new Error('ACCESS_TOKEN_EXPIRY and REFRESH_TOKEN_EXPIRY must be numeric (seconds)');
+    }
     const [accessToken, refreshToken] = await Promise.all([this.jwtService.signAsync(payload, { secret: this.configService.get('ACCESS_TOKEN_SECRET'), expiresIn: accessTokenExpiry }), nanoid(32)]);
     const refreshTokenKey = `${CachePrefix.REFRESH_TOKEN}:${refreshToken}`;
     await this.redisCacheService.set(refreshTokenKey, { _id: user._id.toString() }, refreshTokenExpiry);

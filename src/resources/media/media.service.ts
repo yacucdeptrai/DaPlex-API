@@ -131,6 +131,13 @@ import {
 } from '../../enums';
 import { I18N_DEFAULT_LANGUAGE, STREAM_CODECS, UPLOAD_SUBTITLE_EXT } from '../../config';
 
+// Minimal shape of the file metadata returned by storage providers (Filer/S3/OneDrive)
+// findId/findPath calls; only name and size are consumed here.
+interface StorageFileInfo {
+  name: string;
+  size: number;
+}
+
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
@@ -1403,7 +1410,7 @@ export class MediaService {
         { code: StatusCode.DRIVE_SESSION_NOT_FOUND, message: 'Upload session not found' },
         HttpStatus.NOT_FOUND
       );
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (uploadSession.storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
     } else if (uploadSession.storage.kind === CloudStorage.S3) {
@@ -1570,7 +1577,7 @@ export class MediaService {
   async addMovieAudioStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
     const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
     } else if (storage.kind === CloudStorage.S3) {
@@ -1603,7 +1610,7 @@ export class MediaService {
   async addMovieStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
     const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
     } else if (storage.kind === CloudStorage.S3) {
@@ -1636,7 +1643,7 @@ export class MediaService {
   async addMovieStreamManifest(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
     const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
     } else if (storage.kind === CloudStorage.S3) {
@@ -2939,7 +2946,7 @@ export class MediaService {
         { code: StatusCode.DRIVE_SESSION_NOT_FOUND, message: 'Upload session not found' },
         HttpStatus.NOT_FOUND
       );
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (uploadSession.storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findId(saveMediaSourceDto.fileId, uploadSession.storage);
     } else if (uploadSession.storage.kind === CloudStorage.S3) {
@@ -3097,7 +3104,7 @@ export class MediaService {
   async addTVEpisodeAudioStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
     const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
     } else if (storage.kind === CloudStorage.S3) {
@@ -3129,7 +3136,7 @@ export class MediaService {
   async addTVEpisodeStream(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
     const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
     } else if (storage.kind === CloudStorage.S3) {
@@ -3162,7 +3169,7 @@ export class MediaService {
   async addTVEpisodeStreamManifest(mediaQueueResultDto: MediaQueueResultDto) {
     const filePath = `${mediaQueueResultDto.progress.sourceId}/${mediaQueueResultDto.progress.streamId}/${mediaQueueResultDto.progress.fileName}`;
     const storage = await this.externalStoragesService.findStorageById(mediaQueueResultDto.storage);
-    let fileInfo: any;
+    let fileInfo: StorageFileInfo;
     if (storage.kind === CloudStorage.FILER) {
       fileInfo = await this.filerService.findPath(filePath, mediaQueueResultDto.storage);
     } else if (storage.kind === CloudStorage.S3) {

@@ -17,7 +17,7 @@ export class MediaResultConsumer extends WorkerHost {
     super();
   }
 
-  async process(job: Job<MediaQueueResultDto, any, JobNameType>): Promise<any> {
+  async process(job: Job<MediaQueueResultDto, Record<string, never>, JobNameType>): Promise<Record<string, never>> {
     try {
       const jobData = plainToInstance(MediaQueueResultDto, { jobId: job.id, ...job.data });
       switch (job.name) {
