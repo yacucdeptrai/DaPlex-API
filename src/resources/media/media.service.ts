@@ -3198,7 +3198,7 @@ export class MediaService {
       await this.videoTranscodeH264Queue.remove(jobIds[i].toString());
       await this.videoTranscodeH265Queue.remove(jobIds[i].toString());
       await this.videoTranscodeVP9Queue.remove(jobIds[i].toString());
-      await this.videoTranscodeVP9Queue.remove(jobIds[i].toString());
+      await this.videoTranscodeAV1Queue.remove(jobIds[i].toString());
     }
   }
 
