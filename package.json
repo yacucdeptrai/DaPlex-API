@@ -99,6 +99,9 @@
     "bufferutil": "4.0.8",
     "utf-8-validate": "6.0.4"
   },
+  "overrides": {
+    "mmmagic": "github:yacucdeptrai/mmmagic#10cfab4"
+  },
   "jest": {
     "moduleFileExtensions": [
       "js",
