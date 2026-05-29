@@ -10,11 +10,11 @@ export const DOCUMENT_AUTHOR = 'Kaigonia';
 export const DOCUMENT_GITHUB = 'https://github.com/ktt45678';
 export const DOCUMENT_EMAIL = 'ktt45678@gmail.com';
 export const PASSWORD_HASH_ROUNDS = 10;
-export const ACCESS_TOKEN_SECRET = 'default-access-token-secret';
-export const REFRESH_TOKEN_SECRET = 'default-refresh-token-secret';
+// Token/cookie secrets intentionally have NO defaults — they must be provided via env
+// vars and are enforced as required in env-validation.dto.ts. A predictable fallback
+// secret would let an attacker forge valid JWTs.
 export const ACCESS_TOKEN_EXPIRY = 300;
 export const REFRESH_TOKEN_EXPIRY = 2592000;
-export const COOKIE_SECRET = 'default-cookie-secret';
 export const USER_FILE_STORAGE: number[] = [CloudStorage.CLOUDINARY, CloudStorage.IMAGEKIT];
 export const USER_FILE_TYPES: number[] = [UserFileType.AVATAR, UserFileType.BACKGROUND];
 export const EXTERNAL_STORAGE_KIND: number[] = [CloudStorage.ONEDRIVE, CloudStorage.S3, CloudStorage.FILER];

@@ -1,7 +1,7 @@
 import { plainToInstance, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsIP, IsNotEmpty, IsOptional, IsUrl, validateSync } from 'class-validator';
 
-import { PORT, ADDRESS, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY, COOKIE_SECRET } from '../../config';
+import { PORT, ADDRESS, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from '../../config';
 
 enum Environment {
   Development = 'development',
@@ -37,11 +37,11 @@ class EnvironmentVariables {
   @IsNotEmpty()
   DATABASE_URL_B: string;
 
-  @IsOptional()
-  ACCESS_TOKEN_SECRET: string = ACCESS_TOKEN_SECRET;
+  @IsNotEmpty()
+  ACCESS_TOKEN_SECRET: string;
 
-  @IsOptional()
-  REFRESH_TOKEN_SECRET: string = REFRESH_TOKEN_SECRET;
+  @IsNotEmpty()
+  REFRESH_TOKEN_SECRET: string;
 
   @IsOptional()
   @IsInt()
@@ -51,8 +51,8 @@ class EnvironmentVariables {
   @IsInt()
   REFRESH_TOKEN_EXPIRY: number = REFRESH_TOKEN_EXPIRY;
 
-  @IsOptional()
-  COOKIE_SECRET: string = COOKIE_SECRET;
+  @IsNotEmpty()
+  COOKIE_SECRET: string;
 
   @IsNotEmpty()
   COOKIE_DOMAIN: string;
