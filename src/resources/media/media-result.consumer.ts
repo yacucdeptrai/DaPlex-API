@@ -7,7 +7,15 @@ import { MediaService } from './media.service';
 import { TaskQueue } from '../../enums';
 import { MediaQueueResultDto } from './dto';
 
-type JobNameType = 'update-source' | 'add-stream-video' | 'add-stream-audio' | 'add-stream-manifest' | 'finished-encoding' | 'cancelled-encoding' | 'retry-encoding' | 'failed-encoding';
+type JobNameType =
+  | 'update-source'
+  | 'add-stream-video'
+  | 'add-stream-audio'
+  | 'add-stream-manifest'
+  | 'finished-encoding'
+  | 'cancelled-encoding'
+  | 'retry-encoding'
+  | 'failed-encoding';
 
 @Processor(TaskQueue.VIDEO_TRANSCODE_RESULT, { concurrency: 1 })
 export class MediaResultConsumer extends WorkerHost {
@@ -30,7 +38,9 @@ export class MediaResultConsumer extends WorkerHost {
         }
         case 'add-stream-audio': {
           if (jobData.episode) {
-            this.logger.log(`Adding audio of codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`);
+            this.logger.log(
+              `Adding audio of codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`
+            );
             await this.mediaService.addTVEpisodeAudioStream(jobData);
           } else {
             this.logger.log(`Adding audio of codec ${jobData.progress.codec} to media ${jobData.media}`);
@@ -40,17 +50,23 @@ export class MediaResultConsumer extends WorkerHost {
         }
         case 'add-stream-video': {
           if (jobData.episode) {
-            this.logger.log(`Adding quality ${jobData.progress.quality} and codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`);
+            this.logger.log(
+              `Adding quality ${jobData.progress.quality} and codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`
+            );
             await this.mediaService.addTVEpisodeStream(jobData);
           } else {
-            this.logger.log(`Adding quality ${jobData.progress.quality} and codec ${jobData.progress.codec} to media ${jobData.media}`);
+            this.logger.log(
+              `Adding quality ${jobData.progress.quality} and codec ${jobData.progress.codec} to media ${jobData.media}`
+            );
             await this.mediaService.addMovieStream(jobData);
           }
           break;
         }
         case 'add-stream-manifest': {
           if (jobData.episode) {
-            this.logger.log(`Adding manifest of codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`);
+            this.logger.log(
+              `Adding manifest of codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`
+            );
             await this.mediaService.addTVEpisodeStreamManifest(jobData);
           } else {
             this.logger.log(`Adding manifest of codec ${jobData.progress.codec} to media ${jobData.media}`);

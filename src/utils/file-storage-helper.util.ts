@@ -1,6 +1,6 @@
 import { UserFile } from '../schemas';
 import { ImagekitTransform, UserFileType } from '../enums';
-import { configService } from '../main';
+import { configService } from '../config-ref';
 
 export function createAvatarUrl(avatar: UserFile) {
   let url: string;

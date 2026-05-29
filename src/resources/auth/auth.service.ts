@@ -41,12 +41,24 @@ export class AuthService {
   async authenticate(signInDto: SignInDto) {
     const user = await this.userModel
       .findOne({ email: signInDto.email })
-      .populate({ path: 'roles', select: { _id: 1, name: 1, color: 1, permissions: 1, position: 1 }, options: { sort: { position: 1 } } })
+      .populate({
+        path: 'roles',
+        select: { _id: 1, name: 1, color: 1, permissions: 1, position: 1 },
+        options: { sort: { position: 1 } }
+      })
       .lean()
       .exec();
-    if (!user) throw new HttpException({ code: StatusCode.EMAIL_NOT_EXIST, message: 'Email does not exist' }, HttpStatus.UNAUTHORIZED);
+    if (!user)
+      throw new HttpException(
+        { code: StatusCode.EMAIL_NOT_EXIST, message: 'Email does not exist' },
+        HttpStatus.UNAUTHORIZED
+      );
     const isValidPassword = await this.comparePassword(signInDto.password, user.password);
-    if (!isValidPassword) throw new HttpException({ code: StatusCode.INCORRECT_PASSWORD, message: 'Incorrect password' }, HttpStatus.UNAUTHORIZED);
+    if (!isValidPassword)
+      throw new HttpException(
+        { code: StatusCode.INCORRECT_PASSWORD, message: 'Incorrect password' },
+        HttpStatus.UNAUTHORIZED
+      );
     return this.createJwtToken(user);
   }
 
@@ -74,18 +86,32 @@ export class AuthService {
       activationCode = await nanoid(8);
       user = await this.userModel.findOneAndUpdate({ _id: user._id }, { activationCode }, { new: true }).lean().exec();
     }
-    await this.httpEmailService.sendEmailSendGrid(user.email, user.username, 'Confirm your email', SendgridTemplate.CONFIRM_EMAIL, {
-      recipient_name: user.username,
-      button_url: `${this.configService.get('WEBSITE_URL')}/confirm-email?id=${user._id}&code=${activationCode}`
-    });
+    await this.httpEmailService.sendEmailSendGrid(
+      user.email,
+      user.username,
+      'Confirm your email',
+      SendgridTemplate.CONFIRM_EMAIL,
+      {
+        recipient_name: user.username,
+        button_url: `${this.configService.get('WEBSITE_URL')}/confirm-email?id=${user._id}&code=${activationCode}`
+      }
+    );
   }
 
   async confirmEmail(confirmEmailDto: ConfirmEmailDto) {
     const user = await this.userModel
-      .findOneAndUpdate({ _id: confirmEmailDto.id, activationCode: confirmEmailDto.activationCode }, { $set: { verified: true }, $unset: { activationCode: 1 } }, { new: true })
+      .findOneAndUpdate(
+        { _id: confirmEmailDto.id, activationCode: confirmEmailDto.activationCode },
+        { $set: { verified: true }, $unset: { activationCode: 1 } },
+        { new: true }
+      )
       .lean()
       .exec();
-    if (!user) throw new HttpException({ code: StatusCode.INVALID_CODE, message: 'The code is invalid or expired' }, HttpStatus.NOT_FOUND);
+    if (!user)
+      throw new HttpException(
+        { code: StatusCode.INVALID_CODE, message: 'The code is invalid or expired' },
+        HttpStatus.NOT_FOUND
+      );
     await this.clearCachedAuthUser(user._id);
   }
 
@@ -93,20 +119,38 @@ export class AuthService {
     const { email } = passwordRecoveryDto;
     const recoveryCode = await nanoid(8);
     const user = await this.userModel.findOneAndUpdate({ email }, { recoveryCode }, { new: true }).lean().exec();
-    if (!user) throw new HttpException({ code: StatusCode.EMAIL_NOT_EXIST, message: 'Email does not exist' }, HttpStatus.NOT_FOUND);
-    await this.httpEmailService.sendEmailSendGrid(user.email, user.username, 'Reset your password', SendgridTemplate.RESET_PASSWORD, {
-      recipient_name: user.username,
-      button_url: `${this.configService.get('WEBSITE_URL')}/reset-password?id=${user._id}&code=${recoveryCode}`
-    });
+    if (!user)
+      throw new HttpException(
+        { code: StatusCode.EMAIL_NOT_EXIST, message: 'Email does not exist' },
+        HttpStatus.NOT_FOUND
+      );
+    await this.httpEmailService.sendEmailSendGrid(
+      user.email,
+      user.username,
+      'Reset your password',
+      SendgridTemplate.RESET_PASSWORD,
+      {
+        recipient_name: user.username,
+        button_url: `${this.configService.get('WEBSITE_URL')}/reset-password?id=${user._id}&code=${recoveryCode}`
+      }
+    );
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     const password = await this.hashPassword(resetPasswordDto.password);
     const user = await this.userModel
-      .findOneAndUpdate({ _id: resetPasswordDto.id, recoveryCode: resetPasswordDto.recoveryCode }, { $set: { password }, $unset: { recoveryCode: 1 } }, { new: true })
+      .findOneAndUpdate(
+        { _id: resetPasswordDto.id, recoveryCode: resetPasswordDto.recoveryCode },
+        { $set: { password }, $unset: { recoveryCode: 1 } },
+        { new: true }
+      )
       .lean()
       .exec();
-    if (!user) throw new HttpException({ code: StatusCode.INVALID_CODE, message: 'The code is invalid or expired' }, HttpStatus.NOT_FOUND);
+    if (!user)
+      throw new HttpException(
+        { code: StatusCode.INVALID_CODE, message: 'The code is invalid or expired' },
+        HttpStatus.NOT_FOUND
+      );
   }
 
   async createJwtToken(user: User) {
@@ -116,7 +160,13 @@ export class AuthService {
     if (Number.isNaN(accessTokenExpiry) || Number.isNaN(refreshTokenExpiry)) {
       throw new Error('ACCESS_TOKEN_EXPIRY and REFRESH_TOKEN_EXPIRY must be numeric (seconds)');
     }
-    const [accessToken, refreshToken] = await Promise.all([this.jwtService.signAsync(payload, { secret: this.configService.get('ACCESS_TOKEN_SECRET'), expiresIn: accessTokenExpiry }), nanoid(32)]);
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get('ACCESS_TOKEN_SECRET'),
+        expiresIn: accessTokenExpiry
+      }),
+      nanoid(32)
+    ]);
     const refreshTokenKey = `${CachePrefix.REFRESH_TOKEN}:${refreshToken}`;
     await this.redisCacheService.set(refreshTokenKey, { _id: user._id.toString() }, refreshTokenExpiry);
     return new Jwt(accessToken, refreshToken, refreshTokenExpiry, plainToInstance(UserDetails, user));
@@ -126,12 +176,20 @@ export class AuthService {
     const refreshTokenKey = `${CachePrefix.REFRESH_TOKEN}:${refreshTokenDto.refreshToken}`;
     const refreshTokenPayload = await this.redisCacheService.get<RefreshTokenPayload>(refreshTokenKey);
     // Refresh token has been revoked
-    if (!refreshTokenPayload) throw new HttpException({ code: StatusCode.TOKEN_REVOKED, message: 'Your refresh token has already been revoked' }, HttpStatus.UNAUTHORIZED);
+    if (!refreshTokenPayload)
+      throw new HttpException(
+        { code: StatusCode.TOKEN_REVOKED, message: 'Your refresh token has already been revoked' },
+        HttpStatus.UNAUTHORIZED
+      );
     // Expire this token after 1 minutes (Handle multiple refresh token requests at the same time)
     await this.redisCacheService.set(refreshTokenKey, refreshTokenPayload, 60);
     // Find user by id
     const user = await this.findUserById(BigInt(refreshTokenPayload._id), { includeRoles: true });
-    if (!user) throw new HttpException({ code: StatusCode.UNAUTHORIZED_NO_USER, message: 'Not authorized because user not found' }, HttpStatus.UNAUTHORIZED);
+    if (!user)
+      throw new HttpException(
+        { code: StatusCode.UNAUTHORIZED_NO_USER, message: 'Not authorized because user not found' },
+        HttpStatus.UNAUTHORIZED
+      );
     // If user changed their email or password
     //if (refreshTokenPayload.email !== user.email || refreshTokenPayload.password !== user.password)
     //  throw new HttpException({ code: StatusCode.CREDENTIALS_CHANGED, message: 'Your email or password has been changed, please login again' }, HttpStatus.UNAUTHORIZED);
@@ -154,7 +212,9 @@ export class AuthService {
 
   async verifyAccessToken(accessToken: string) {
     try {
-      const payload = await this.jwtService.verifyAsync<ATPayload>(accessToken, { secret: this.configService.get('ACCESS_TOKEN_SECRET') });
+      const payload = await this.jwtService.verifyAsync<ATPayload>(accessToken, {
+        secret: this.configService.get('ACCESS_TOKEN_SECRET')
+      });
       return payload;
     } catch (e) {
       throw new HttpException({ code: StatusCode.UNAUTHORIZED, message: 'Unauthorized' }, HttpStatus.UNAUTHORIZED);
@@ -177,7 +237,11 @@ export class AuthService {
     if (!options?.includeRoles) return this.userModel.findOne({ _id: id }).exec();
     return this.userModel
       .findOne({ _id: id })
-      .populate({ path: 'roles', select: { _id: 1, name: 1, color: 1, permissions: 1, position: 1 }, options: { sort: { position: 1 } } })
+      .populate({
+        path: 'roles',
+        select: { _id: 1, name: 1, color: 1, permissions: 1, position: 1 },
+        options: { sort: { position: 1 } }
+      })
       .exec();
   }
 

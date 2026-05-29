@@ -16,9 +16,6 @@ export const DATABASE_URL = '';
 export const DOCUMENT_TITLE = 'DaPlex API';
 export const DOCUMENT_DESCRIPTION = 'REST API media streaming';
 export const DOCUMENT_VERSION = '0.0.1';
-export const DOCUMENT_AUTHOR = 'Kaigonia';
-export const DOCUMENT_GITHUB = 'https://github.com/ktt45678';
-export const DOCUMENT_EMAIL = 'ktt45678@gmail.com';
 export const PASSWORD_HASH_ROUNDS = 10;
 // Token/cookie secrets intentionally have NO defaults — they must be provided via env
 // vars and are enforced as required in env-validation.dto.ts. A predictable fallback

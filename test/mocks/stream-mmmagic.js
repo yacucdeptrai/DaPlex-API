@@ -4,6 +4,5 @@
 // exercise libmagic file-type detection, so this no-op stub keeps modules that
 // import it loadable. Wired in via jest.moduleNameMapper.
 module.exports = {
-  default: () =>
-    Promise.resolve([{ type: 'application/octet-stream' }, { unpipe: () => {} }])
+  default: () => Promise.resolve([{ type: 'application/octet-stream' }, { unpipe: () => {} }])
 };

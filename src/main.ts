@@ -9,8 +9,9 @@ import fastifyCookie from '@fastify/cookie';
 import dns from 'node:dns';
 
 import { AppModule } from './app.module';
-import { DOCUMENT_TITLE, DOCUMENT_DESCRIPTION, DOCUMENT_VERSION, DOCUMENT_AUTHOR, DOCUMENT_GITHUB, DOCUMENT_EMAIL } from './config';
+import { DOCUMENT_TITLE, DOCUMENT_DESCRIPTION, DOCUMENT_VERSION } from './config';
 import { applyBigIntPatches } from './utils';
+import { setConfigService } from './config-ref';
 
 async function bootstrap() {
   const isDev = process.env.NODE_ENV === 'development';
@@ -27,7 +28,8 @@ async function bootstrap() {
       trustProxy: process.env.TRUST_PROXY === 'true'
     })
   );
-  configService = app.get(ConfigService);
+  const configService = app.get(ConfigService);
+  setConfigService(configService);
   // Setup Swagger UI
   if (isDev) {
     const swaggerDocument = SwaggerModule.createDocument(
@@ -36,7 +38,6 @@ async function bootstrap() {
         .setTitle(DOCUMENT_TITLE)
         .setDescription(DOCUMENT_DESCRIPTION)
         .setVersion(DOCUMENT_VERSION)
-        .setContact(DOCUMENT_AUTHOR, DOCUMENT_GITHUB, DOCUMENT_EMAIL)
         .addBearerAuth({
           type: 'apiKey',
           in: 'header',
@@ -92,6 +93,5 @@ async function bootstrap() {
   await app.listen(port, address);
 }
 
-export let configService: ConfigService<unknown, boolean>;
 applyBigIntPatches();
 bootstrap();
