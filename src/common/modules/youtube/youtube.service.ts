@@ -13,13 +13,18 @@ export class YoutubeService {
 
   async getVideoInfo(url: string) {
     try {
-      const response = await firstValueFrom(this.httpService.get<YoutubeOEmbed>('https://www.youtube.com/oembed', { params: { url, format: 'json' } }));
+      const response = await firstValueFrom(
+        this.httpService.get<YoutubeOEmbed>('https://www.youtube.com/oembed', { params: { url, format: 'json' } })
+      );
       return response.data;
     } catch (e) {
       if (e.isAxiosError) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }

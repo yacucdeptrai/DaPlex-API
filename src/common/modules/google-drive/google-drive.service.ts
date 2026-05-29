@@ -44,7 +44,10 @@ export class GoogleDriveService {
       if (e.isAxiosError) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -86,7 +89,10 @@ export class GoogleDriveService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -139,7 +145,10 @@ export class GoogleDriveService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -171,7 +180,10 @@ export class GoogleDriveService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -198,7 +210,9 @@ export class GoogleDriveService {
             supportsAllDrives: true,
             includeItemsFromAllDrives: true,
             fields: 'files(id,mimeType,size)',
-            q: parentId ? `'${parentId}' in parents and name = '${childName}' and trashed = false` : `name = '${childName}' and trashed = false`
+            q: parentId
+              ? `'${parentId}' in parents and name = '${childName}' and trashed = false`
+              : `name = '${childName}' and trashed = false`
           };
           response = await firstValueFrom(
             this.httpService.get<DriveFileList>(`${this.baseUrl}/drive/v3/files`, {
@@ -220,7 +234,10 @@ export class GoogleDriveService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -250,11 +267,18 @@ export class GoogleDriveService {
         if (e.isAxiosError) {
           if (e.response?.status === 401 && i < 1) await this.refreshToken(storage);
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
-          else if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
+          else if (e.response?.status === 404)
+            throw new HttpException(
+              { code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' },
+              HttpStatus.NOT_FOUND
+            );
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }

@@ -44,7 +44,10 @@ export class DropboxService {
       if (e.isAxiosError) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -100,7 +103,10 @@ export class DropboxService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -148,7 +154,10 @@ export class DropboxService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }

@@ -29,12 +29,17 @@ export class HttpEmailService {
       data.append(`v:${p}`, params[p]);
     });
     try {
-      const response = await firstValueFrom(this.httpService.post('https://api.mailgun.net/v3/whitefoo.me/messages', data, config));
+      const response = await firstValueFrom(
+        this.httpService.post('https://api.mailgun.net/v3/whitefoo.me/messages', data, config)
+      );
       return response.data;
     } catch (e) {
       this.logger.error(e.response);
       throw new HttpException(
-        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+        },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }
@@ -48,12 +53,17 @@ export class HttpEmailService {
       to: [{ email, name }]
     };
     try {
-      const response = await firstValueFrom(this.httpService.post('https://api.sendinblue.com/v3/smtp/email', data, { headers }));
+      const response = await firstValueFrom(
+        this.httpService.post('https://api.sendinblue.com/v3/smtp/email', data, { headers })
+      );
       return response.data;
     } catch (e) {
       this.logger.error(e.response);
       throw new HttpException(
-        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+        },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }
@@ -69,12 +79,17 @@ export class HttpEmailService {
       content: [{ type: 'text/html', value: subject }]
     };
     try {
-      const response = await firstValueFrom(this.httpService.post('https://api.sendgrid.com/v3/mail/send', data, { headers }));
+      const response = await firstValueFrom(
+        this.httpService.post('https://api.sendgrid.com/v3/mail/send', data, { headers })
+      );
       return response.data;
     } catch (e) {
       this.logger.error(e.response?.data || e.response);
       throw new HttpException(
-        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+        },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }

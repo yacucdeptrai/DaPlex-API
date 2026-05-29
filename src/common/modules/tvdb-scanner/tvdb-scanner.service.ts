@@ -105,7 +105,10 @@ export class TvdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -129,11 +132,19 @@ export class TvdbScannerService {
       );
       const data = response.data.data;
       const selectedLangCodes = languageCodeHelper.getByISO63912(language?.substring(0, 2) || 'en');
-      const langNameTranslation = data.translations.nameTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
-      const langOverviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
+      const langNameTranslation = data.translations.nameTranslations?.find(
+        (t) => t.language === selectedLangCodes.iso639_2
+      );
+      const langOverviewTranslation = data.translations.overviewTranslations?.find(
+        (t) => t.language === selectedLangCodes.iso639_2
+      );
       const langNameAlias = data.aliases.find((t) => t.language === selectedLangCodes.iso639_2);
-      const origLangNameTranslation = data.translations.nameTranslations?.find((t) => t.language === data.originalLanguage);
-      const origLangOverviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === data.originalLanguage);
+      const origLangNameTranslation = data.translations.nameTranslations?.find(
+        (t) => t.language === data.originalLanguage
+      );
+      const origLangOverviewTranslation = data.translations.overviewTranslations?.find(
+        (t) => t.language === data.originalLanguage
+      );
       const tmdbId = data.remoteIds?.find((r) => r.type === 12)?.id; // Type 12: TheMovieDB.com
       const movieDetailsFromTMDB = tmdbId ? await this.tmdbScannerService.movieDetails(tmdbId, language) : null;
       const result = new MediaDetails();
@@ -141,9 +152,12 @@ export class TvdbScannerService {
       result.title = langNameTranslation?.name || langNameAlias.name || movieDetailsFromTMDB?.title || data.name;
       result.originalTitle = data.name || movieDetailsFromTMDB?.originalTitle;
       result.altTitles = this.mapAltTitles(data.aliases, origLangNameTranslation, movieDetailsFromTMDB?.altTitles);
-      result.overview = langOverviewTranslation?.overview || movieDetailsFromTMDB?.overview || origLangOverviewTranslation?.overview;
-      result.posterPath = data.image || data.artworks?.find((a) => a.type === 14)?.image || movieDetailsFromTMDB?.posterPath || '';
-      result.backdropPath = data.artworks?.find((a) => a.type === 15)?.image || movieDetailsFromTMDB?.backdropPath || '';
+      result.overview =
+        langOverviewTranslation?.overview || movieDetailsFromTMDB?.overview || origLangOverviewTranslation?.overview;
+      result.posterPath =
+        data.image || data.artworks?.find((a) => a.type === 14)?.image || movieDetailsFromTMDB?.posterPath || '';
+      result.backdropPath =
+        data.artworks?.find((a) => a.type === 15)?.image || movieDetailsFromTMDB?.backdropPath || '';
       result.originalLanguage = languageCodeHelper.getByISO63913(data.originalLanguage)?.iso639_1;
       result.collection = movieDetailsFromTMDB?.collection;
       result.genres = data.genres.map((g) => g.name);
@@ -162,7 +176,9 @@ export class TvdbScannerService {
         const languageCodes = languageCodeHelper.getByISO63912(i18nLang);
         const [iso6391Lang] = ISO6391.getLanguages([i18nLang]);
         const nameTranslation = data.translations.nameTranslations?.find((t) => t.language === languageCodes.iso639_2);
-        const overviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === languageCodes.iso639_2);
+        const overviewTranslation = data.translations.overviewTranslations?.find(
+          (t) => t.language === languageCodes.iso639_2
+        );
         if (nameTranslation || overviewTranslation) {
           const mediaTranslation: MediaTranslation = {
             iso31661: languageCodes?.iso3166_1,
@@ -182,7 +198,10 @@ export class TvdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -206,11 +225,19 @@ export class TvdbScannerService {
       );
       const data = response.data.data;
       const selectedLangCodes = languageCodeHelper.getByISO63912(language?.substring(0, 2) || 'en');
-      const langNameTranslation = data.translations.nameTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
-      const langOverviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
+      const langNameTranslation = data.translations.nameTranslations?.find(
+        (t) => t.language === selectedLangCodes.iso639_2
+      );
+      const langOverviewTranslation = data.translations.overviewTranslations?.find(
+        (t) => t.language === selectedLangCodes.iso639_2
+      );
       const langNameAlias = data.aliases.find((t) => t.language === selectedLangCodes.iso639_2);
-      const origLangNameTranslation = data.translations.nameTranslations?.find((t) => t.language === data.originalLanguage);
-      const origLangOverviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === data.originalLanguage);
+      const origLangNameTranslation = data.translations.nameTranslations?.find(
+        (t) => t.language === data.originalLanguage
+      );
+      const origLangOverviewTranslation = data.translations.overviewTranslations?.find(
+        (t) => t.language === data.originalLanguage
+      );
       const tmdbId = data.remoteIds?.find((r) => r.type === 12)?.id; // Type 12: TheMovieDB.com
       const tvDetailsFromTMDB = tmdbId ? await this.tmdbScannerService.tvDetails(tmdbId, language) : null;
       const result = new MediaDetails();
@@ -218,8 +245,10 @@ export class TvdbScannerService {
       result.title = langNameTranslation?.name || langNameAlias.name || tvDetailsFromTMDB?.title || data.name;
       result.originalTitle = data.name;
       result.altTitles = this.mapAltTitles(data.aliases, origLangNameTranslation, tvDetailsFromTMDB?.altTitles);
-      result.overview = langOverviewTranslation?.overview || tvDetailsFromTMDB?.overview || origLangOverviewTranslation.overview;
-      result.posterPath = data.image || data.artworks?.find((a) => a.type === 14)?.image || tvDetailsFromTMDB?.posterPath || '';
+      result.overview =
+        langOverviewTranslation?.overview || tvDetailsFromTMDB?.overview || origLangOverviewTranslation.overview;
+      result.posterPath =
+        data.image || data.artworks?.find((a) => a.type === 14)?.image || tvDetailsFromTMDB?.posterPath || '';
       result.backdropPath = data.artworks?.find((a) => a.type === 15)?.image || tvDetailsFromTMDB?.backdropPath || '';
       result.originalLanguage = languageCodeHelper.getByISO63913(data.originalLanguage)?.iso639_1;
       result.collection = tvDetailsFromTMDB?.collection;
@@ -256,8 +285,12 @@ export class TvdbScannerService {
               .pipe(retry(this.getUnauthorizedRetryConfig()))
           );
           const seasonData = seasonResponse.data.data;
-          const langNameTranslation = seasonData.translations.nameTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
-          const langOverviewTranslation = seasonData.translations.overviewTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
+          const langNameTranslation = seasonData.translations.nameTranslations?.find(
+            (t) => t.language === selectedLangCodes.iso639_2
+          );
+          const langOverviewTranslation = seasonData.translations.overviewTranslations?.find(
+            (t) => t.language === selectedLangCodes.iso639_2
+          );
           season.name = langNameTranslation?.name || '';
           season.overview = langOverviewTranslation?.overview || '';
           season.seasonNumber = seasonData.number;
@@ -273,7 +306,9 @@ export class TvdbScannerService {
         const languageCodes = languageCodeHelper.getByISO63912(i18nLang);
         const [iso6391Lang] = ISO6391.getLanguages([i18nLang]);
         const nameTranslation = data.translations.nameTranslations?.find((t) => t.language === languageCodes.iso639_2);
-        const overviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === languageCodes.iso639_2);
+        const overviewTranslation = data.translations.overviewTranslations?.find(
+          (t) => t.language === languageCodes.iso639_2
+        );
         if (nameTranslation || overviewTranslation) {
           const mediaTranslation: MediaTranslation = {
             iso31661: languageCodes?.iso3166_1,
@@ -293,7 +328,10 @@ export class TvdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -316,7 +354,11 @@ export class TvdbScannerService {
           .pipe(retry(this.getUnauthorizedRetryConfig()))
       );
       const episodeId = episodeQueryResponse.data.data.episodes?.[0]?.id;
-      if (!episodeId) throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
+      if (!episodeId)
+        throw new HttpException(
+          { code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' },
+          HttpStatus.NOT_FOUND
+        );
       const response = await firstValueFrom(
         this.httpService
           .get<TVDBResponse<EpisodeExtendedRecord>>(`${this.baseUrl}/episodes/${episodeId}/extended`, {
@@ -330,8 +372,12 @@ export class TvdbScannerService {
       );
       const data = response.data.data;
       const selectedLangCodes = languageCodeHelper.getByISO63912(language?.substring(0, 2) || 'en');
-      const langNameTranslation = data.translations.nameTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
-      const langOverviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === selectedLangCodes.iso639_2);
+      const langNameTranslation = data.translations.nameTranslations?.find(
+        (t) => t.language === selectedLangCodes.iso639_2
+      );
+      const langOverviewTranslation = data.translations.overviewTranslations?.find(
+        (t) => t.language === selectedLangCodes.iso639_2
+      );
       const result = new TVEpisode();
       result.episodeNumber = data.number;
       result.name = langNameTranslation?.name || data.name;
@@ -344,7 +390,9 @@ export class TvdbScannerService {
         const languageCodes = languageCodeHelper.getByISO63912(i18nLang);
         const [iso6391Lang] = ISO6391.getLanguages([i18nLang]);
         const nameTranslation = data.translations.nameTranslations?.find((t) => t.language === languageCodes.iso639_2);
-        const overviewTranslation = data.translations.overviewTranslations?.find((t) => t.language === languageCodes.iso639_2);
+        const overviewTranslation = data.translations.overviewTranslations?.find(
+          (t) => t.language === languageCodes.iso639_2
+        );
         if (nameTranslation || overviewTranslation) {
           const episodeTranslation: EpisodeTranslation = {
             iso31661: languageCodes?.iso3166_1,
@@ -364,7 +412,10 @@ export class TvdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -391,7 +442,10 @@ export class TvdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -419,7 +473,10 @@ export class TvdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }

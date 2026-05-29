@@ -29,12 +29,17 @@ export class ImagekitService {
       auth: { username: this.configService.get('IMAGEKIT_API_KEY'), password: '' }
     };
     try {
-      const response = await firstValueFrom(this.httpService.post('https://upload.imagekit.io/api/v1/files/upload', data, config));
+      const response = await firstValueFrom(
+        this.httpService.post('https://upload.imagekit.io/api/v1/files/upload', data, config)
+      );
       return response.data;
     } catch (e) {
       this.logger.error(e.response);
       throw new HttpException(
-        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+        },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     } finally {
@@ -54,7 +59,10 @@ export class ImagekitService {
       if (e.response.data.reason === 'FOLDER_NOT_FOUND') return;
       this.logger.error(e.response);
       throw new HttpException(
-        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+        },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }

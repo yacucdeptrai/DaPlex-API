@@ -29,14 +29,25 @@ export class S3Service {
       for (let j = 0; j < retry; j++) {
         try {
           const fileInfo = await this.headObject(storage, filePath);
-          return { storage: storage, file: { id: filePath, name: filePath.split('/').pop(), size: fileInfo.contentLength, file: { mimeType: fileInfo.contentType } } };
+          return {
+            storage: storage,
+            file: {
+              id: filePath,
+              name: filePath.split('/').pop(),
+              size: fileInfo.contentLength,
+              file: { mimeType: fileInfo.contentType }
+            }
+          };
         } catch (e) {
           if (j < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else if (e.response?.status === 404) break;
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -52,14 +63,22 @@ export class S3Service {
     for (let i = 0; i < retry; i++) {
       try {
         const fileInfo = await this.headObject(storage, path);
-        return { id: path, name: path.split('/').pop(), size: fileInfo.contentLength, file: { mimeType: fileInfo.contentType } };
+        return {
+          id: path,
+          name: path.split('/').pop(),
+          size: fileInfo.contentLength,
+          file: { mimeType: fileInfo.contentType }
+        };
       } catch (e) {
         if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
           this.logger.error(e.response);
           throw new HttpException(
-            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            {
+              code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+              message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+            },
             HttpStatus.SERVICE_UNAVAILABLE
           );
         }
@@ -72,15 +91,27 @@ export class S3Service {
     for (let i = 0; i < retry; i++) {
       try {
         const fileInfo = await this.headObject(storage, fileId);
-        return { id: fileId, name: fileId.split('/').pop(), size: fileInfo.contentLength, file: { mimeType: fileInfo.contentType } };
+        return {
+          id: fileId,
+          name: fileId.split('/').pop(),
+          size: fileInfo.contentLength,
+          file: { mimeType: fileInfo.contentType }
+        };
       } catch (e) {
-        if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
+        if (e.response?.status === 404)
+          throw new HttpException(
+            { code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' },
+            HttpStatus.NOT_FOUND
+          );
         if (i < retry - 1) {
           await new Promise((r) => setTimeout(r, retryTimeout));
         } else {
           this.logger.error(e.response);
           throw new HttpException(
-            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            {
+              code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+              message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+            },
             HttpStatus.SERVICE_UNAVAILABLE
           );
         }
@@ -88,7 +119,12 @@ export class S3Service {
     }
   }
 
-  async deleteFolder(folder: bigint | string, storage: ExternalStorage, retry: number = 5, retryTimeout: number = 3000) {
+  async deleteFolder(
+    folder: bigint | string,
+    storage: ExternalStorage,
+    retry: number = 5,
+    retryTimeout: number = 3000
+  ) {
     const path = folder.toString();
     await this.externalStoragesService.decryptToken(storage);
     for (let i = 0; i < retry; i++) {
@@ -102,7 +138,10 @@ export class S3Service {
         } else {
           this.logger.error(e.response);
           throw new HttpException(
-            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            {
+              code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+              message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+            },
             HttpStatus.SERVICE_UNAVAILABLE
           );
         }
@@ -170,7 +209,12 @@ export class S3Service {
     return `https://${host}${canonicalUri}?${canonicalQuerystring}&X-Amz-Signature=${signature}`;
   }
 
-  async completeMultipartUpload(storage: ExternalStorage, key: string, uploadId: string, parts: { partNumber: number; etag: string }[]) {
+  async completeMultipartUpload(
+    storage: ExternalStorage,
+    key: string,
+    uploadId: string,
+    parts: { partNumber: number; etag: string }[]
+  ) {
     await this.externalStoragesService.decryptToken(storage);
     const { host, bucket } = this.parsePublicUrl(storage.publicUrl);
     const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${key}`);
@@ -178,7 +222,16 @@ export class S3Service {
     const body = `<CompleteMultipartUpload>${parts.map((p) => `<Part><PartNumber>${p.partNumber}</PartNumber><ETag>${p.etag}</ETag></Part>`).join('')}</CompleteMultipartUpload>`;
     const payloadHash = this.hash(body);
 
-    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'POST', canonicalQuerystring, payloadHash, { 'content-type': 'application/xml' });
+    const authHeader = this.getAuthorizationHeader(
+      storage.clientId,
+      storage.clientSecret,
+      host,
+      canonicalUri,
+      'POST',
+      canonicalQuerystring,
+      payloadHash,
+      { 'content-type': 'application/xml' }
+    );
 
     try {
       await firstValueFrom(
@@ -192,7 +245,10 @@ export class S3Service {
     } catch (e) {
       this.logger.error(e.response);
       throw new HttpException(
-        { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+        },
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }
@@ -205,15 +261,28 @@ export class S3Service {
     const canonicalQuerystring = `uploadId=${encodeURIComponent(uploadId)}`;
     const payloadHash = this.hash('');
 
-    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'DELETE', canonicalQuerystring, payloadHash);
+    const authHeader = this.getAuthorizationHeader(
+      storage.clientId,
+      storage.clientSecret,
+      host,
+      canonicalUri,
+      'DELETE',
+      canonicalQuerystring,
+      payloadHash
+    );
 
     try {
-      await firstValueFrom(this.httpService.delete(`https://${host}${canonicalUri}?${canonicalQuerystring}`, { headers: authHeader }));
+      await firstValueFrom(
+        this.httpService.delete(`https://${host}${canonicalUri}?${canonicalQuerystring}`, { headers: authHeader })
+      );
     } catch (e) {
       if (e.response?.status !== 404) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -226,9 +295,19 @@ export class S3Service {
     const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${fullKey}`);
     const payloadHash = this.hash('');
 
-    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'HEAD', '', payloadHash);
+    const authHeader = this.getAuthorizationHeader(
+      storage.clientId,
+      storage.clientSecret,
+      host,
+      canonicalUri,
+      'HEAD',
+      '',
+      payloadHash
+    );
 
-    const response = await firstValueFrom(this.httpService.head(`https://${host}${canonicalUri}`, { headers: authHeader }));
+    const response = await firstValueFrom(
+      this.httpService.head(`https://${host}${canonicalUri}`, { headers: authHeader })
+    );
     return {
       contentLength: parseInt(response.headers['content-length'] || '0', 10),
       contentType: response.headers['content-type'] || 'application/octet-stream'
@@ -241,7 +320,15 @@ export class S3Service {
     const canonicalUri = this.encodeCanonicalUri(`/${bucket}/${fullKey}`);
     const payloadHash = this.hash('');
 
-    const authHeader = this.getAuthorizationHeader(storage.clientId, storage.clientSecret, host, canonicalUri, 'DELETE', '', payloadHash);
+    const authHeader = this.getAuthorizationHeader(
+      storage.clientId,
+      storage.clientSecret,
+      host,
+      canonicalUri,
+      'DELETE',
+      '',
+      payloadHash
+    );
 
     await firstValueFrom(this.httpService.delete(`https://${host}${canonicalUri}`, { headers: authHeader }));
   }
@@ -322,7 +409,9 @@ export class S3Service {
       uri
         .replace(/^\//, '')
         .split('/')
-        .map((segment) => encodeURIComponent(segment).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()))
+        .map((segment) =>
+          encodeURIComponent(segment).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase())
+        )
         .join('/')
     );
   }

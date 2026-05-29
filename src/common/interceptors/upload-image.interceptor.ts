@@ -1,4 +1,12 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  HttpException,
+  HttpStatus,
+  Logger
+} from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { SavedMultipartFile } from '@fastify/multipart';
 import mimeTypes from 'mime-types';
@@ -58,35 +66,66 @@ export class UploadImageInterceptor implements NestInterceptor {
         const files = await req.saveRequestFiles({ limits: { files: 1, fileSize: this.maxSize } });
         file = files[0];
       } catch (e) {
-        if (e.code === 'FST_REQ_FILE_TOO_LARGE') throw new HttpException({ code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' }, HttpStatus.BAD_REQUEST);
-        else if (e.code === 'FST_FILES_LIMIT') throw new HttpException({ code: StatusCode.FILES_LIMIT_REACHED, message: 'Files limit reached' }, HttpStatus.BAD_REQUEST);
+        if (e.code === 'FST_REQ_FILE_TOO_LARGE')
+          throw new HttpException(
+            { code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' },
+            HttpStatus.BAD_REQUEST
+          );
+        else if (e.code === 'FST_FILES_LIMIT')
+          throw new HttpException(
+            { code: StatusCode.FILES_LIMIT_REACHED, message: 'Files limit reached' },
+            HttpStatus.BAD_REQUEST
+          );
         else throw e;
       }
-      if (!file) throw new HttpException({ code: StatusCode.REQUIRE_FILE, message: 'File is required' }, HttpStatus.BAD_REQUEST);
+      if (!file)
+        throw new HttpException({ code: StatusCode.REQUIRE_FILE, message: 'File is required' }, HttpStatus.BAD_REQUEST);
       // We don't need this stream
       file.file.destroy();
       if (this.mimeTypes?.length) {
-        if (!this.mimeTypes.includes(file.mimetype)) throw new HttpException({ code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        if (!this.mimeTypes.includes(file.mimetype))
+          throw new HttpException(
+            { code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' },
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE
+          );
       }
       try {
         //const result = await getAverageColor(file.filepath);
         var info = await sharp(file.filepath, { pages: 1 }).metadata();
       } catch (e) {
         this.logger.error(e);
-        throw new HttpException({ code: StatusCode.FILE_DETECTION, message: 'Failed to detect file type' }, HttpStatus.UNPROCESSABLE_ENTITY);
+        throw new HttpException(
+          { code: StatusCode.FILE_DETECTION, message: 'Failed to detect file type' },
+          HttpStatus.UNPROCESSABLE_ENTITY
+        );
       }
       const detectedMimetype = mimeTypes.lookup(info.format) || 'application/octet-stream';
       if (this.mimeTypes?.length && file.mimetype !== detectedMimetype)
-        throw new HttpException({ code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        throw new HttpException(
+          { code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' },
+          HttpStatus.UNSUPPORTED_MEDIA_TYPE
+        );
       if ((this.maxHeight && info.height > this.maxHeight) || (this.maxWidth && info.width > this.maxWidth))
-        throw new HttpException({ code: StatusCode.IMAGE_MAX_DIMENSIONS, message: 'Image dimensions are too high' }, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          { code: StatusCode.IMAGE_MAX_DIMENSIONS, message: 'Image dimensions are too high' },
+          HttpStatus.BAD_REQUEST
+        );
       if ((this.minHeight && info.height < this.minHeight) || (this.minWidth && info.width < this.minWidth))
-        throw new HttpException({ code: StatusCode.IMAGE_MIN_DIMENSIONS, message: 'Image dimensions are too low' }, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          { code: StatusCode.IMAGE_MIN_DIMENSIONS, message: 'Image dimensions are too low' },
+          HttpStatus.BAD_REQUEST
+        );
       const targetWidth = Math.ceil((info.height * this.ratio[0]) / this.ratio[1]);
       if (this.ratio && targetWidth !== info.width) {
-        if (!this.autoResize) throw new HttpException({ code: StatusCode.IMAGE_RATIO, message: 'Invalid aspect ratio' }, HttpStatus.BAD_REQUEST);
+        if (!this.autoResize)
+          throw new HttpException(
+            { code: StatusCode.IMAGE_RATIO, message: 'Invalid aspect ratio' },
+            HttpStatus.BAD_REQUEST
+          );
         const tempFilePath = appendToFilename(file.filepath, '_resized');
-        await sharp(file.filepath, { pages: -1 }).resize({ width: targetWidth, height: info.height }).toFile(tempFilePath);
+        await sharp(file.filepath, { pages: -1 })
+          .resize({ width: targetWidth, height: info.height })
+          .toFile(tempFilePath);
         await fs.promises.rename(tempFilePath, file.filepath);
         info = await sharp(file.filepath, { pages: 1 }).metadata();
       }
@@ -110,19 +149,39 @@ export class UploadImageInterceptor implements NestInterceptor {
         //const result = await getAverageColor(url);
         var info = await sharp(imageBuffer, { pages: 1 }).metadata();
       } catch (e) {
-        throw new HttpException({ code: StatusCode.FILE_DETECTION, message: 'Failed to detect file type' }, HttpStatus.UNPROCESSABLE_ENTITY);
+        throw new HttpException(
+          { code: StatusCode.FILE_DETECTION, message: 'Failed to detect file type' },
+          HttpStatus.UNPROCESSABLE_ENTITY
+        );
       }
       const detectedMimetype = mimeTypes.lookup(info.format) || 'application/octet-stream';
       if (this.mimeTypes?.length) {
-        if (!this.mimeTypes.includes(detectedMimetype)) throw new HttpException({ code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        if (!this.mimeTypes.includes(detectedMimetype))
+          throw new HttpException(
+            { code: StatusCode.FILE_UNSUPPORTED, message: 'Unsupported file type' },
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE
+          );
       }
-      if (info.size && info.size > this.maxSize) throw new HttpException({ code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' }, HttpStatus.BAD_REQUEST);
+      if (info.size && info.size > this.maxSize)
+        throw new HttpException(
+          { code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' },
+          HttpStatus.BAD_REQUEST
+        );
       if ((this.maxHeight && info.height > this.maxHeight) || (this.maxWidth && info.width > this.maxWidth))
-        throw new HttpException({ code: StatusCode.IMAGE_MAX_DIMENSIONS, message: 'Image dimensions are too high' }, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          { code: StatusCode.IMAGE_MAX_DIMENSIONS, message: 'Image dimensions are too high' },
+          HttpStatus.BAD_REQUEST
+        );
       if ((this.minHeight && info.height < this.minHeight) || (this.minWidth && info.width < this.minWidth))
-        throw new HttpException({ code: StatusCode.IMAGE_MIN_DIMENSIONS, message: 'Image dimensions are too low' }, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          { code: StatusCode.IMAGE_MIN_DIMENSIONS, message: 'Image dimensions are too low' },
+          HttpStatus.BAD_REQUEST
+        );
       if (this.ratio && (info.height * this.ratio[0]) / this.ratio[1] !== info.width)
-        throw new HttpException({ code: StatusCode.IMAGE_RATIO, message: 'Invalid aspect ratio' }, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          { code: StatusCode.IMAGE_RATIO, message: 'Invalid aspect ratio' },
+          HttpStatus.BAD_REQUEST
+        );
       const thumbhashResult = await this.createThumbhash(imageBuffer, info.width, info.height);
       req.incomingFile.filepath = url;
       req.incomingFile.mimetype = detectedMimetype;
@@ -132,14 +191,21 @@ export class UploadImageInterceptor implements NestInterceptor {
       req.incomingFile.filename = url.split('/').pop().split('#')[0].split('?')[0];
       req.incomingFile.isUrl = true;
     } else {
-      throw new HttpException({ code: StatusCode.REQUIRE_MULTIPART, message: 'Multipart/form-data is required' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        { code: StatusCode.REQUIRE_MULTIPART, message: 'Multipart/form-data is required' },
+        HttpStatus.BAD_REQUEST
+      );
     }
     return next.handle();
   }
 
   private async createThumbhash(input: string | Buffer, srcWidth: number, srcHeight: number) {
     const scaledSizes = getScaledSizes(srcWidth, srcHeight, 100, 100);
-    const rgba = await sharp(input).resize({ width: scaledSizes.width, height: scaledSizes.height }).ensureAlpha().raw().toBuffer();
+    const rgba = await sharp(input)
+      .resize({ width: scaledSizes.width, height: scaledSizes.height })
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
     const thumbhash = rgbaToThumbHash(scaledSizes.width, scaledSizes.height, rgba);
     const b64 = Buffer.from(thumbhash).toString('base64').replace(/\=+$/, '');
     const averageColorRBGA = thumbHashToAverageRGBA(thumbhash);

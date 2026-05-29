@@ -28,7 +28,9 @@ export class OnedriveService {
     data.append('refresh_token', storage.refreshToken);
     data.append('grant_type', 'refresh_token');
     try {
-      const response = await firstValueFrom(this.httpService.post('https://login.microsoftonline.com/common/oauth2/v2.0/token', data));
+      const response = await firstValueFrom(
+        this.httpService.post('https://login.microsoftonline.com/common/oauth2/v2.0/token', data)
+      );
       const { access_token, refresh_token, expires_in } = response.data;
       const expiry = new Date();
       expiry.setSeconds(expiry.getSeconds() + expires_in - 30);
@@ -41,7 +43,10 @@ export class OnedriveService {
       if (e.isAxiosError) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -85,7 +90,10 @@ export class OnedriveService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -102,7 +110,12 @@ export class OnedriveService {
     return this.deleteFolder(folder, storage);
   }
 
-  async deleteFolder(folder: bigint | string, storage: ExternalStorage, retry: number = 5, retryTimeout: number = 3000) {
+  async deleteFolder(
+    folder: bigint | string,
+    storage: ExternalStorage,
+    retry: number = 5,
+    retryTimeout: number = 3000
+  ) {
     await this.externalStoragesService.decryptToken(storage);
     if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
     for (let i = 0; i < retry; i++) {
@@ -123,7 +136,10 @@ export class OnedriveService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -158,7 +174,10 @@ export class OnedriveService {
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -186,11 +205,18 @@ export class OnedriveService {
         if (e.isAxiosError && e.response) {
           if (e.response.status === 401 && i < 1) await this.refreshToken(storage);
           else if (i < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
-          else if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
+          else if (e.response?.status === 404)
+            throw new HttpException(
+              { code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' },
+              HttpStatus.NOT_FOUND
+            );
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -226,7 +252,10 @@ export class OnedriveService {
             else {
               this.logger.error(e.response);
               throw new HttpException(
-                { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+                {
+                  code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                  message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+                },
                 HttpStatus.SERVICE_UNAVAILABLE
               );
             }

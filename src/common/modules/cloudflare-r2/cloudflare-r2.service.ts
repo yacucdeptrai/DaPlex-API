@@ -47,7 +47,13 @@ export class CloudflareR2Service {
       this.logger.error(err.response?.data ?? err.message);
       const status = err.response?.status ?? HttpStatus.BAD_GATEWAY;
       const statusText = err.response?.statusText ?? 'Unknown error';
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${status} ${statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${status} ${statusText} error from third party api`
+        },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     } finally {
       stream.destroy();
     }
@@ -73,7 +79,13 @@ export class CloudflareR2Service {
       this.logger.error(err.response?.data ?? err.message);
       const status = err.response?.status ?? HttpStatus.BAD_GATEWAY;
       const statusText = err.response?.statusText ?? 'Unknown error';
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${status} ${statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+      throw new HttpException(
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: `Received ${status} ${statusText} error from third party api`
+        },
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
     }
   }
 
@@ -99,7 +111,13 @@ export class CloudflareR2Service {
     const secretKey = credentialSplit?.length > 1 ? credentialSplit.slice(1).join(':') : secretKeyRaw;
 
     if (!accessKey || !secretKey) {
-      throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: 'Cloudflare R2 credentials are not configured correctly' }, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        {
+          code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+          message: 'Cloudflare R2 credentials are not configured correctly'
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
 
     const bucket = url.substring(url.lastIndexOf('/') + 1);

@@ -24,7 +24,9 @@ export class AzureBlobService implements OnModuleInit {
   }
 
   async upload(container: string, filename: string, filePath: string, mimeType: string) {
-    const blobClientService = BlobServiceClient.fromConnectionString(this.configService.get<string>('AZURE_STORAGE_CONNECTION_STRING'));
+    const blobClientService = BlobServiceClient.fromConnectionString(
+      this.configService.get<string>('AZURE_STORAGE_CONNECTION_STRING')
+    );
     const containerClient = blobClientService.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(filename);
     await blobClient.uploadFile(filePath, {
@@ -34,7 +36,9 @@ export class AzureBlobService implements OnModuleInit {
   }
 
   async delete(container: string, filename: string) {
-    const blobClientService = BlobServiceClient.fromConnectionString(this.configService.get<string>('AZURE_STORAGE_CONNECTION_STRING'));
+    const blobClientService = BlobServiceClient.fromConnectionString(
+      this.configService.get<string>('AZURE_STORAGE_CONNECTION_STRING')
+    );
     const containerClient = blobClientService.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(filename);
     return blobClient.deleteIfExists();

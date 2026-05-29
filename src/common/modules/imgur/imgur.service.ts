@@ -41,9 +41,16 @@ export class ImgurService {
     } catch (e) {
       if (e.isAxiosError) {
         this.logger.error(e.toJSON());
-        if (!e.response) throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received an unknown error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
+        if (!e.response)
+          throw new HttpException(
+            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received an unknown error from third party api` },
+            HttpStatus.SERVICE_UNAVAILABLE
+          );
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -73,7 +80,13 @@ export class ImgurService {
     if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
   }
 
-  private async uploadImage(filePath: string, fileName: string, storage: ExternalStorage, retry: number = 5, retryTimeout: number = 0) {
+  private async uploadImage(
+    filePath: string,
+    fileName: string,
+    storage: ExternalStorage,
+    retry: number = 5,
+    retryTimeout: number = 0
+  ) {
     for (let i = 0; i < retry; i++) {
       let file: string | fs.ReadStream;
       if (filePath.match(/^https?:\/\/.+\/.+$/)) file = filePath;
@@ -84,7 +97,9 @@ export class ImgurService {
       storage.folderId && data.append('album', storage.folderId);
       try {
         const response = await firstValueFrom(
-          this.httpService.post<ImgurUploadResponse>(`${this.baseUrl}/3/image`, data, { headers: { ...data.getHeaders(), Authorization: `Bearer ${storage.accessToken}` } })
+          this.httpService.post<ImgurUploadResponse>(`${this.baseUrl}/3/image`, data, {
+            headers: { ...data.getHeaders(), Authorization: `Bearer ${storage.accessToken}` }
+          })
         );
         response.data.data.storage = storage._id;
         return response.data.data;
@@ -92,12 +107,21 @@ export class ImgurService {
         if (e.isAxiosError && e.response) {
           if (e.response.status === 401 && i < 1) storage = await this.refreshToken(storage);
           else if (e.response.status === 409)
-            throw new HttpException({ code: StatusCode.THRID_PARTY_RATE_LIMIT, message: 'Rate limit from third party api, please try again in 1 hour' }, HttpStatus.SERVICE_UNAVAILABLE);
+            throw new HttpException(
+              {
+                code: StatusCode.THRID_PARTY_RATE_LIMIT,
+                message: 'Rate limit from third party api, please try again in 1 hour'
+              },
+              HttpStatus.SERVICE_UNAVAILABLE
+            );
           else if (i < retry - 1) new Promise((r) => setTimeout(r, retryTimeout));
           else {
             this.logger.error(e.toJSON());
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -120,7 +144,11 @@ export class ImgurService {
     await this.checkStorage(storage);
     for (let i = 0; i < retry; i++) {
       try {
-        const response = await firstValueFrom(this.httpService.delete(`${this.baseUrl}/3/image/${id}`, { headers: { Authorization: `Bearer ${storage.accessToken}` } }));
+        const response = await firstValueFrom(
+          this.httpService.delete(`${this.baseUrl}/3/image/${id}`, {
+            headers: { Authorization: `Bearer ${storage.accessToken}` }
+          })
+        );
         return response.data;
       } catch (e) {
         if (e.isAxiosError && e.response) {
@@ -130,7 +158,10 @@ export class ImgurService {
           else {
             this.logger.error(e.toJSON());
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }

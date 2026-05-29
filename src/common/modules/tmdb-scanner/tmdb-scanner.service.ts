@@ -12,11 +12,28 @@ import { TVEpisode } from '../../../resources/media-scanner/entities/tv-episode.
 import { Production } from '../../../resources/media-scanner/entities/production.entity';
 import { MediaVideo } from '../../../resources/media-scanner/entities/media-video.entity';
 import { MediaAltTitle } from '../../../resources/media-scanner/entities/media-alt-title.entity';
-import { EpisodeTranslation, MediaTranslation } from '../../../resources/media-scanner/entities/media-translation.entity';
+import {
+  EpisodeTranslation,
+  MediaTranslation
+} from '../../../resources/media-scanner/entities/media-translation.entity';
 import { TVSeason } from '../../../resources/media-scanner/entities/tv-season.entity';
 import { MediaImages } from '../../../resources/media-scanner/entities/media-images.entity';
 import { MediaImageItem } from '../../../resources/media-scanner/entities/media-image-item.entity';
-import { Search, Movie, TV, MovieDetails, TvShowDetails, ExternalIds, EpisodeDetails, Video, Title, Translation, TMDBImages, CollectionDetails, MediaKeyword } from './interfaces';
+import {
+  Search,
+  Movie,
+  TV,
+  MovieDetails,
+  TvShowDetails,
+  ExternalIds,
+  EpisodeDetails,
+  Video,
+  Title,
+  Translation,
+  TMDBImages,
+  CollectionDetails,
+  MediaKeyword
+} from './interfaces';
 import { StatusCode } from '../../../enums';
 import { apStyleTitleCase } from '../../../utils';
 import { I18N_LANGUAGES } from '../../../config';
@@ -65,7 +82,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -103,7 +123,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -188,7 +211,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -285,7 +311,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -334,7 +363,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -345,10 +377,13 @@ export class TmdbScannerService {
   async episodeDetails(id: string, season: string, episode: string, language: string) {
     try {
       const response = await firstValueFrom(
-        this.httpService.get<EpisodeDetails & { translations: { translations: Translation[] } }>(`${this.baseUrl}/tv/${id}/season/${season}/episode/${episode}`, {
-          params: { language, append_to_response: 'translations' },
-          headers: this.headers
-        })
+        this.httpService.get<EpisodeDetails & { translations: { translations: Translation[] } }>(
+          `${this.baseUrl}/tv/${id}/season/${season}/episode/${episode}`,
+          {
+            params: { language, append_to_response: 'translations' },
+            headers: this.headers
+          }
+        )
       );
       const data = response.data;
       const result = new TVEpisode();
@@ -375,7 +410,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -397,7 +435,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
@@ -419,7 +460,10 @@ export class TmdbScannerService {
       if (e.isAxiosError && e.response) {
         this.logger.error(e.response);
         throw new HttpException(
-          { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+          {
+            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+          },
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }

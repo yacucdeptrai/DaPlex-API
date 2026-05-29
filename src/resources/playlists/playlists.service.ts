@@ -18,11 +18,31 @@ import {
   DeletePlaylistItemDto,
   AddAllPlaylistItemsDto
 } from './dto';
-import { CursorPagePlaylistItems, Playlist as PlaylistEntity, PlaylistDetails, PlaylistItem as PlaylistItemEntity } from './entities';
+import {
+  CursorPagePlaylistItems,
+  Playlist as PlaylistEntity,
+  PlaylistDetails,
+  PlaylistItem as PlaylistItemEntity
+} from './entities';
 import { MediaService } from '../media/media.service';
 import { AuthUserDto } from '../users';
-import { CloudflareR2Container, MediaFileType, MediaPStatus, MediaVisibility, MongooseConnection, StatusCode } from '../../enums';
-import { LookupOptions, convertToLanguage, convertToLanguageArray, createSnowFlakeId, MongooseCursorPagination, escapeRegExp, trimSlugFilename } from '../../utils';
+import {
+  CloudflareR2Container,
+  MediaFileType,
+  MediaPStatus,
+  MediaVisibility,
+  MongooseConnection,
+  StatusCode
+} from '../../enums';
+import {
+  LookupOptions,
+  convertToLanguage,
+  convertToLanguageArray,
+  createSnowFlakeId,
+  MongooseCursorPagination,
+  escapeRegExp,
+  trimSlugFilename
+} from '../../utils';
 
 @Injectable()
 export class PlaylistsService {
@@ -74,7 +94,10 @@ export class PlaylistsService {
     const { pageToken, limit, sort } = cursorPagePlaylistDto;
     const filters: { [key: string]: any } = {};
     if (authUser.isAnonymous && !cursorPagePlaylistDto.author) {
-      throw new HttpException({ code: StatusCode.PLAYLIST_AUTHOR_NOT_FOUND, message: 'Author not found' }, HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_AUTHOR_NOT_FOUND, message: 'Author not found' },
+        HttpStatus.NOT_FOUND
+      );
     }
     if (cursorPagePlaylistDto.author && cursorPagePlaylistDto.author !== authUser._id) {
       filters.visibility = MediaVisibility.PUBLIC;
@@ -82,7 +105,15 @@ export class PlaylistsService {
     } else {
       filters.author = authUser._id;
     }
-    const aggregation = new MongooseCursorPagination({ pageToken, limit, fields, sortQuery: sort, sortEnum, typeMap, filters });
+    const aggregation = new MongooseCursorPagination({
+      pageToken,
+      limit,
+      fields,
+      sortQuery: sort,
+      sortEnum,
+      typeMap,
+      filters
+    });
     const lookupOptions: LookupOptions[] = [
       {
         from: 'media',
@@ -131,9 +162,20 @@ export class PlaylistsService {
       ])
       .lean()
       .exec();
-    if (!playlist) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
-    else if (playlist.visibility === MediaVisibility.PRIVATE && playlist.author._id !== authUser._id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.PLAYLIST_PRIVATE, message: 'This playlist is private' }, HttpStatus.FORBIDDEN);
+    if (!playlist)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
+    else if (
+      playlist.visibility === MediaVisibility.PRIVATE &&
+      playlist.author._id !== authUser._id &&
+      !authUser.hasPermission
+    )
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_PRIVATE, message: 'This playlist is private' },
+        HttpStatus.FORBIDDEN
+      );
     return plainToInstance(PlaylistDetails, playlist);
   }
 
@@ -159,9 +201,16 @@ export class PlaylistsService {
         { path: 'thumbnailMedia', select: { _id: 1, poster: 1, backdrop: 1 }, model: 'Media', strictPopulate: false }
       ])
       .exec();
-    if (!playlist) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+    if (!playlist)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
     else if (playlist.author._id !== authUser._id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' }, HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' },
+        HttpStatus.FORBIDDEN
+      );
     if (updatePlaylistDto.name != undefined) playlist.name = updatePlaylistDto.name;
     if (updatePlaylistDto.description !== undefined) playlist.description = updatePlaylistDto.description;
     if (updatePlaylistDto.visibility != undefined) playlist.visibility = updatePlaylistDto.visibility;
@@ -178,7 +227,11 @@ export class PlaylistsService {
     await session
       .withTransaction(async () => {
         const playlist = await this.playlistModel.findOneAndDelete(filters, { session }).lean();
-        if (!playlist) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+        if (!playlist)
+          throw new HttpException(
+            { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+            HttpStatus.NOT_FOUND
+          );
         if (playlist.thumbnail) {
           await this.deletePlaylistImage(playlist.thumbnail, CloudflareR2Container.PLAYLIST_THUMBNAILS);
         }
@@ -188,14 +241,27 @@ export class PlaylistsService {
 
   async uploadThumbnail(id: bigint, file: Storage.MultipartFile, authUser: AuthUserDto) {
     const playlist = await this.playlistModel.findOne({ _id: id }, { author: 1, thumbnail: 1 }).exec();
-    if (!playlist) throw new HttpException({ code: StatusCode.COLLECTION_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+    if (!playlist)
+      throw new HttpException(
+        { code: StatusCode.COLLECTION_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
     else if (<bigint>(<unknown>playlist.author) !== authUser._id)
-      throw new HttpException({ code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' }, HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' },
+        HttpStatus.FORBIDDEN
+      );
     const thumbnailId = await createSnowFlakeId();
     const trimmedFilename = trimSlugFilename(file.filename);
     const saveFile = `${thumbnailId}/${trimmedFilename}`;
-    const image = await this.cloudflareR2Service.upload(CloudflareR2Container.PLAYLIST_THUMBNAILS, saveFile, file.filepath, file.detectedMimetype);
-    if (playlist.thumbnail) await this.deletePlaylistImage(playlist.thumbnail, CloudflareR2Container.PLAYLIST_THUMBNAILS);
+    const image = await this.cloudflareR2Service.upload(
+      CloudflareR2Container.PLAYLIST_THUMBNAILS,
+      saveFile,
+      file.filepath,
+      file.detectedMimetype
+    );
+    if (playlist.thumbnail)
+      await this.deletePlaylistImage(playlist.thumbnail, CloudflareR2Container.PLAYLIST_THUMBNAILS);
     const thumbnail = new MediaFile();
     thumbnail._id = thumbnailId;
     thumbnail.type = MediaFileType.PLAYLIST_THUMBNAIL;
@@ -217,9 +283,16 @@ export class PlaylistsService {
 
   async deleteThumbnail(id: bigint, authUser: AuthUserDto) {
     const playlist = await this.playlistModel.findOne({ _id: id }, { author: 1, thumbnail: 1 }).exec();
-    if (!playlist) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+    if (!playlist)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
     else if (<bigint>(<unknown>playlist.author) !== authUser._id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' }, HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' },
+        HttpStatus.FORBIDDEN
+      );
     if (!playlist.thumbnail) return;
     await this.deletePlaylistImage(playlist.thumbnail, CloudflareR2Container.PLAYLIST_THUMBNAILS);
     playlist.thumbnail = undefined;
@@ -228,9 +301,16 @@ export class PlaylistsService {
 
   async addItem(id: bigint, addPlaylistMediaDto: AddPlaylistItemDto, headers: HeadersDto, authUser: AuthUserDto) {
     const playlist = await this.playlistModel.findOne({ _id: id }).sort({ 'items.position': 1 }).exec();
-    if (!playlist) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+    if (!playlist)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
     else if (playlist.author._id !== authUser._id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' }, HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' },
+        HttpStatus.FORBIDDEN
+      );
     const media = await this.findAndValidateMedia(addPlaylistMediaDto.mediaId);
     const newItemPosition = playlist.items.length === 0 ? 1 : playlist.items[playlist.items.length - 1].position + 1;
     const playlistItem = new PlaylistItem();
@@ -250,11 +330,22 @@ export class PlaylistsService {
 
   async addAllItems(id: bigint, addAllPlaylistItemsDto: AddAllPlaylistItemsDto, authUser: AuthUserDto) {
     const playlist = await this.playlistModel.findOne({ _id: id }).sort({ 'items.position': 1 }).lean().exec();
-    if (!playlist) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+    if (!playlist)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
     else if (playlist.author._id !== authUser._id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' }, HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' },
+        HttpStatus.FORBIDDEN
+      );
     const playlistFrom = await this.playlistModel.findOne({ _id: addAllPlaylistItemsDto.playlistId }).lean().exec();
-    if (!playlistFrom) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+    if (!playlistFrom)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
     this.scheduleAddAllItems(playlist, playlistFrom.items, addAllPlaylistItemsDto.skipAlreadyAdded);
   }
 
@@ -267,7 +358,8 @@ export class PlaylistsService {
         if (skipAlreadyAdded) {
           if (playlist.items.find((i) => i.media === itemChunk[j].media)) continue;
         }
-        const newItemPosition = playlist.items.length === 0 ? 1 : playlist.items[playlist.items.length - 1].position + 1;
+        const newItemPosition =
+          playlist.items.length === 0 ? 1 : playlist.items[playlist.items.length - 1].position + 1;
         const playlistItem = new PlaylistItem();
         playlistItem._id = await createSnowFlakeId();
         playlistItem.media = itemChunk[i].media;
@@ -280,7 +372,9 @@ export class PlaylistsService {
     }
     playlist.itemCount = playlist.items.length;
     try {
-      await this.playlistModel.updateOne({ _id: playlist._id }, { $set: { items: playlist.items, itemCount: playlist.itemCount } }).exec();
+      await this.playlistModel
+        .updateOne({ _id: playlist._id }, { $set: { items: playlist.items, itemCount: playlist.itemCount } })
+        .exec();
     } catch (e) {
       this.logger.error(e);
     }
@@ -288,13 +382,21 @@ export class PlaylistsService {
 
   findAddToPlaylist(findAddToPlaylistDto: FindAddToPlaylistDto, authUser: AuthUserDto) {
     const filters: PipelineStage.Match['$match'] = { author: authUser._id };
-    findAddToPlaylistDto.search && (filters.name = { $regex: escapeRegExp(findAddToPlaylistDto.search), $options: 'i' });
+    findAddToPlaylistDto.search &&
+      (filters.name = { $regex: escapeRegExp(findAddToPlaylistDto.search), $options: 'i' });
     const project: PipelineStage.Project['$project'] = { _id: 1, name: 1, itemCount: 1, visibility: 1, createdAt: 1 };
     findAddToPlaylistDto.mediaId && (project.hasMedia = { $in: [findAddToPlaylistDto.mediaId, '$items.media'] });
-    return this.playlistModel.aggregate([{ $match: filters }, { $sort: { updatedAt: -1 } }, { $limit: 10 }, { $project: project }]).exec();
+    return this.playlistModel
+      .aggregate([{ $match: filters }, { $sort: { updatedAt: -1 } }, { $limit: 10 }, { $project: project }])
+      .exec();
   }
 
-  async findAllItems(id: bigint, findPlaylistItemsDto: CursorPagePlaylistItemsDto, headers: HeadersDto, authUser: AuthUserDto) {
+  async findAllItems(
+    id: bigint,
+    findPlaylistItemsDto: CursorPagePlaylistItemsDto,
+    headers: HeadersDto,
+    authUser: AuthUserDto
+  ) {
     const sortEnum = ['_id', 'position'];
     const typeMap = new Map<string, any>([
       ['_id', BigInt],
@@ -324,7 +426,9 @@ export class PlaylistsService {
     const filters: { [key: string]: any } = { _id: id };
     const aggregation = new MongooseCursorPagination({ pageToken, limit, sortQuery: sort, sortEnum, filters, typeMap });
     const secondListName = 'mediaList';
-    const mediaMatch = authUser.hasPermission ? { $eq: ['$pStatus', MediaPStatus.DONE] } : { $and: [{ $ne: ['$visibility', MediaVisibility.PRIVATE] }, { $eq: ['$pStatus', MediaPStatus.DONE] }] };
+    const mediaMatch = authUser.hasPermission
+      ? { $eq: ['$pStatus', MediaPStatus.DONE] }
+      : { $and: [{ $ne: ['$visibility', MediaVisibility.PRIVATE] }, { $eq: ['$pStatus', MediaPStatus.DONE] }] };
     const lookupOptions: LookupOptions[] = [
       {
         from: 'media',
@@ -356,9 +460,16 @@ export class PlaylistsService {
 
   async removeItem(id: bigint, deletePlaylistItemDto: DeletePlaylistItemDto, authUser: AuthUserDto) {
     const playlist = await this.playlistModel.findOne({ _id: id }).exec();
-    if (!playlist) throw new HttpException({ code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' }, HttpStatus.NOT_FOUND);
+    if (!playlist)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_NOT_FOUND, message: 'Playlist not found' },
+        HttpStatus.NOT_FOUND
+      );
     else if (playlist.author._id !== authUser._id && !authUser.hasPermission)
-      throw new HttpException({ code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' }, HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_UPDATE_FORBIDDEN, message: 'You do not have permission to update this playlist' },
+        HttpStatus.FORBIDDEN
+      );
     if (deletePlaylistItemDto.itemId) playlist.items.pull({ _id: deletePlaylistItemDto.itemId });
     if (deletePlaylistItemDto.mediaId) playlist.items.pull({ media: deletePlaylistItemDto.mediaId });
     playlist.itemCount = playlist.items.length;
@@ -371,8 +482,13 @@ export class PlaylistsService {
 
   private async findAndValidateMedia(mediaId: bigint) {
     const media = await this.mediaService.findOneForPlaylist(mediaId);
-    if (!media) throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
-    if (media.pStatus !== MediaPStatus.DONE) throw new HttpException({ code: StatusCode.PLAYLIST_ITEM_UPDATE_INVALID, message: 'Cannot add this media to playlist' }, HttpStatus.BAD_REQUEST);
+    if (!media)
+      throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
+    if (media.pStatus !== MediaPStatus.DONE)
+      throw new HttpException(
+        { code: StatusCode.PLAYLIST_ITEM_UPDATE_INVALID, message: 'Cannot add this media to playlist' },
+        HttpStatus.BAD_REQUEST
+      );
     return media;
   }
 

@@ -39,14 +39,25 @@ export class FilerService {
       for (let j = 0; j < retry; j++) {
         try {
           const fileInfo = await this.getFileInfo(storage, filePath);
-          return { storage: storage, file: { id: filePath, name: filePath.split('/').pop(), size: fileInfo.FileSize, file: { mimeType: fileInfo.Mime } } };
+          return {
+            storage: storage,
+            file: {
+              id: filePath,
+              name: filePath.split('/').pop(),
+              size: fileInfo.FileSize,
+              file: { mimeType: fileInfo.Mime }
+            }
+          };
         } catch (e) {
           if (j < retry - 1) await new Promise((r) => setTimeout(r, retryTimeout));
           else if (e.response?.status === 404) break;
           else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
@@ -72,7 +83,10 @@ export class FilerService {
         } else {
           this.logger.error(e.response);
           throw new HttpException(
-            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            {
+              code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+              message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+            },
             HttpStatus.SERVICE_UNAVAILABLE
           );
         }
@@ -86,9 +100,18 @@ export class FilerService {
     for (let i = 0; i < retry; i++) {
       try {
         const fileInfo = await this.getFileInfo(storage, fileId);
-        return { id: fileId, name: fileInfo.FullPath.split('/').pop(), size: fileInfo.FileSize, file: { mimeType: fileInfo.Mime } };
+        return {
+          id: fileId,
+          name: fileInfo.FullPath.split('/').pop(),
+          size: fileInfo.FileSize,
+          file: { mimeType: fileInfo.Mime }
+        };
       } catch (e) {
-        if (e.response?.status === 404) throw new HttpException({ code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' }, HttpStatus.NOT_FOUND);
+        if (e.response?.status === 404)
+          throw new HttpException(
+            { code: StatusCode.DRIVE_FILE_NOT_FOUND, message: 'File not found' },
+            HttpStatus.NOT_FOUND
+          );
         if (e.response?.status === 401 && i < 1) {
           await this.refreshToken(storage);
         } else if (i < retry - 1) {
@@ -96,7 +119,10 @@ export class FilerService {
         } else {
           this.logger.error(e.response);
           throw new HttpException(
-            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            {
+              code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+              message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+            },
             HttpStatus.SERVICE_UNAVAILABLE
           );
         }
@@ -104,7 +130,12 @@ export class FilerService {
     }
   }
 
-  async deleteFolder(folder: bigint | string, storage: ExternalStorage, retry: number = 5, retryTimeout: number = 3000) {
+  async deleteFolder(
+    folder: bigint | string,
+    storage: ExternalStorage,
+    retry: number = 5,
+    retryTimeout: number = 3000
+  ) {
     const path = folder.toString();
     await this.externalStoragesService.decryptToken(storage);
     if (!storage.accessToken || storage.expiry < new Date()) await this.refreshToken(storage);
@@ -128,7 +159,10 @@ export class FilerService {
         } else {
           this.logger.error(e.response);
           throw new HttpException(
-            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` },
+            {
+              code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+              message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
+            },
             HttpStatus.SERVICE_UNAVAILABLE
           );
         }
@@ -161,9 +195,15 @@ export class FilerService {
         );
         const locationUrl = response.headers['location'];
         if (!locationUrl) {
-          throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: 'Failed to create upload session' }, HttpStatus.INTERNAL_SERVER_ERROR);
+          throw new HttpException(
+            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: 'Failed to create upload session' },
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
         }
-        const uploadToken = await this.jwtService.signAsync({ allowed_prefixes: ['/.tus/.uploads/'], allowed_methods: ['HEAD', 'PATCH'] }, { secret: storage.clientSecret, expiresIn: '7d' });
+        const uploadToken = await this.jwtService.signAsync(
+          { allowed_prefixes: ['/.tus/.uploads/'], allowed_methods: ['HEAD', 'PATCH'] },
+          { secret: storage.clientSecret, expiresIn: '7d' }
+        );
         const sessionLocationUrl = new URL(locationUrl);
         sessionLocationUrl.searchParams.set('jwt', uploadToken);
         sessionLocationUrl.searchParams.set('filePath', filePath);
@@ -184,7 +224,10 @@ export class FilerService {
           } else {
             this.logger.error(e.response);
             throw new HttpException(
-              { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from Filer API` },
+              {
+                code: StatusCode.THRID_PARTY_REQUEST_FAILED,
+                message: `Received ${e.response.status} ${e.response.statusText} error from Filer API`
+              },
               HttpStatus.SERVICE_UNAVAILABLE
             );
           }
