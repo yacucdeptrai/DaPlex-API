@@ -264,7 +264,8 @@ export class MediaController {
   }
 
   @Patch(':id/poster')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA] })
   @UseInterceptors(
     new UploadImageInterceptor({
       maxSize: UPLOAD_POSTER_MAX_SIZE,
