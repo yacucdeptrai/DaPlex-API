@@ -3925,128 +3925,101 @@ export class MediaService {
   }
 
   // Create new genres and productions start with "create:" keyword, check existing ones by ids
-  private async findOrCreateGenres(genres: string[], creatorId: bigint, session: ClientSession) {
-    const newGenres = [];
-    const existingGenreIds = [];
-    for (let i = 0; i < genres.length; i++) {
-      if (genres[i].startsWith('create:')) {
-        const createGenreQuery = new URLSearchParams(genres[i].substring(7));
-        const name = createGenreQuery.get('name');
+  /**
+   * Shared find-or-create for genre/production/tag references. Entries shaped
+   * `create:name=...` become new documents; everything else is treated as an
+   * existing BigInt id and verified to resolve. Per-entity differences (label,
+   * max name length, not-found code, extra fields) come from `config`.
+   */
+  private async findOrCreateEntities(
+    inputs: string[],
+    creatorId: bigint,
+    session: ClientSession,
+    config: {
+      service: {
+        countByIds(ids: bigint[]): Promise<number>;
+        createMany(items: any[], creatorId: bigint, session?: ClientSession): Promise<any[]>;
+      };
+      label: string;
+      maxNameLength: number;
+      notFoundCode: StatusCode;
+      buildEntity: (name: string, query: URLSearchParams) => Record<string, unknown>;
+    }
+  ) {
+    const newEntities: Record<string, unknown>[] = [];
+    const existingIds: bigint[] = [];
+    for (let i = 0; i < inputs.length; i++) {
+      if (inputs[i].startsWith('create:')) {
+        const query = new URLSearchParams(inputs[i].substring(7));
+        const name = query.get('name');
         if (!name)
           throw new HttpException(
-            { code: StatusCode.IS_NOT_EMPTY, message: 'Genre name must not be empty' },
+            { code: StatusCode.IS_NOT_EMPTY, message: `${config.label} name must not be empty` },
             HttpStatus.BAD_REQUEST
           );
-        if (name.length > 32)
+        if (name.length > config.maxNameLength)
           throw new HttpException(
-            { code: StatusCode.MAX_LENGTH, message: 'Genre name must not be longer than 32 characters' },
+            {
+              code: StatusCode.MAX_LENGTH,
+              message: `${config.label} name must not be longer than ${config.maxNameLength} characters`
+            },
             HttpStatus.BAD_REQUEST
           );
-        newGenres.push({ name });
+        newEntities.push(config.buildEntity(name, query));
       } else {
         try {
-          existingGenreIds.push(BigInt(genres[i]));
+          existingIds.push(BigInt(inputs[i]));
         } catch {
           continue;
         }
       }
     }
-    const genreCount = await this.genresService.countByIds(existingGenreIds);
-    if (genreCount !== existingGenreIds.length)
-      throw new HttpException(
-        { code: StatusCode.GENRES_NOT_FOUND, message: 'Cannot find all the required genres' },
-        HttpStatus.BAD_REQUEST
-      );
-    if (newGenres.length) {
-      const createdGenres = await this.genresService.createMany(newGenres, creatorId, session);
-      const createdGenreIds = createdGenres.map((g) => g._id);
-      existingGenreIds.push(...createdGenreIds);
-    }
-    return existingGenreIds;
-  }
-
-  private async findOrCreateProductions(productions: string[], creatorId: bigint, session: ClientSession) {
-    const newProductions = [];
-    const existingProductionIds = [];
-    for (let i = 0; i < productions.length; i++) {
-      if (productions[i].startsWith('create:')) {
-        const createProductionQuery = new URLSearchParams(productions[i].substring(7));
-        const name = createProductionQuery.get('name');
-        const country_ = createProductionQuery.get('country');
-        const country = country_ && isISO31661Alpha2(country_) ? country_ : null;
-        if (!name)
-          throw new HttpException(
-            { code: StatusCode.IS_NOT_EMPTY, message: 'Production name must not be empty' },
-            HttpStatus.BAD_REQUEST
-          );
-        if (name.length > 150)
-          throw new HttpException(
-            { code: StatusCode.MAX_LENGTH, message: 'Production name must not be longer than 150 characters' },
-            HttpStatus.BAD_REQUEST
-          );
-        newProductions.push({ name, country });
-      } else {
-        try {
-          existingProductionIds.push(BigInt(productions[i]));
-        } catch {
-          continue;
-        }
-      }
-    }
-    if (existingProductionIds.length) {
-      const productionCount = await this.productionsService.countByIds(existingProductionIds);
-      if (productionCount !== existingProductionIds.length)
+    if (existingIds.length) {
+      const count = await config.service.countByIds(existingIds);
+      if (count !== existingIds.length)
         throw new HttpException(
-          { code: StatusCode.PRODUCTIONS_NOT_FOUND, message: 'Cannot find all the required productions' },
+          { code: config.notFoundCode, message: `Cannot find all the required ${config.label.toLowerCase()}s` },
           HttpStatus.BAD_REQUEST
         );
     }
-    if (newProductions.length) {
-      const createdProductions = await this.productionsService.createMany(newProductions, creatorId, session);
-      const createdProductionIds = createdProductions.map((g) => g._id);
-      existingProductionIds.push(...createdProductionIds);
+    if (newEntities.length) {
+      const created = await config.service.createMany(newEntities, creatorId, session);
+      existingIds.push(...created.map((e) => e._id));
     }
-    return existingProductionIds;
+    return existingIds;
   }
 
-  private async findOrCreateTags(tags: string[], creatorId: bigint, session: ClientSession) {
-    const newTags = [];
-    const existingTagIds = [];
-    for (let i = 0; i < tags.length; i++) {
-      if (tags[i].startsWith('create:')) {
-        const createTagQuery = new URLSearchParams(tags[i].substring(7));
-        const name = createTagQuery.get('name');
-        if (!name)
-          throw new HttpException(
-            { code: StatusCode.IS_NOT_EMPTY, message: 'Tag name must not be empty' },
-            HttpStatus.BAD_REQUEST
-          );
-        if (name.length > 32)
-          throw new HttpException(
-            { code: StatusCode.MAX_LENGTH, message: 'Tag name must not be longer than 32 characters' },
-            HttpStatus.BAD_REQUEST
-          );
-        newTags.push({ name });
-      } else {
-        try {
-          existingTagIds.push(BigInt(tags[i]));
-        } catch {
-          continue;
-        }
+  private findOrCreateGenres(genres: string[], creatorId: bigint, session: ClientSession) {
+    return this.findOrCreateEntities(genres, creatorId, session, {
+      service: this.genresService,
+      label: 'Genre',
+      maxNameLength: 32,
+      notFoundCode: StatusCode.GENRES_NOT_FOUND,
+      buildEntity: (name) => ({ name })
+    });
+  }
+
+  private findOrCreateProductions(productions: string[], creatorId: bigint, session: ClientSession) {
+    return this.findOrCreateEntities(productions, creatorId, session, {
+      service: this.productionsService,
+      label: 'Production',
+      maxNameLength: 150,
+      notFoundCode: StatusCode.PRODUCTIONS_NOT_FOUND,
+      buildEntity: (name, query) => {
+        const country = query.get('country');
+        return { name, country: country && isISO31661Alpha2(country) ? country : null };
       }
-    }
-    const tagCount = await this.tagsService.countByIds(existingTagIds);
-    if (tagCount !== existingTagIds.length)
-      throw new HttpException(
-        { code: StatusCode.TAGS_NOT_FOUND, message: 'Cannot find all the required tags' },
-        HttpStatus.BAD_REQUEST
-      );
-    if (newTags.length) {
-      const createdTags = await this.tagsService.createMany(newTags, creatorId, session);
-      const createdTagIds = createdTags.map((t) => t._id);
-      existingTagIds.push(...createdTagIds);
-    }
-    return existingTagIds;
+    });
+  }
+
+  private findOrCreateTags(tags: string[], creatorId: bigint, session: ClientSession) {
+    return this.findOrCreateEntities(tags, creatorId, session, {
+      service: this.tagsService,
+      label: 'Tag',
+      maxNameLength: 32,
+      notFoundCode: StatusCode.TAGS_NOT_FOUND,
+      buildEntity: (name) => ({ name })
+    });
   }
 
   private async validateSubtitle(file: Storage.MultipartFile) {
