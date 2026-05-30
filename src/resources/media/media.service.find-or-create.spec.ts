@@ -113,20 +113,32 @@ describe('MediaService find-or-create helpers (characterization)', () => {
     it('parses a valid ISO country and keeps it', async () => {
       productionsService.createMany.mockResolvedValue([{ _id: BigInt(21) }]);
       const result = await callProductions(['create:name=Studio&country=US']);
-      expect(productionsService.createMany).toHaveBeenCalledWith([{ name: 'Studio', country: 'US' }], creatorId, session);
+      expect(productionsService.createMany).toHaveBeenCalledWith(
+        [{ name: 'Studio', country: 'US' }],
+        creatorId,
+        session
+      );
       expect(result).toEqual([BigInt(21)]);
     });
 
     it('nulls an invalid ISO country', async () => {
       productionsService.createMany.mockResolvedValue([{ _id: BigInt(22) }]);
       await callProductions(['create:name=Studio&country=ZZ']);
-      expect(productionsService.createMany).toHaveBeenCalledWith([{ name: 'Studio', country: null }], creatorId, session);
+      expect(productionsService.createMany).toHaveBeenCalledWith(
+        [{ name: 'Studio', country: null }],
+        creatorId,
+        session
+      );
     });
 
     it('nulls an absent country', async () => {
       productionsService.createMany.mockResolvedValue([{ _id: BigInt(23) }]);
       await callProductions(['create:name=Studio']);
-      expect(productionsService.createMany).toHaveBeenCalledWith([{ name: 'Studio', country: null }], creatorId, session);
+      expect(productionsService.createMany).toHaveBeenCalledWith(
+        [{ name: 'Studio', country: null }],
+        creatorId,
+        session
+      );
     });
 
     it('allows a 150-char production name but rejects 151', async () => {
