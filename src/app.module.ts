@@ -10,6 +10,7 @@ import { AppSocketModule } from './app-socket.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './common/dto/env-validation.dto';
+import { buildMongooseOptions } from './common/database/mongoose-options.factory';
 import { MongooseConnection } from './enums';
 
 @Module({
@@ -21,21 +22,13 @@ import { MongooseConnection } from './enums';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('DATABASE_URL'),
-        family: 4,
-        useBigInt64: true
-      }),
+      useFactory: async (configService: ConfigService) => buildMongooseOptions(configService, 'DATABASE_URL'),
       connectionName: MongooseConnection.DATABASE_A,
       inject: [ConfigService]
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('DATABASE_URL_B'),
-        family: 4,
-        useBigInt64: true
-      }),
+      useFactory: async (configService: ConfigService) => buildMongooseOptions(configService, 'DATABASE_URL_B'),
       connectionName: MongooseConnection.DATABASE_B,
       inject: [ConfigService]
     }),

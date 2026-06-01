@@ -63,6 +63,7 @@
     "rxjs": "7.8.1",
     "sharp": "0.32.6",
     "slugify": "1.6.6",
+    "socks": "2.8.7",
     "stream-mmmagic": "2.3.0",
     "validator": "13.12.0"
   },

@@ -1,7 +1,7 @@
 import { plainToInstance, Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsIP, IsNotEmpty, IsOptional, IsUrl, validateSync } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsIP, IsNotEmpty, IsOptional, IsString, IsUrl, validateSync } from 'class-validator';
 
-import { PORT, ADDRESS, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from '../../config';
+import { PORT, ADDRESS, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY, WARP_CLI_PATH } from '../../config';
 
 enum Environment {
   Development = 'development',
@@ -36,6 +36,34 @@ class EnvironmentVariables {
 
   @IsNotEmpty()
   DATABASE_URL_B: string;
+
+  // Automatic WARP fallback for MongoDB (default ON). On startup the API probes the
+  // Atlas shards directly; if the ISP blocks them it auto-enables the Cloudflare WARP
+  // SOCKS5 proxy and routes only MongoDB through it. Set to the string 'false' to disable.
+  @IsOptional()
+  @IsString()
+  MONGO_AUTO_WARP: string;
+
+  // Override the WARP SOCKS5 listening port used by the automatic fallback (default 40000).
+  @IsOptional()
+  @IsInt()
+  MONGO_WARP_PORT: number;
+
+  // Path to the Cloudflare warp-cli binary used by the automatic fallback (default in config.ts).
+  @IsOptional()
+  @IsString()
+  WARP_CLI_PATH: string = WARP_CLI_PATH;
+
+  // Manual SOCKS5 proxy override for all MongoDB connections. When both are set they take
+  // precedence over the automatic fallback above. Leave unset to rely on automatic
+  // detection / a normal direct connection.
+  @IsOptional()
+  @IsString()
+  MONGO_PROXY_HOST: string;
+
+  @IsOptional()
+  @IsInt()
+  MONGO_PROXY_PORT: number;
 
   @IsNotEmpty()
   ACCESS_TOKEN_SECRET: string;
