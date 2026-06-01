@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { MongooseModuleFactoryOptions } from '@nestjs/mongoose';
 
-import { WARP_CLI_PATH } from '../../config';
 import { resolveAutoProxyOptions } from './mongo-connectivity';
 
 type DatabaseUrlKey = 'DATABASE_URL' | 'DATABASE_URL_B';
@@ -19,7 +18,7 @@ const DEFAULT_WARP_PROXY_PORT = 40000;
  *      ISP is blocking the Atlas (AWS) shard IPs it auto-enables the Cloudflare WARP
  *      SOCKS5 proxy and routes ONLY MongoDB through it. Set MONGO_AUTO_WARP=false to
  *      disable, MONGO_WARP_PORT to change the proxy port (default 40000), and
- *      WARP_CLI_PATH to point at the warp-cli binary (default in config.ts).
+ *      WARP_CLI_PATH to override warp-cli discovery (otherwise found on PATH).
  *
  * Either way only MongoDB traffic is tunneled — the rest of the process keeps using the
  * direct connection.
@@ -52,7 +51,7 @@ export async function buildMongooseOptions(
   }
 
   const warpPort = Number(configService.get<string>('MONGO_WARP_PORT')) || DEFAULT_WARP_PROXY_PORT;
-  const warpCliPath = configService.get<string>('WARP_CLI_PATH') || WARP_CLI_PATH;
+  const warpCliPath = configService.get<string>('WARP_CLI_PATH');
   const autoProxy = await resolveAutoProxyOptions(uri, warpPort, warpCliPath);
   if (autoProxy) {
     options.proxyHost = autoProxy.proxyHost;

@@ -12,9 +12,6 @@ import {
 
 export const PORT = 3000;
 export const ADDRESS = '0.0.0.0';
-// Default Cloudflare WARP CLI path used by the automatic MongoDB-over-WARP fallback.
-// Override per-environment via the WARP_CLI_PATH env var (see env-validation.dto.ts).
-export const WARP_CLI_PATH = 'C:\\Program Files\\Cloudflare\\Cloudflare WARP\\warp-cli.exe';
 export const DATABASE_URL = '';
 export const DOCUMENT_TITLE = 'DaPlex API';
 export const DOCUMENT_DESCRIPTION = 'REST API media streaming';

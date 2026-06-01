@@ -1,7 +1,7 @@
 import { plainToInstance, Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsIP, IsNotEmpty, IsOptional, IsString, IsUrl, validateSync } from 'class-validator';
 
-import { PORT, ADDRESS, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY, WARP_CLI_PATH } from '../../config';
+import { PORT, ADDRESS, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from '../../config';
 
 enum Environment {
   Development = 'development',
@@ -49,10 +49,11 @@ class EnvironmentVariables {
   @IsInt()
   MONGO_WARP_PORT: number;
 
-  // Path to the Cloudflare warp-cli binary used by the automatic fallback (default in config.ts).
+  // Optional override for the Cloudflare warp-cli binary path. Leave unset to auto-detect
+  // it on PATH / well-known install locations; set only for non-standard installs.
   @IsOptional()
   @IsString()
-  WARP_CLI_PATH: string = WARP_CLI_PATH;
+  WARP_CLI_PATH: string;
 
   // Manual SOCKS5 proxy override for all MongoDB connections. When both are set they take
   // precedence over the automatic fallback above. Leave unset to rely on automatic

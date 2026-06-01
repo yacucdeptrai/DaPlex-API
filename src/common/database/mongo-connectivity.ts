@@ -3,6 +3,7 @@ import { execFileSync } from 'child_process';
 import * as dns from 'dns/promises';
 import * as fs from 'fs';
 import * as net from 'net';
+import * as path from 'path';
 
 const logger = new Logger('MongoConnectivity');
 
@@ -10,6 +11,16 @@ const DIRECT_PROBE_TIMEOUT_MS = 6000;
 const WARP_READY_TIMEOUT_MS = 25000;
 const WARP_POLL_INTERVAL_MS = 1000;
 const DEFAULT_SHARD_PORT = 27017;
+
+const WARP_CLI_BINARY = process.platform === 'win32' ? 'warp-cli.exe' : 'warp-cli';
+
+// Well-known install locations checked only after the PATH lookup fails. These are
+// discovery hints, not configuration — set the WARP_CLI_PATH env var to override.
+const WELL_KNOWN_WARP_PATHS: Record<string, string[]> = {
+  win32: ['C:\\Program Files\\Cloudflare\\Cloudflare WARP\\warp-cli.exe'],
+  darwin: ['/Applications/Cloudflare WARP.app/Contents/Resources/warp-cli', '/usr/local/bin/warp-cli'],
+  linux: ['/usr/bin/warp-cli', '/usr/local/bin/warp-cli']
+};
 
 export interface MongoProxyOptions {
   proxyHost: string;
@@ -64,9 +75,42 @@ async function isMongoReachableDirectly(srvHost: string): Promise<boolean> {
   }
 }
 
-function findWarpCli(warpCliPath: string): string | null {
-  if (process.platform !== 'win32') return null;
-  return warpCliPath && fs.existsSync(warpCliPath) ? warpCliPath : null;
+/** First directory on PATH that contains the given binary, or null. */
+function findOnPath(binary: string): string | null {
+  const dirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+  for (const dir of dirs) {
+    const candidate = path.join(dir, binary);
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+/**
+ * Locate the Cloudflare warp-cli binary in a portable way:
+ *   1. explicit WARP_CLI_PATH override (if it exists),
+ *   2. the binary on the system PATH,
+ *   3. per-OS well-known install locations.
+ * Returns null when WARP is not installed on this machine.
+ */
+function resolveWarpCli(configuredPath?: string): string | null {
+  if (configuredPath && fs.existsSync(configuredPath)) {
+    return configuredPath;
+  }
+
+  const onPath = findOnPath(WARP_CLI_BINARY);
+  if (onPath) {
+    return onPath;
+  }
+
+  for (const candidate of WELL_KNOWN_WARP_PATHS[process.platform] ?? []) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 function enableWarpProxyMode(warpCli: string, port: number): void {
@@ -86,7 +130,7 @@ async function waitForPort(host: string, port: number, timeoutMs: number): Promi
   return false;
 }
 
-async function decide(uri: string, warpPort: number, warpCliPath: string): Promise<MongoProxyOptions | null> {
+async function decide(uri: string, warpPort: number, warpCliPath?: string): Promise<MongoProxyOptions | null> {
   const srvHost = parseSrvHost(uri);
   if (!srvHost) {
     logger.warn('Could not parse the Mongo host from the connection string; skipping auto-WARP.');
@@ -98,11 +142,11 @@ async function decide(uri: string, warpPort: number, warpCliPath: string): Promi
     return null;
   }
 
-  const warpCli = findWarpCli(warpCliPath);
+  const warpCli = resolveWarpCli(warpCliPath);
   if (!warpCli) {
     logger.warn(
-      'MongoDB is unreachable directly and Cloudflare WARP is not available here; ' +
-        'the connection will be attempted directly and may fail.'
+      'MongoDB is unreachable directly and the Cloudflare warp-cli binary could not be found ' +
+        '(set WARP_CLI_PATH to point at it); the connection will be attempted directly and may fail.'
     );
     return null;
   }
@@ -135,7 +179,7 @@ async function decide(uri: string, warpPort: number, warpCliPath: string): Promi
 export function resolveAutoProxyOptions(
   uri: string,
   warpPort: number,
-  warpCliPath: string
+  warpCliPath?: string
 ): Promise<MongoProxyOptions | null> {
   const key = parseSrvHost(uri) ?? uri;
   let cached = decisionCache.get(key);
