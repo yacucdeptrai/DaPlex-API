@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { execFileSync } from 'child_process';
+import { setServers as setDefaultResolverServers } from 'dns';
 import * as dns from 'dns/promises';
 import * as fs from 'fs';
 import * as net from 'net';
@@ -11,6 +12,12 @@ const DIRECT_PROBE_TIMEOUT_MS = 6000;
 const WARP_READY_TIMEOUT_MS = 25000;
 const WARP_POLL_INTERVAL_MS = 1000;
 const DEFAULT_SHARD_PORT = 27017;
+
+// Public resolvers used only when the OS resolver cannot answer SRV. On Windows,
+// c-ares falls back to a loopback resolver (e.g. the flaky Internet Connection
+// Sharing DNS proxy on 127.0.0.1) that refuses queries with ECONNREFUSED, which
+// breaks SRV resolution for mongodb+srv URIs even though the shards are reachable.
+const PUBLIC_DNS_FALLBACK = ['1.1.1.1', '8.8.8.8'];
 
 const WARP_CLI_BINARY = process.platform === 'win32' ? 'warp-cli.exe' : 'warp-cli';
 
@@ -75,6 +82,66 @@ async function isMongoReachableDirectly(srvHost: string): Promise<boolean> {
   }
 }
 
+/** True for a resolver address that cannot reach the public internet (loopback / unspecified). */
+function isLoopbackResolver(server: string): boolean {
+  // dns.getServers() may append a port: "1.1.1.1:5353" (v4) or "[::1]:5353" (v6).
+  let host = server;
+  const bracketed = host.match(/^\[(.+)\](?::\d+)?$/);
+  if (bracketed) {
+    host = bracketed[1];
+  } else if ((host.match(/:/g) || []).length === 1) {
+    host = host.split(':')[0];
+  }
+  return host === '::1' || host === '0.0.0.0' || host.startsWith('127.');
+}
+
+/** True when every configured resolver is loopback/unspecified (or there are none). */
+function isLoopbackOnly(servers: string[]): boolean {
+  return servers.length === 0 || servers.every(isLoopbackResolver);
+}
+
+/**
+ * Make sure Node can resolve the cluster's SRV record before the driver tries to.
+ *
+ * c-ares occasionally ends up pinned to a loopback resolver that does not actually
+ * answer (notably the Windows ICS DNS proxy on 127.0.0.1, which returns ECONNREFUSED).
+ * Because SRV resolution for mongodb+srv URIs never goes through the SOCKS proxy, a
+ * broken resolver fails the connection on every path — direct and WARP alike. If the
+ * configured resolver is loopback-only, or it cannot answer the SRV query, switch the
+ * process to public resolvers. No-op when the OS resolver already works. Idempotent.
+ */
+export async function ensureSrvResolvable(srvHost: string): Promise<void> {
+  const servers = dns.getServers();
+
+  if (!isLoopbackOnly(servers)) {
+    try {
+      await dns.resolveSrv(`_mongodb._tcp.${srvHost}`);
+      return; // the configured resolver works; leave it alone
+    } catch (error) {
+      logger.warn(
+        `SRV lookup failed via configured DNS (${servers.join(', ') || 'none'}): ` +
+          `${(error as Error).message}; switching to public resolvers.`
+      );
+    }
+  } else {
+    logger.warn(
+      `Node DNS resolver is loopback-only (${servers.join(', ') || 'none'}) — likely a local ` +
+        'DNS proxy (e.g. Windows ICS) that breaks SRV resolution; switching MongoDB to public resolvers.'
+    );
+  }
+
+  try {
+    // Set both the promises and the callback default resolvers — they can diverge,
+    // and the mongodb driver may use either depending on the Node/driver version.
+    dns.setServers(PUBLIC_DNS_FALLBACK);
+    setDefaultResolverServers(PUBLIC_DNS_FALLBACK);
+    await dns.resolveSrv(`_mongodb._tcp.${srvHost}`);
+    logger.log(`DNS fallback active: resolving via ${PUBLIC_DNS_FALLBACK.join(', ')}.`);
+  } catch (error) {
+    logger.error(`SRV lookup still failing after switching to public resolvers: ${(error as Error).message}`);
+  }
+}
+
 /** First directory on PATH that contains the given binary, or null. */
 function findOnPath(binary: string): string | null {
   const dirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
@@ -135,6 +202,11 @@ async function decide(uri: string, warpPort: number, warpCliPath?: string): Prom
   if (!srvHost) {
     logger.warn('Could not parse the Mongo host from the connection string; skipping auto-WARP.');
     return null;
+  }
+
+  // Repair the DNS resolver first — a dead loopback resolver breaks SRV on every path.
+  if (/^mongodb\+srv:/i.test(uri)) {
+    await ensureSrvResolvable(srvHost);
   }
 
   if (await isMongoReachableDirectly(srvHost)) {
