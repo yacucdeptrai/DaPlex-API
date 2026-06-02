@@ -35,6 +35,7 @@ import {
 } from '@nestjs/swagger';
 
 import { MediaService } from './media.service';
+import { MediaSubtitlesService } from './media-subtitles.service';
 import {
   CreateMediaDto,
   UpdateMediaDto,
@@ -104,7 +105,10 @@ import { FastifyRequest } from 'fastify';
 @ApiExtraModels(Media)
 @Controller()
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(
+    private readonly mediaService: MediaService,
+    private readonly mediaSubtitlesService: MediaSubtitlesService
+  ) {}
 
   @Post()
   @UseInterceptors(ClassSerializerInterceptor)
@@ -505,7 +509,7 @@ export class MediaController {
     @FileUpload() file: Storage.MultipartFile,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.uploadMovieSubtitle(id, file, headers, authUser);
+    return this.mediaSubtitlesService.uploadMovieSubtitle(id, file, headers, authUser);
   }
 
   @Get(':id/movie/subtitles')
@@ -519,7 +523,7 @@ export class MediaController {
   @ApiNotFoundResponse({ description: 'The media could not be found', type: ErrorMessage })
   @ApiForbiddenResponse({ description: 'The media is private', type: ErrorMessage })
   findAllMovieSubtitles(@AuthUser() authUser: AuthUserDto, @Param('id', ParseBigIntPipe) id: bigint) {
-    return this.mediaService.findAllMovieSubtitles(id, authUser);
+    return this.mediaSubtitlesService.findAllMovieSubtitles(id, authUser);
   }
 
   @Delete(':id/movie/subtitles/:subtitle_id')
@@ -540,7 +544,7 @@ export class MediaController {
     @Param('subtitle_id', ParseBigIntPipe) subtitleId: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteMovieSubtitle(id, subtitleId, headers, authUser);
+    return this.mediaSubtitlesService.deleteMovieSubtitle(id, subtitleId, headers, authUser);
   }
 
   @Delete(':id/movie/subtitles')
@@ -560,7 +564,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Query() deleteMediaSubtitlesDto: DeleteMediaSubtitlesDto
   ) {
-    return this.mediaService.deleteMovieSubtitles(id, deleteMediaSubtitlesDto, headers, authUser);
+    return this.mediaSubtitlesService.deleteMovieSubtitles(id, deleteMediaSubtitlesDto, headers, authUser);
   }
 
   @Post(':id/movie/source')
@@ -1012,7 +1016,7 @@ export class MediaController {
     @FileUpload() file: Storage.MultipartFile,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.uploadTVEpisodeSubtitle(id, episodeId, file, headers, authUser);
+    return this.mediaSubtitlesService.uploadTVEpisodeSubtitle(id, episodeId, file, headers, authUser);
   }
 
   @Get(':id/tv/episodes/:episode_id/subtitles')
@@ -1031,7 +1035,7 @@ export class MediaController {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Param('episode_id', ParseBigIntPipe) episodeId: bigint
   ) {
-    return this.mediaService.findAllTVEpisodeSubtitles(id, episodeId, authUser);
+    return this.mediaSubtitlesService.findAllTVEpisodeSubtitles(id, episodeId, authUser);
   }
 
   @Delete(':id/tv/episodes/:episode_id/subtitles/:subtitle_id')
@@ -1054,7 +1058,7 @@ export class MediaController {
     @Param('subtitle_id', ParseBigIntPipe) subtitleId: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteTVEpisodeSubtitle(id, episodeId, subtitleId, headers, authUser);
+    return this.mediaSubtitlesService.deleteTVEpisodeSubtitle(id, episodeId, subtitleId, headers, authUser);
   }
 
   @Delete(':id/tv/episodes/:episode_id/subtitles')
@@ -1076,7 +1080,13 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Query() deleteMediaSubtitlesDto: DeleteMediaSubtitlesDto
   ) {
-    return this.mediaService.deleteTVEpisodeSubtitles(id, episodeId, deleteMediaSubtitlesDto, headers, authUser);
+    return this.mediaSubtitlesService.deleteTVEpisodeSubtitles(
+      id,
+      episodeId,
+      deleteMediaSubtitlesDto,
+      headers,
+      authUser
+    );
   }
 
   @Post(':id/tv/episodes/:episode_id/source')
