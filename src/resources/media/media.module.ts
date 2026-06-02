@@ -4,8 +4,18 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
-import { Media, MediaSchema, MediaStorage, MediaStorageSchema, DriveSession, DriveSessionSchema, TVEpisode, TVEpisodeSchema } from '../../schemas';
+import {
+  Media,
+  MediaSchema,
+  MediaStorage,
+  MediaStorageSchema,
+  DriveSession,
+  DriveSessionSchema,
+  TVEpisode,
+  TVEpisodeSchema
+} from '../../schemas';
 import { MediaService } from './media.service';
+import { MediaSubtitlesService } from './media-subtitles.service';
 import { MediaController } from './media.controller';
 import { MediaConsumerAV1, MediaConsumerH264, MediaConsumerH265, MediaConsumerVP9 } from './media.consumer';
 import { MediaResultConsumer } from './media-result.consumer';
@@ -113,7 +123,16 @@ import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
     })
   ],
   controllers: [MediaController],
-  providers: [MediaService, MediaConsumerH264, MediaConsumerH265, MediaConsumerVP9, MediaConsumerAV1, MediaResultConsumer, IsISO6391Constraint],
+  providers: [
+    MediaService,
+    MediaSubtitlesService,
+    MediaConsumerH264,
+    MediaConsumerH265,
+    MediaConsumerVP9,
+    MediaConsumerAV1,
+    MediaResultConsumer,
+    IsISO6391Constraint
+  ],
   exports: [MediaService]
 })
 export class MediaModule {}
