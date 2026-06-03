@@ -29,7 +29,7 @@ export class SettingsController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @AuthGuardOptions({ anonymous: true })
-  @RolesGuardOptions({ requireOwner: true, throwError: false })
+  @RolesGuardOptions({ requireOwner: true, optional: true })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the current setting (owner only)' })
   @ApiOkResponse({ description: 'Return the current setting', type: Setting })

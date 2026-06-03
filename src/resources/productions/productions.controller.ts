@@ -134,7 +134,7 @@ export class ProductionsController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(AuthGuard, RolesGuard)
   @AuthGuardOptions({ anonymous: true })
-  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA], throwError: false })
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA], optional: true })
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: String })
   @ApiOperation({ summary: `Find all media in a studio or producer using cursor pagination, (optional auth, optional permissions: ${UserPermission.MANAGE_MEDIA})` })

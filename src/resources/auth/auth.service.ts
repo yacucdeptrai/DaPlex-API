@@ -299,7 +299,7 @@ export class AuthService {
   }
 }
 
-interface FindUserOptions {
+export interface FindUserOptions {
   includeRoles?: boolean;
 }
 

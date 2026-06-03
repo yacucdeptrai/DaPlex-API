@@ -50,7 +50,7 @@ export class ChapterTypeController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @AuthGuardOptions({ anonymous: true })
-  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA], throwError: false })
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA], optional: true })
   @ApiBearerAuth()
   @ApiOperation({ summary: `Find all chapter types, (optional auth, optional permissions: ${UserPermission.MANAGE_MEDIA})` })
   @ApiOkResponse({
@@ -68,7 +68,7 @@ export class ChapterTypeController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(AuthGuard, RolesGuard)
   @AuthGuardOptions({ anonymous: true })
-  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA], throwError: false })
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA], optional: true })
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: String })
   @ApiOperation({ summary: `Get details of a chapter type, (optional auth, optional permissions: ${UserPermission.MANAGE_MEDIA})` })
