@@ -24,13 +24,13 @@ export class RolesGuard implements CanActivate {
       user.hasPermission = true;
       return true;
     } else if (options.requireOwner) {
-      if (options.throwError) return false;
+      if (!options.optional) return false;
     }
     // Check permissions
     user.hasPermission = user.granted.includes(UserPermission.ADMINISTRATOR) || user.granted.some((r) => options.permissions.includes(r));
     if (user.hasPermission) return true;
     // If not qualified
-    if (options.throwError) return false;
+    if (!options.optional) return false;
     return true;
   }
 }

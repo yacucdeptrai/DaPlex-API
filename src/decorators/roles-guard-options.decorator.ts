@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 
-const defaultOptions: PermissionOptions = { permissions: [], throwError: true, requireOwner: false };
+const defaultOptions: PermissionOptions = { permissions: [], optional: false, requireOwner: false };
 
 export const RolesGuardOptions = (options: PermissionOptions) => {
   options = { ...defaultOptions, ...options };
@@ -9,6 +9,6 @@ export const RolesGuardOptions = (options: PermissionOptions) => {
 
 export class PermissionOptions {
   permissions?: number[];
-  throwError?: boolean;
+  optional?: boolean;
   requireOwner?: boolean;
 }
