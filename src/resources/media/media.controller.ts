@@ -39,6 +39,7 @@ import { MediaSubtitlesService } from './media-subtitles.service';
 import { MediaImagesService } from './media-images.service';
 import { MediaVideosService } from './media-videos.service';
 import { MediaChaptersService } from './media-chapters.service';
+import { MediaTVEpisodesService } from './media-tv-episodes.service';
 import {
   CreateMediaDto,
   UpdateMediaDto,
@@ -113,7 +114,8 @@ export class MediaController {
     private readonly mediaSubtitlesService: MediaSubtitlesService,
     private readonly mediaImagesService: MediaImagesService,
     private readonly mediaVideosService: MediaVideosService,
-    private readonly mediaChaptersService: MediaChaptersService
+    private readonly mediaChaptersService: MediaChaptersService,
+    private readonly mediaTVEpisodesService: MediaTVEpisodesService
   ) {}
 
   @Post()
@@ -828,7 +830,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Body() addTVEpisodeDto: AddTVEpisodeDto
   ) {
-    return this.mediaService.addTVEpisode(id, addTVEpisodeDto, headers, authUser);
+    return this.mediaTVEpisodesService.addTVEpisode(id, addTVEpisodeDto, headers, authUser);
   }
 
   @Get(':id/tv/episodes')
@@ -848,7 +850,7 @@ export class MediaController {
     @Query() findEpisodesDto: FindTVEpisodesDto,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.findAllTVEpisodes(id, findEpisodesDto, headers, authUser);
+    return this.mediaTVEpisodesService.findAllTVEpisodes(id, findEpisodesDto, headers, authUser);
   }
 
   @Get(':id/tv/episodes/:episode_id')
@@ -871,7 +873,7 @@ export class MediaController {
     @Param('episode_id', ParseBigIntPipe) episodeId: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.findOneTVEpisode(id, episodeId, headers, authUser);
+    return this.mediaTVEpisodesService.findOneTVEpisode(id, episodeId, headers, authUser);
   }
 
   @Patch(':id/tv/episodes/:episode_id')
