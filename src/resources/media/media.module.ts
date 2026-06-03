@@ -47,6 +47,12 @@ import { SettingsModule } from '../settings/settings.module';
 import { WsAdminModule } from '../ws-admin/ws-admin.module';
 import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
 
+const TRANSCODE_JOB_OPTIONS = {
+  removeOnComplete: { age: 600, count: 100 },
+  removeOnFail: { age: 600, count: 100 },
+  attempts: 3
+};
+
 @Module({
   imports: [
     AuthModule,
@@ -59,7 +65,6 @@ import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
     forwardRef(() => HistoryModule),
     forwardRef(() => PlaylistsModule),
     forwardRef(() => RatingsModule),
-    HistoryModule,
     CloudflareR2Module,
     OnedriveModule,
     FilerModule,
@@ -81,35 +86,19 @@ import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
     BullModule.registerQueue(
       {
         name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H264}`,
-        defaultJobOptions: {
-          removeOnComplete: { age: 600, count: 100 },
-          removeOnFail: { age: 600, count: 100 },
-          attempts: 3
-        }
+        defaultJobOptions: TRANSCODE_JOB_OPTIONS
       },
       {
         name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H265}`,
-        defaultJobOptions: {
-          removeOnComplete: { age: 600, count: 100 },
-          removeOnFail: { age: 600, count: 100 },
-          attempts: 3
-        }
+        defaultJobOptions: TRANSCODE_JOB_OPTIONS
       },
       {
         name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.VP9}`,
-        defaultJobOptions: {
-          removeOnComplete: { age: 600, count: 100 },
-          removeOnFail: { age: 600, count: 100 },
-          attempts: 3
-        }
+        defaultJobOptions: TRANSCODE_JOB_OPTIONS
       },
       {
         name: `${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.AV1}`,
-        defaultJobOptions: {
-          removeOnComplete: { age: 600, count: 100 },
-          removeOnFail: { age: 600, count: 100 },
-          attempts: 3
-        }
+        defaultJobOptions: TRANSCODE_JOB_OPTIONS
       },
       {
         name: TaskQueue.VIDEO_TRANSCODE_RESULT,
