@@ -36,6 +36,7 @@ import {
 
 import { MediaService } from './media.service';
 import { MediaSubtitlesService } from './media-subtitles.service';
+import { MediaImagesService } from './media-images.service';
 import {
   CreateMediaDto,
   UpdateMediaDto,
@@ -107,7 +108,8 @@ import { FastifyRequest } from 'fastify';
 export class MediaController {
   constructor(
     private readonly mediaService: MediaService,
-    private readonly mediaSubtitlesService: MediaSubtitlesService
+    private readonly mediaSubtitlesService: MediaSubtitlesService,
+    private readonly mediaImagesService: MediaImagesService
   ) {}
 
   @Post()
@@ -388,7 +390,7 @@ export class MediaController {
     @FileUpload() file: Storage.MultipartFile,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.uploadMediaPoster(id, file, headers, authUser);
+    return this.mediaImagesService.uploadMediaPoster(id, file, headers, authUser);
   }
 
   @Delete(':id/poster')
@@ -407,7 +409,7 @@ export class MediaController {
     @Param('id', ParseBigIntPipe) id: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteMediaPoster(id, headers, authUser);
+    return this.mediaImagesService.deleteMediaPoster(id, headers, authUser);
   }
 
   @Patch(':id/backdrop')
@@ -445,7 +447,7 @@ export class MediaController {
     @FileUpload() file: Storage.MultipartFile,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.uploadMediaBackdrop(id, file, headers, authUser);
+    return this.mediaImagesService.uploadMediaBackdrop(id, file, headers, authUser);
   }
 
   @Delete(':id/backdrop')
@@ -464,7 +466,7 @@ export class MediaController {
     @Param('id', ParseBigIntPipe) id: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteMediaBackdrop(id, headers, authUser);
+    return this.mediaImagesService.deleteMediaBackdrop(id, headers, authUser);
   }
 
   @Post(':id/movie/subtitles')
@@ -947,7 +949,7 @@ export class MediaController {
     @FileUpload() file: Storage.MultipartFile,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.uploadTVEpisodeStill(id, episodeId, file, headers, authUser);
+    return this.mediaImagesService.uploadTVEpisodeStill(id, episodeId, file, headers, authUser);
   }
 
   @Delete(':id/tv/episodes/:episode_id/still')
@@ -969,7 +971,7 @@ export class MediaController {
     @FileUpload() file: Storage.MultipartFile,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteTVEpisodeStill(id, episodeId, headers, authUser);
+    return this.mediaImagesService.deleteTVEpisodeStill(id, episodeId, headers, authUser);
   }
 
   @Post(':id/tv/episodes/:episode_id/subtitles')
