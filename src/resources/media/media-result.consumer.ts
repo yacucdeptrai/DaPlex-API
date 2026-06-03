@@ -3,7 +3,7 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
 
-import { MediaService } from './media.service';
+import { MediaStreamResultsService } from './media-stream-results.service';
 import { TaskQueue } from '../../enums';
 import { MediaQueueResultDto } from './dto';
 
@@ -21,7 +21,7 @@ type JobNameType =
 export class MediaResultConsumer extends WorkerHost {
   private readonly logger = new Logger(MediaResultConsumer.name);
 
-  constructor(private readonly mediaService: MediaService) {
+  constructor(private readonly mediaStreamResultsService: MediaStreamResultsService) {
     super();
   }
 
@@ -33,7 +33,7 @@ export class MediaResultConsumer extends WorkerHost {
           let message = `Updating source ${jobData.progress.quality} of media ${jobData.media}`;
           if (jobData.episode) message += `, episode ${jobData.episode}`;
           this.logger.log(message);
-          await this.mediaService.updateMediaSourceData(jobData);
+          await this.mediaStreamResultsService.updateMediaSourceData(jobData);
           break;
         }
         case 'add-stream-audio': {
@@ -41,10 +41,10 @@ export class MediaResultConsumer extends WorkerHost {
             this.logger.log(
               `Adding audio of codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`
             );
-            await this.mediaService.addTVEpisodeAudioStream(jobData);
+            await this.mediaStreamResultsService.addTVEpisodeAudioStream(jobData);
           } else {
             this.logger.log(`Adding audio of codec ${jobData.progress.codec} to media ${jobData.media}`);
-            await this.mediaService.addMovieAudioStream(jobData);
+            await this.mediaStreamResultsService.addMovieAudioStream(jobData);
           }
           break;
         }
@@ -53,12 +53,12 @@ export class MediaResultConsumer extends WorkerHost {
             this.logger.log(
               `Adding quality ${jobData.progress.quality} and codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`
             );
-            await this.mediaService.addTVEpisodeStream(jobData);
+            await this.mediaStreamResultsService.addTVEpisodeStream(jobData);
           } else {
             this.logger.log(
               `Adding quality ${jobData.progress.quality} and codec ${jobData.progress.codec} to media ${jobData.media}`
             );
-            await this.mediaService.addMovieStream(jobData);
+            await this.mediaStreamResultsService.addMovieStream(jobData);
           }
           break;
         }
@@ -67,50 +67,50 @@ export class MediaResultConsumer extends WorkerHost {
             this.logger.log(
               `Adding manifest of codec ${jobData.progress.codec} to media ${jobData.media}, episode ${jobData.episode}`
             );
-            await this.mediaService.addTVEpisodeStreamManifest(jobData);
+            await this.mediaStreamResultsService.addTVEpisodeStreamManifest(jobData);
           } else {
             this.logger.log(`Adding manifest of codec ${jobData.progress.codec} to media ${jobData.media}`);
-            await this.mediaService.addMovieStreamManifest(jobData);
+            await this.mediaStreamResultsService.addMovieStreamManifest(jobData);
           }
           break;
         }
         case 'finished-encoding': {
           if (jobData.episode) {
             this.logger.log(`Finished encoding media ${jobData.media}, episode ${jobData.episode}`);
-            await this.mediaService.handleTVEpisodeStreamQueueDone(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleTVEpisodeStreamQueueDone(jobData.jobId, jobData);
           } else {
             this.logger.log(`Finished encoding media ${jobData.media}`);
-            await this.mediaService.handleMovieStreamQueueDone(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleMovieStreamQueueDone(jobData.jobId, jobData);
           }
           break;
         }
         case 'cancelled-encoding': {
           if (jobData.episode) {
             this.logger.log(`Cancelled encoding media ${jobData.media}, episode ${jobData.episode}`);
-            await this.mediaService.handleTVEpisodeStreamQueueCancel(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleTVEpisodeStreamQueueCancel(jobData.jobId, jobData);
           } else {
             this.logger.log(`Cancelled encoding media ${jobData.media}`);
-            await this.mediaService.handleMovieStreamQueueCancel(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleMovieStreamQueueCancel(jobData.jobId, jobData);
           }
           break;
         }
         case 'retry-encoding': {
           if (jobData.episode) {
             this.logger.log(`Preparing to retry encoding media ${jobData.media}, episode ${jobData.episode}`);
-            await this.mediaService.handleTVEpisodeStreamQueueRetry(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleTVEpisodeStreamQueueRetry(jobData.jobId, jobData);
           } else {
             this.logger.log(`Preparing to retry encoding media ${jobData.media}`);
-            await this.mediaService.handleMovieStreamQueueRetry(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleMovieStreamQueueRetry(jobData.jobId, jobData);
           }
           break;
         }
         case 'failed-encoding': {
           if (jobData.episode) {
             this.logger.error(`Failed encoding media ${jobData.media}, episode ${jobData.episode}`);
-            await this.mediaService.handleTVEpisodeStreamQueueError(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleTVEpisodeStreamQueueError(jobData.jobId, jobData);
           } else {
             this.logger.error(`Failed encoding media ${jobData.media}`);
-            await this.mediaService.handleMovieStreamQueueError(jobData.jobId, jobData);
+            await this.mediaStreamResultsService.handleMovieStreamQueueError(jobData.jobId, jobData);
           }
           break;
         }
