@@ -4,7 +4,7 @@ import { Queue } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
 
 import { MediaQueueResultDto } from './dto';
-import { MediaService } from './media.service';
+import { MediaStreamResultsService } from './media-stream-results.service';
 import { TaskQueue, VideoCodec } from '../../enums';
 
 /**
@@ -23,7 +23,7 @@ abstract class BaseMediaConsumer extends QueueEventsHost {
   protected abstract readonly logger: Logger;
   protected abstract readonly codec: string;
   protected abstract readonly queue: Queue;
-  protected abstract readonly mediaService: MediaService;
+  protected abstract readonly mediaStreamResultsService: MediaStreamResultsService;
 
   @OnQueueEvent('active')
   onGlobalActive({ jobId }: { jobId: string }) {
@@ -45,9 +45,9 @@ abstract class BaseMediaConsumer extends QueueEventsHost {
     this.logger.log(`Cleanning failed job ${jobId}`);
     const jobData = plainToInstance(MediaQueueResultDto, { jobId: job.id, ...job.data });
     if (jobData.episode) {
-      await this.mediaService.handleTVEpisodeStreamQueueError(jobData.jobId, jobData);
+      await this.mediaStreamResultsService.handleTVEpisodeStreamQueueError(jobData.jobId, jobData);
     } else {
-      await this.mediaService.handleMovieStreamQueueError(jobData.jobId, jobData);
+      await this.mediaStreamResultsService.handleMovieStreamQueueError(jobData.jobId, jobData);
     }
   }
 }
@@ -59,7 +59,7 @@ export class MediaConsumerH264 extends BaseMediaConsumer {
 
   constructor(
     @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H264}`) protected readonly queue: Queue,
-    protected readonly mediaService: MediaService
+    protected readonly mediaStreamResultsService: MediaStreamResultsService
   ) {
     super();
   }
@@ -72,7 +72,7 @@ export class MediaConsumerH265 extends BaseMediaConsumer {
 
   constructor(
     @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.H265}`) protected readonly queue: Queue,
-    protected readonly mediaService: MediaService
+    protected readonly mediaStreamResultsService: MediaStreamResultsService
   ) {
     super();
   }
@@ -85,7 +85,7 @@ export class MediaConsumerVP9 extends BaseMediaConsumer {
 
   constructor(
     @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.VP9}`) protected readonly queue: Queue,
-    protected readonly mediaService: MediaService
+    protected readonly mediaStreamResultsService: MediaStreamResultsService
   ) {
     super();
   }
@@ -98,7 +98,7 @@ export class MediaConsumerAV1 extends BaseMediaConsumer {
 
   constructor(
     @InjectQueue(`${TaskQueue.VIDEO_TRANSCODE}:${VideoCodec.AV1}`) protected readonly queue: Queue,
-    protected readonly mediaService: MediaService
+    protected readonly mediaStreamResultsService: MediaStreamResultsService
   ) {
     super();
   }
