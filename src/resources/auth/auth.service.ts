@@ -190,9 +190,6 @@ export class AuthService {
         { code: StatusCode.UNAUTHORIZED_NO_USER, message: 'Not authorized because user not found' },
         HttpStatus.UNAUTHORIZED
       );
-    // If user changed their email or password
-    //if (refreshTokenPayload.email !== user.email || refreshTokenPayload.password !== user.password)
-    //  throw new HttpException({ code: StatusCode.CREDENTIALS_CHANGED, message: 'Your email or password has been changed, please login again' }, HttpStatus.UNAUTHORIZED);
     // Revoke and generate new tokens
     return this.createJwtToken(user.toObject());
   }
@@ -305,6 +302,4 @@ export interface FindUserOptions {
 
 interface RefreshTokenPayload {
   _id: string;
-  email: string;
-  password: string;
 }
