@@ -37,6 +37,7 @@ import {
 import { MediaService } from './media.service';
 import { MediaSubtitlesService } from './media-subtitles.service';
 import { MediaImagesService } from './media-images.service';
+import { MediaVideosService } from './media-videos.service';
 import {
   CreateMediaDto,
   UpdateMediaDto,
@@ -109,7 +110,8 @@ export class MediaController {
   constructor(
     private readonly mediaService: MediaService,
     private readonly mediaSubtitlesService: MediaSubtitlesService,
-    private readonly mediaImagesService: MediaImagesService
+    private readonly mediaImagesService: MediaImagesService,
+    private readonly mediaVideosService: MediaVideosService
   ) {}
 
   @Post()
@@ -265,7 +267,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Body() addMediaVideoDto: AddMediaVideoDto
   ) {
-    return this.mediaService.addMediaVideo(id, addMediaVideoDto, headers, authUser);
+    return this.mediaVideosService.addMediaVideo(id, addMediaVideoDto, headers, authUser);
   }
 
   @Get(':id/videos')
@@ -286,7 +288,7 @@ export class MediaController {
     @Param('id', ParseBigIntPipe) id: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.findAllMediaVideos(id, headers, authUser);
+    return this.mediaVideosService.findAllMediaVideos(id, headers, authUser);
   }
 
   @Patch(':id/videos/:video_id')
@@ -308,7 +310,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Body() updateMediaVideoDto: UpdateMediaVideoDto
   ) {
-    return this.mediaService.updateMediaVideo(id, videoId, updateMediaVideoDto, headers, authUser);
+    return this.mediaVideosService.updateMediaVideo(id, videoId, updateMediaVideoDto, headers, authUser);
   }
 
   @Delete(':id/videos/:video_id')
@@ -330,7 +332,7 @@ export class MediaController {
     @Param('video_id', ParseBigIntPipe) videoId: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteMediaVideo(id, videoId, headers, authUser);
+    return this.mediaVideosService.deleteMediaVideo(id, videoId, headers, authUser);
   }
 
   @Delete(':id/videos')
@@ -351,7 +353,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Query() deleteMediaVideosDto: DeleteMediaVideosDto
   ) {
-    return this.mediaService.deleteMediaVideos(id, deleteMediaVideosDto, headers, authUser);
+    return this.mediaVideosService.deleteMediaVideos(id, deleteMediaVideosDto, headers, authUser);
   }
 
   @Patch(':id/poster')
