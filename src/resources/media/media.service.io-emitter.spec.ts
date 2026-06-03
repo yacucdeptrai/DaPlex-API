@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MediaService } from './media.service';
 
 /**
- * Characterization tests for resolveIoEmitter (Phase 6.3).
+ * Characterization tests for resolveIoEmitter.
  *
  * 32 call sites duplicated the expression
  *   (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId))

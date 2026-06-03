@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { MediaConsumerH264, MediaConsumerH265, MediaConsumerVP9, MediaConsumerAV1 } from './media.consumer';
 
 /**
- * Characterization + safety tests for the Phase 6.1 BaseMediaConsumer extraction.
+ * Characterization + safety tests for the shared BaseMediaConsumer.
  *
  * The four per-codec listeners now inherit their active/completed/failed handlers from a
  * shared abstract base. These tests pin (a) the unchanged handler behaviour and (b) the
@@ -20,7 +20,7 @@ type Consumer = {
   onGlobalFailed(arg: { jobId: string; failedReason: string }): Promise<void>;
 };
 
-describe('MediaConsumer (Phase 6.1 base extraction)', () => {
+describe('MediaConsumer (shared base)', () => {
   const makeQueue = () => ({
     remove: jest.fn().mockResolvedValue(undefined),
     getJob: jest.fn().mockResolvedValue(undefined)

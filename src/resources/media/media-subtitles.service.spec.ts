@@ -5,8 +5,7 @@ import { MediaSubtitlesService } from './media-subtitles.service';
 import { StatusCode } from '../../enums';
 
 /**
- * Characterization tests for the subtitle validation logic (Phase 7.1 step 1 —
- * MediaSubtitlesService extraction).
+ * Characterization tests for the subtitle validation logic.
  *
  * validateSubtitle is the only branching, dependency-free piece of the subtitle
  * group; the rest are I/O-heavy methods moved verbatim. These pin its exact

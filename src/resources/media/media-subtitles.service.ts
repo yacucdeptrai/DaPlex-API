@@ -28,11 +28,10 @@ import {
 import { UPLOAD_SUBTITLE_EXT } from '../../config';
 
 /**
- * Subtitle upload / list / delete for movies and TV episodes, extracted verbatim
- * from MediaService (Phase 7.1 step 1). Carries its own copies of the trivial
+ * Subtitle upload / list / delete for movies and TV episodes. Carries its own
  * resolveIoEmitter (wsAdminGateway) and deleteMediaSubtitle (cloudflareR2) helpers;
- * deleteMediaSubtitle also remains in MediaService (used by remove()/deleteEpisodeById)
- * — both read the same injected services, so the duplication is behaviour-identical.
+ * deleteMediaSubtitle also remains in MediaService (remove() / deleteEpisodeById),
+ * reading the same injected services so behaviour is identical.
  */
 @Injectable()
 export class MediaSubtitlesService {

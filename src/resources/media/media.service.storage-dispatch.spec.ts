@@ -3,7 +3,7 @@ import { MediaService } from './media.service';
 import { CloudStorage } from '../../enums';
 
 /**
- * Characterization tests for resolveStorageService (Phase 6.2).
+ * Characterization tests for resolveStorageService.
  *
  * Every source/stream storage operation duplicated the same dispatch:
  *   if (kind === CloudStorage.FILER)      -> this.filerService.<op>(...)

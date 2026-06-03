@@ -8,7 +8,7 @@ import { MediaService } from './media.service';
 import { TaskQueue, VideoCodec } from '../../enums';
 
 /**
- * Shared queue-event handling for the per-codec transcode listeners (Phase 6.1).
+ * Shared queue-event handling for the per-codec transcode listeners.
  *
  * MediaConsumerH264/H265/VP9/AV1 were four byte-identical classes differing only by the
  * codec label, the injected queue, and the class/field names. The active/completed/failed

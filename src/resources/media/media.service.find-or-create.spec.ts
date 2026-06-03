@@ -5,7 +5,7 @@ import { StatusCode } from '../../enums';
 
 /**
  * Characterization tests for findOrCreateGenres / findOrCreateProductions /
- * findOrCreateTags (Phase 6.4).
+ * findOrCreateTags.
  *
  * The three helpers are near-identical: parse "create:name=..." entries into new
  * documents, collect existing BigInt ids, verify all existing ids resolve, then

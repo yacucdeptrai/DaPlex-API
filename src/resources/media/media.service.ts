@@ -180,13 +180,9 @@ export class MediaService {
   }
 
   /**
-   * Resolves the cloud-storage service backing a storage kind (Phase 6.2). Mirrors the
-   * `FILER → filer / S3 → s3 / else → onedrive` dispatch that was duplicated across every
-   * source/stream storage operation. The three services share identical
-   * `findId` / `findPath` / `deleteFolder` signatures; per-service retry defaults
-   * (findId/findPath: filer & s3 = 3, onedrive = 5; deleteFolder = 5 on all three) are
-   * preserved because the resolved service's own method is invoked. Any non-FILER,
-   * non-S3 kind maps to onedrive, exactly replicating the original `else` branch.
+   * Resolves the cloud-storage service for a storage kind:
+   * `FILER → filer / S3 → s3 / else → onedrive`. Each service keeps its own
+   * findId / findPath / deleteFolder retry defaults since its own method is invoked.
    */
   private resolveStorageService(kind: number): FilerService | S3Service | OnedriveService {
     if (kind === CloudStorage.FILER) return this.filerService;
