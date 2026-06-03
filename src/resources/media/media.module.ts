@@ -19,6 +19,7 @@ import { MediaSubtitlesService } from './media-subtitles.service';
 import { MediaImagesService } from './media-images.service';
 import { MediaVideosService } from './media-videos.service';
 import { MediaChaptersService } from './media-chapters.service';
+import { MediaTVEpisodesService } from './media-tv-episodes.service';
 import { MediaController } from './media.controller';
 import { MediaConsumerAV1, MediaConsumerH264, MediaConsumerH265, MediaConsumerVP9 } from './media.consumer';
 import { MediaResultConsumer } from './media-result.consumer';
@@ -132,6 +133,7 @@ import { MongooseConnection, TaskQueue, VideoCodec } from '../../enums';
     MediaImagesService,
     MediaVideosService,
     MediaChaptersService,
+    MediaTVEpisodesService,
     MediaConsumerH264,
     MediaConsumerH265,
     MediaConsumerVP9,
