@@ -38,6 +38,7 @@ import { MediaService } from './media.service';
 import { MediaSubtitlesService } from './media-subtitles.service';
 import { MediaImagesService } from './media-images.service';
 import { MediaVideosService } from './media-videos.service';
+import { MediaChaptersService } from './media-chapters.service';
 import {
   CreateMediaDto,
   UpdateMediaDto,
@@ -111,7 +112,8 @@ export class MediaController {
     private readonly mediaService: MediaService,
     private readonly mediaSubtitlesService: MediaSubtitlesService,
     private readonly mediaImagesService: MediaImagesService,
-    private readonly mediaVideosService: MediaVideosService
+    private readonly mediaVideosService: MediaVideosService,
+    private readonly mediaChaptersService: MediaChaptersService
   ) {}
 
   @Post()
@@ -720,7 +722,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Body() addMediaChapterDto: AddMediaChapterDto
   ) {
-    return this.mediaService.addMovieChapter(id, addMediaChapterDto, headers, authUser);
+    return this.mediaChaptersService.addMovieChapter(id, addMediaChapterDto, headers, authUser);
   }
 
   @Get(':id/movie/chapters')
@@ -741,7 +743,7 @@ export class MediaController {
     @Param('id', ParseBigIntPipe) id: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.findAllMovieChapters(id, headers, authUser);
+    return this.mediaChaptersService.findAllMovieChapters(id, headers, authUser);
   }
 
   @Patch(':id/movie/chapters/:chapter_id')
@@ -763,7 +765,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Body() updateMediaChapterDto: UpdateMediaChapterDto
   ) {
-    return this.mediaService.updateMovieChapter(id, chapterId, updateMediaChapterDto, headers, authUser);
+    return this.mediaChaptersService.updateMovieChapter(id, chapterId, updateMediaChapterDto, headers, authUser);
   }
 
   @Delete(':id/movie/chapters/:chapter_id')
@@ -785,7 +787,7 @@ export class MediaController {
     @Param('chapter_id', ParseBigIntPipe) chapterId: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteMovieChapter(id, chapterId, headers, authUser);
+    return this.mediaChaptersService.deleteMovieChapter(id, chapterId, headers, authUser);
   }
 
   @Delete(':id/movie/chapters')
@@ -806,7 +808,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Query() deleteMediaChaptersDto: DeleteMediaChaptersDto
   ) {
-    return this.mediaService.deleteMovieChapters(id, deleteMediaChaptersDto, headers, authUser);
+    return this.mediaChaptersService.deleteMovieChapters(id, deleteMediaChaptersDto, headers, authUser);
   }
 
   @Post(':id/tv/episodes')
@@ -1258,7 +1260,7 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Body() addMediaChapterDto: AddMediaChapterDto
   ) {
-    return this.mediaService.addTVEpisodeChapter(id, episodeId, addMediaChapterDto, headers, authUser);
+    return this.mediaChaptersService.addTVEpisodeChapter(id, episodeId, addMediaChapterDto, headers, authUser);
   }
 
   @Get(':id/tv/episodes/:episode_id/chapters')
@@ -1281,7 +1283,7 @@ export class MediaController {
     @Param('episode_id', ParseBigIntPipe) episodeId: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.findAllTVEpisodeChapters(id, episodeId, headers, authUser);
+    return this.mediaChaptersService.findAllTVEpisodeChapters(id, episodeId, headers, authUser);
   }
 
   @Patch(':id/tv/episodes/:episode_id/chapters/:chapter_id')
@@ -1305,7 +1307,14 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Body() updateMediaChapterDto: UpdateMediaChapterDto
   ) {
-    return this.mediaService.updateTVEpisodeChapter(id, episodeId, chapterId, updateMediaChapterDto, headers, authUser);
+    return this.mediaChaptersService.updateTVEpisodeChapter(
+      id,
+      episodeId,
+      chapterId,
+      updateMediaChapterDto,
+      headers,
+      authUser
+    );
   }
 
   @Delete(':id/tv/episodes/:episode_id/chapters/:chapter_id')
@@ -1329,7 +1338,7 @@ export class MediaController {
     @Param('chapter_id', ParseBigIntPipe) chapterId: bigint,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
-    return this.mediaService.deleteTVEpisodeChapter(id, episodeId, chapterId, headers, authUser);
+    return this.mediaChaptersService.deleteTVEpisodeChapter(id, episodeId, chapterId, headers, authUser);
   }
 
   @Delete(':id/tv/episodes/:episode_id/chapters')
@@ -1352,6 +1361,6 @@ export class MediaController {
     @RequestHeaders(HeadersDto) headers: HeadersDto,
     @Query() deleteMediaChaptersDto: DeleteMediaChaptersDto
   ) {
-    return this.mediaService.deleteTVEpisodeChapters(id, episodeId, deleteMediaChaptersDto, headers, authUser);
+    return this.mediaChaptersService.deleteTVEpisodeChapters(id, episodeId, deleteMediaChaptersDto, headers, authUser);
   }
 }
