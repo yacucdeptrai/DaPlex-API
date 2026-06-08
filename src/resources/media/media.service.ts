@@ -11,7 +11,6 @@ import {
   Types,
   UpdateQuery
 } from 'mongoose';
-import { Cron } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { instanceToPlain, plainToInstance, plainToClassFromExist } from 'class-transformer';
@@ -1806,35 +1805,6 @@ export class MediaService {
       streams: manifestStreams,
       subtitles: episode.subtitles
     });
-  }
-
-  @Cron('0 0 0 * * *')
-  async removeOldUploadSessionsCron() {
-    const uploadSessions = await this.driveSessionModel
-      .find({ expiry: { $lte: new Date() } })
-      .populate('storage')
-      .lean()
-      .exec();
-    await this.driveSessionModel.deleteMany({ expiry: { $lte: new Date() } }).exec();
-    for (let i = 0; i < uploadSessions.length; i++) {
-      const session = uploadSessions[i];
-      await this.resolveStorageService(session.storage.kind).deleteFolder(session._id, session.storage);
-    }
-  }
-
-  @Cron('0 0 * * *')
-  async resetDailyViewsCron() {
-    await this.mediaModel.updateMany({ dailyViews: { $gt: 0 } }, { dailyViews: 0 }).exec();
-  }
-
-  @Cron('0 0 * * 1')
-  async resetWeeklyViewsCron() {
-    await this.mediaModel.updateMany({ weeklyViews: { $gt: 0 } }, { weeklyViews: 0 }).exec();
-  }
-
-  @Cron('0 0 1 * *')
-  async resetMonthlyViewsCron() {
-    await this.mediaModel.updateMany({ monthlyViews: { $gt: 0 } }, { monthlyViews: 0 }).exec();
   }
 
   async updateMediaRating(id: bigint, incCount: number, incScore: number, session?: ClientSession) {

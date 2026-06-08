@@ -21,6 +21,7 @@ import { MediaVideosService } from './media-videos.service';
 import { MediaChaptersService } from './media-chapters.service';
 import { MediaTVEpisodesService } from './media-tv-episodes.service';
 import { MediaStreamResultsService } from './media-stream-results.service';
+import { MediaSchedulerService } from './media-scheduler.service';
 import { MediaController } from './media.controller';
 import { MediaConsumerAV1, MediaConsumerH264, MediaConsumerH265, MediaConsumerVP9 } from './media.consumer';
 import { MediaResultConsumer } from './media-result.consumer';
@@ -125,6 +126,7 @@ const TRANSCODE_JOB_OPTIONS = {
     MediaChaptersService,
     MediaTVEpisodesService,
     MediaStreamResultsService,
+    MediaSchedulerService,
     MediaConsumerH264,
     MediaConsumerH265,
     MediaConsumerVP9,
