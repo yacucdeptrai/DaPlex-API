@@ -1,17 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MediaController } from './media.controller';
+import { MovieController } from './movie.controller';
 import { MediaService } from './media.service';
 
-describe('MediaController', () => {
-  let controller: MediaController;
+describe('MovieController', () => {
+  let controller: MovieController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [MediaController],
+      controllers: [MovieController],
       providers: [MediaService]
-    }).useMocker(() => ({})).compile();
+    })
+      .useMocker(() => ({}))
+      .compile();
 
-    controller = module.get<MediaController>(MediaController);
+    controller = module.get<MovieController>(MovieController);
   });
 
   it('should be defined', () => {

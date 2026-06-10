@@ -22,7 +22,11 @@ import { MediaChaptersService } from './media-chapters.service';
 import { MediaTVEpisodesService } from './media-tv-episodes.service';
 import { MediaStreamResultsService } from './media-stream-results.service';
 import { MediaSchedulerService } from './media-scheduler.service';
-import { MediaController } from './media.controller';
+import { MovieController } from './movie.controller';
+import { TVEpisodeController } from './tv-episode.controller';
+import { MediaVideoController } from './media-video.controller';
+import { MediaSubtitleController } from './media-subtitle.controller';
+import { MediaChapterController } from './media-chapter.controller';
 import { MediaConsumerAV1, MediaConsumerH264, MediaConsumerH265, MediaConsumerVP9 } from './media.consumer';
 import { MediaResultConsumer } from './media-result.consumer';
 import { CloudflareR2Module } from '../../common/modules/cloudflare-r2';
@@ -117,7 +121,13 @@ const TRANSCODE_JOB_OPTIONS = {
       })
     })
   ],
-  controllers: [MediaController],
+  controllers: [
+    MovieController,
+    TVEpisodeController,
+    MediaVideoController,
+    MediaSubtitleController,
+    MediaChapterController
+  ],
   providers: [
     MediaService,
     MediaSubtitlesService,

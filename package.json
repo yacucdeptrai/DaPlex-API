@@ -115,12 +115,19 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
-      "^stream-mmmagic$": "<rootDir>/../test/mocks/stream-mmmagic.js"
+      "^stream-mmmagic$": "<rootDir>/../test/mocks/stream-mmmagic.js",
+      "^sharp$": "<rootDir>/../test/mocks/sharp.js",
+      "^bcrypt$": "<rootDir>/../test/mocks/bcrypt.js"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "allowScripts": {
+    "bufferutil@4.0.8": true,
+    "github:yacucdeptrai/mmmagic#10cfab429aafc3236de70aa5a3075e441b975da0": true,
+    "utf-8-validate@6.0.4": true
   }
 }
