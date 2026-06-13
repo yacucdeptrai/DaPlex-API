@@ -391,6 +391,11 @@ describe('MediaService -> MediaCrudService delegation (Slice-A facade)', () => {
       findOneTVEpisodeByNumber: jest.fn(),
       findAvailableMedia: jest.fn(),
       findOneForPlaylist: jest.fn(),
+      deleteGenreMedia: jest.fn(),
+      deleteProductionMedia: jest.fn(),
+      deleteCollectionMedia: jest.fn(),
+      deleteTagMedia: jest.fn(),
+      deleteChapterMedia: jest.fn(),
       resolveStoragePublicUrl: jest.fn()
     } as unknown as jest.Mocked<MediaCrudService>;
 
@@ -490,6 +495,52 @@ describe('MediaService -> MediaCrudService delegation (Slice-A facade)', () => {
     crud.findOneForPlaylist.mockReturnValue(out);
     expect(service.findOneForPlaylist(BigInt(7))).toBe(out);
     expect(crud.findOneForPlaylist).toHaveBeenCalledWith(BigInt(7));
+  });
+
+  it('deleteGenreMedia forwards (id, mediaIds, session) and returns the crud result', () => {
+    const out = {} as any;
+    crud.deleteGenreMedia.mockReturnValue(out);
+    const ids = [BigInt(1)];
+    const session = {} as any;
+    expect(service.deleteGenreMedia(BigInt(10), ids, session)).toBe(out);
+    expect(crud.deleteGenreMedia).toHaveBeenCalledWith(BigInt(10), ids, session);
+  });
+
+  it('deleteProductionMedia forwards (id, mediaIds, session) and returns the crud result', () => {
+    const out = {} as any;
+    crud.deleteProductionMedia.mockReturnValue(out);
+    const ids = [BigInt(1)];
+    const session = {} as any;
+    expect(service.deleteProductionMedia(BigInt(11), ids, session)).toBe(out);
+    expect(crud.deleteProductionMedia).toHaveBeenCalledWith(BigInt(11), ids, session);
+  });
+
+  it('deleteCollectionMedia forwards (id, mediaIds, session) and returns the crud result', () => {
+    const out = {} as any;
+    crud.deleteCollectionMedia.mockReturnValue(out);
+    const ids = [BigInt(1)];
+    const session = {} as any;
+    expect(service.deleteCollectionMedia(BigInt(12), ids, session)).toBe(out);
+    expect(crud.deleteCollectionMedia).toHaveBeenCalledWith(BigInt(12), ids, session);
+  });
+
+  it('deleteTagMedia forwards (id, mediaIds, session) and returns the crud result', () => {
+    const out = {} as any;
+    crud.deleteTagMedia.mockReturnValue(out);
+    const ids = [BigInt(1)];
+    const session = {} as any;
+    expect(service.deleteTagMedia(BigInt(13), ids, session)).toBe(out);
+    expect(crud.deleteTagMedia).toHaveBeenCalledWith(BigInt(13), ids, session);
+  });
+
+  it('deleteChapterMedia forwards (id, mediaIds, episodeIds, session) and returns the crud result', () => {
+    const out = {} as any;
+    crud.deleteChapterMedia.mockReturnValue(out);
+    const mediaIds = [BigInt(1)];
+    const episodeIds = [BigInt(2)];
+    const session = {} as any;
+    expect(service.deleteChapterMedia(BigInt(14), mediaIds, episodeIds, session)).toBe(out);
+    expect(crud.deleteChapterMedia).toHaveBeenCalledWith(BigInt(14), mediaIds, episodeIds, session);
   });
 
   it('resolveStoragePublicUrl forwards (kind, url, folderId) and returns the crud result', () => {

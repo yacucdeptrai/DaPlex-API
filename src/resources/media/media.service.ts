@@ -1559,57 +1559,22 @@ export class MediaService {
   }
 
   deleteGenreMedia(genreId: bigint, mediaIds: bigint[], session?: ClientSession) {
-    if (mediaIds.length)
-      return this.mediaModel.updateMany({ _id: { $in: mediaIds } }, { $pull: { genres: genreId } }, { session });
+    return this.mediaCrudService.deleteGenreMedia(genreId, mediaIds, session);
   }
 
   deleteProductionMedia(productionId: bigint, mediaIds: bigint[], session?: ClientSession) {
-    if (mediaIds.length)
-      return this.mediaModel.updateMany(
-        { _id: { $in: mediaIds } },
-        { $pull: { studios: productionId, producers: productionId } },
-        { session }
-      );
+    return this.mediaCrudService.deleteProductionMedia(productionId, mediaIds, session);
   }
 
   deleteCollectionMedia(collectionId: bigint, mediaIds: bigint[], session?: ClientSession) {
-    if (mediaIds.length)
-      return this.mediaModel.updateMany(
-        { _id: { $in: mediaIds } },
-        { $pull: { inCollections: collectionId } },
-        { session }
-      );
+    return this.mediaCrudService.deleteCollectionMedia(collectionId, mediaIds, session);
   }
 
   deleteTagMedia(tagId: bigint, mediaIds: bigint[], session?: ClientSession) {
-    if (mediaIds.length)
-      return this.mediaModel.updateMany({ _id: { $in: mediaIds } }, { $pull: { tags: tagId } }, { session });
+    return this.mediaCrudService.deleteTagMedia(tagId, mediaIds, session);
   }
 
-  async deleteChapterMedia(chapterTypeId: bigint, mediaIds: bigint[], episodeIds: bigint[], session?: ClientSession) {
-    const updatePromises: Promise<any>[] = [];
-    if (mediaIds.length) {
-      updatePromises.push(
-        this.mediaModel.updateMany(
-          { _id: { $in: mediaIds } },
-          {
-            $pull: { 'movie.chapters': { $elemMatch: { type: chapterTypeId } } }
-          },
-          { session }
-        )
-      );
-    }
-    if (episodeIds.length) {
-      updatePromises.push(
-        this.tvEpisodeModel.updateMany(
-          { _id: { $in: episodeIds } },
-          {
-            $pull: { chapters: { $elemMatch: { type: chapterTypeId } } }
-          },
-          { session }
-        )
-      );
-    }
-    await Promise.all(updatePromises);
+  deleteChapterMedia(chapterTypeId: bigint, mediaIds: bigint[], episodeIds: bigint[], session?: ClientSession) {
+    return this.mediaCrudService.deleteChapterMedia(chapterTypeId, mediaIds, episodeIds, session);
   }
 }

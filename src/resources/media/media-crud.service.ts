@@ -469,6 +469,61 @@ export class MediaCrudService {
     });
   }
 
+  deleteGenreMedia(genreId: bigint, mediaIds: bigint[], session?: ClientSession) {
+    if (mediaIds.length)
+      return this.mediaModel.updateMany({ _id: { $in: mediaIds } }, { $pull: { genres: genreId } }, { session });
+  }
+
+  deleteProductionMedia(productionId: bigint, mediaIds: bigint[], session?: ClientSession) {
+    if (mediaIds.length)
+      return this.mediaModel.updateMany(
+        { _id: { $in: mediaIds } },
+        { $pull: { studios: productionId, producers: productionId } },
+        { session }
+      );
+  }
+
+  deleteCollectionMedia(collectionId: bigint, mediaIds: bigint[], session?: ClientSession) {
+    if (mediaIds.length)
+      return this.mediaModel.updateMany(
+        { _id: { $in: mediaIds } },
+        { $pull: { inCollections: collectionId } },
+        { session }
+      );
+  }
+
+  deleteTagMedia(tagId: bigint, mediaIds: bigint[], session?: ClientSession) {
+    if (mediaIds.length)
+      return this.mediaModel.updateMany({ _id: { $in: mediaIds } }, { $pull: { tags: tagId } }, { session });
+  }
+
+  async deleteChapterMedia(chapterTypeId: bigint, mediaIds: bigint[], episodeIds: bigint[], session?: ClientSession) {
+    const updatePromises: Promise<any>[] = [];
+    if (mediaIds.length) {
+      updatePromises.push(
+        this.mediaModel.updateMany(
+          { _id: { $in: mediaIds } },
+          {
+            $pull: { 'movie.chapters': { $elemMatch: { type: chapterTypeId } } }
+          },
+          { session }
+        )
+      );
+    }
+    if (episodeIds.length) {
+      updatePromises.push(
+        this.tvEpisodeModel.updateMany(
+          { _id: { $in: episodeIds } },
+          {
+            $pull: { chapters: { $elemMatch: { type: chapterTypeId } } }
+          },
+          { session }
+        )
+      );
+    }
+    await Promise.all(updatePromises);
+  }
+
   async findAll(offsetPageMediaDto: OffsetPageMediaDto, headers: HeadersDto, authUser: AuthUserDto) {
     const sortEnum = [
       '_id',
