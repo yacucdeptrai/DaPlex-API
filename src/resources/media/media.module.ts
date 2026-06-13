@@ -15,6 +15,7 @@ import {
   TVEpisodeSchema
 } from '../../schemas';
 import { MediaService } from './media.service';
+import { MediaCrudService } from './media-crud.service';
 import { MediaSubtitlesService } from './media-subtitles.service';
 import { MediaImagesService } from './media-images.service';
 import { MediaVideosService } from './media-videos.service';
@@ -130,6 +131,7 @@ const TRANSCODE_JOB_OPTIONS = {
   ],
   providers: [
     MediaService,
+    MediaCrudService,
     MediaSubtitlesService,
     MediaImagesService,
     MediaVideosService,
