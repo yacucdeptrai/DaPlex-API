@@ -381,6 +381,8 @@ describe('MediaService -> MediaCrudService delegation (Slice-A facade)', () => {
 
   beforeEach(async () => {
     crud = {
+      create: jest.fn(),
+      update: jest.fn(),
       findAll: jest.fn(),
       findAllCursor: jest.fn(),
       findOne: jest.fn(),
@@ -399,6 +401,26 @@ describe('MediaService -> MediaCrudService delegation (Slice-A facade)', () => {
       .compile();
 
     service = module.get<MediaService>(MediaService);
+  });
+
+  it('create forwards (dto, headers, authUser) and returns the crud result', () => {
+    const out = {} as any;
+    crud.create.mockReturnValue(out);
+    const dto = {} as any;
+    const headers = {} as any;
+    const authUser = {} as any;
+    expect(service.create(dto, headers, authUser)).toBe(out);
+    expect(crud.create).toHaveBeenCalledWith(dto, headers, authUser);
+  });
+
+  it('update forwards (id, dto, headers, authUser) and returns the crud result', () => {
+    const out = {} as any;
+    crud.update.mockReturnValue(out);
+    const dto = {} as any;
+    const headers = {} as any;
+    const authUser = {} as any;
+    expect(service.update(BigInt(5), dto, headers, authUser)).toBe(out);
+    expect(crud.update).toHaveBeenCalledWith(BigInt(5), dto, headers, authUser);
   });
 
   it('findAll forwards (dto, headers, authUser) and returns the crud result', () => {
