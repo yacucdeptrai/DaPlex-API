@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
-import { MediaService } from './media.service';
+import { MediaCrudService } from './media-crud.service';
 import { StatusCode } from '../../enums';
 
 /**
@@ -13,8 +13,10 @@ import { StatusCode } from '../../enums';
  * (32 vs 150), not-found status code, and productions' extra ISO country field.
  * These tests pin the per-entity behavior before collapsing into one generic.
  */
-describe('MediaService find-or-create helpers (characterization)', () => {
-  let service: MediaService;
+describe('MediaCrudService find-or-create helpers (characterization)', () => {
+  // SUT re-pointed to MediaCrudService: the find-or-create helpers moved there with
+  // create/update. Same dep field names, so the mocks and every assertion stay identical.
+  let service: MediaCrudService;
   let genresService: { countByIds: jest.Mock; createMany: jest.Mock };
   let productionsService: { countByIds: jest.Mock; createMany: jest.Mock };
   let tagsService: { countByIds: jest.Mock; createMany: jest.Mock };
@@ -24,12 +26,12 @@ describe('MediaService find-or-create helpers (characterization)', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MediaService]
+      providers: [MediaCrudService]
     })
       .useMocker(() => ({}))
       .compile();
 
-    service = module.get<MediaService>(MediaService);
+    service = module.get<MediaCrudService>(MediaCrudService);
 
     genresService = { countByIds: jest.fn().mockResolvedValue(0), createMany: jest.fn().mockResolvedValue([]) };
     productionsService = { countByIds: jest.fn().mockResolvedValue(0), createMany: jest.fn().mockResolvedValue([]) };

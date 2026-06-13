@@ -15,6 +15,7 @@ import {
   TVEpisodeSchema
 } from '../../schemas';
 import { MediaService } from './media.service';
+import { MediaCrudService } from './media-crud.service';
 import { MediaSubtitlesService } from './media-subtitles.service';
 import { MediaImagesService } from './media-images.service';
 import { MediaVideosService } from './media-videos.service';
@@ -45,7 +46,6 @@ import { CollectionModule } from '../collection/collection.module';
 import { TagsModule } from '../tags/tags.module';
 import { ChapterTypeModule } from '../chapter-type/chapter-type.module';
 import { HistoryModule } from '../history/history.module';
-import { PlaylistsModule } from '../playlists/playlists.module';
 import { RatingsModule } from '../ratings/ratings.module';
 import { ExternalStoragesModule } from '../external-storages/external-storages.module';
 import { SettingsModule } from '../settings/settings.module';
@@ -68,7 +68,6 @@ const TRANSCODE_JOB_OPTIONS = {
     forwardRef(() => TagsModule),
     forwardRef(() => ChapterTypeModule),
     forwardRef(() => HistoryModule),
-    forwardRef(() => PlaylistsModule),
     forwardRef(() => RatingsModule),
     CloudflareR2Module,
     OnedriveModule,
@@ -130,6 +129,7 @@ const TRANSCODE_JOB_OPTIONS = {
   ],
   providers: [
     MediaService,
+    MediaCrudService,
     MediaSubtitlesService,
     MediaImagesService,
     MediaVideosService,
