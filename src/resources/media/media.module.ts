@@ -46,7 +46,6 @@ import { CollectionModule } from '../collection/collection.module';
 import { TagsModule } from '../tags/tags.module';
 import { ChapterTypeModule } from '../chapter-type/chapter-type.module';
 import { HistoryModule } from '../history/history.module';
-import { PlaylistsModule } from '../playlists/playlists.module';
 import { RatingsModule } from '../ratings/ratings.module';
 import { ExternalStoragesModule } from '../external-storages/external-storages.module';
 import { SettingsModule } from '../settings/settings.module';
@@ -69,7 +68,6 @@ const TRANSCODE_JOB_OPTIONS = {
     forwardRef(() => TagsModule),
     forwardRef(() => ChapterTypeModule),
     forwardRef(() => HistoryModule),
-    forwardRef(() => PlaylistsModule),
     forwardRef(() => RatingsModule),
     CloudflareR2Module,
     OnedriveModule,

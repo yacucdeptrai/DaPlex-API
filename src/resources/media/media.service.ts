@@ -1,20 +1,9 @@
-import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import {
-  ClientSession,
-  Connection,
-  FilterQuery,
-  FlattenMaps,
-  Model,
-  PopulateOptions,
-  ProjectionType,
-  Types,
-  UpdateQuery
-} from 'mongoose';
+import { ClientSession, Connection, FilterQuery, FlattenMaps, Model, Types, UpdateQuery } from 'mongoose';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { instanceToPlain, plainToInstance, plainToClassFromExist } from 'class-transformer';
-import mimeTypes from 'mime-types';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import pLimit from 'p-limit';
 import path from 'path';
 
@@ -56,31 +45,19 @@ import { TagsService } from '../tags/tags.service';
 import { ChapterTypeService } from '../chapter-type/chapter-type.service';
 import { CollectionService } from '../collection/collection.service';
 import { HistoryService } from '../history/history.service';
-import { PlaylistsService } from '../playlists/playlists.service';
 import { RatingsService } from '../ratings/ratings.service';
 import { SettingsService } from '../settings/settings.service';
 import { CloudflareR2Service } from '../../common/modules/cloudflare-r2';
 import { OnedriveService } from '../../common/modules/onedrive/onedrive.service';
 import { FilerService } from '../../common/modules/filer/filer.service';
 import { S3Service } from '../../common/modules/s3/s3.service';
-import { LocalCacheService } from '../../common/modules/local-cache/local-cache.service';
 import { RedisPubSubService } from '../../common/modules/redis-pubsub';
 import { ExternalStoragesService } from '../external-storages/external-storages.service';
 import { WsAdminGateway } from '../ws-admin';
 import { HeadersDto } from '../../common/dto';
-import { CursorPaginated, Paginated } from '../../common/entities';
-import { Media as MediaEntity, MediaDetails, MediaStream, TVEpisode as TVEpisodeEntity } from './entities';
+import { MediaStream, TVEpisode as TVEpisodeEntity } from './entities';
 import { MediaCrudService } from './media-crud.service';
-import {
-  LookupOptions,
-  MongooseOffsetPagination,
-  convertToLanguage,
-  convertToLanguageArray,
-  createSnowFlakeId,
-  trimSlugFilename,
-  AuditLogBuilder,
-  MongooseCursorPagination
-} from '../../utils';
+import { createSnowFlakeId, trimSlugFilename, AuditLogBuilder } from '../../utils';
 import {
   MediaType,
   StatusCode,
@@ -94,7 +71,6 @@ import {
   SocketMessage,
   SocketRoom,
   VideoCodec,
-  CachePrefix,
   CloudflareR2Container,
   CloudStorage
 } from '../../enums';
@@ -109,8 +85,6 @@ interface StorageFileInfo {
 
 @Injectable()
 export class MediaService {
-  private readonly logger = new Logger(MediaService.name);
-
   constructor(
     @InjectModel(Media.name, MongooseConnection.DATABASE_A) private mediaModel: Model<MediaDocument>,
     @InjectModel(MediaStorage.name, MongooseConnection.DATABASE_A)
@@ -129,7 +103,6 @@ export class MediaService {
     @Inject(forwardRef(() => ChapterTypeService)) private chapterTypeService: ChapterTypeService,
     @Inject(forwardRef(() => CollectionService)) private collectionService: CollectionService,
     @Inject(forwardRef(() => HistoryService)) private historyService: HistoryService,
-    @Inject(forwardRef(() => PlaylistsService)) private playlistsService: PlaylistsService,
     @Inject(forwardRef(() => RatingsService)) private ratingsService: RatingsService,
     private redisPubSubService: RedisPubSubService,
     private auditLogService: AuditLogService,
@@ -140,7 +113,6 @@ export class MediaService {
     private filerService: FilerService,
     private s3Service: S3Service,
     private cloudflareR2Service: CloudflareR2Service,
-    private localCacheService: LocalCacheService,
     private mediaCrudService: MediaCrudService
   ) {}
 
