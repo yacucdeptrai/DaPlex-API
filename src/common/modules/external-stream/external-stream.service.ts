@@ -1,10 +1,9 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
 import { FlixHQWatch, GogoanimeServer, ZoroWatch } from './interfaces';
-import { StatusCode } from '../../../enums';
 
 @Injectable()
 export class ExternalStreamService {
@@ -42,8 +41,6 @@ export class ExternalStreamService {
       return decodedUrl;
     } catch (e) {
       return null;
-      //console.error(e);
-      //throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
     }
   }
 
@@ -63,8 +60,6 @@ export class ExternalStreamService {
       return response.data;
     } catch (e) {
       return null;
-      //console.error(e);
-      //throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
     }
   }
 
@@ -82,8 +77,6 @@ export class ExternalStreamService {
       return response.data;
     } catch (e) {
       return null;
-      //console.error(e);
-      //throw new HttpException({ code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: `Received ${e.response.status} ${e.response.statusText} error from third party api` }, HttpStatus.SERVICE_UNAVAILABLE);
     }
   }
 }
