@@ -14,14 +14,15 @@ export class PermissionsService {
     // Administrators can bypass every permission
     if (user.roles.find((role) => role.permissions & UserPermission.ADMINISTRATOR)) return true;
     // Check every permission
-    for (let i = 0; i < permissions.length; i++) if (user.roles.find((role) => role.permissions & permissions[i])) return true;
+    for (let i = 0; i < permissions.length; i++)
+      if (user.roles.find((role) => role.permissions & permissions[i])) return true;
     return false;
   }
 
   scanPermission(user: AuthUserDto | User) {
-    const granted = [];
+    const granted: number[] = [];
     if (!user?.roles?.length) return granted;
-    const permKeys = Object.keys(UserPermission);
+    const permKeys = Object.keys(UserPermission) as (keyof typeof UserPermission)[];
     for (let i = 0; i < permKeys.length; i++) {
       if (user.roles.find((role) => role.permissions & UserPermission[permKeys[i]])) {
         granted.push(UserPermission[permKeys[i]]);

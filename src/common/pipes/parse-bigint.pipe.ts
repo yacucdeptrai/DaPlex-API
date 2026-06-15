@@ -1,5 +1,13 @@
 // https://github.com/nestjs/nest/blob/master/packages/common/pipes/parse-int.pipe.ts
-import { PipeTransform, Injectable, ArgumentMetadata, Optional, ParseIntPipeOptions, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  PipeTransform,
+  Injectable,
+  ArgumentMetadata,
+  Optional,
+  ParseIntPipeOptions,
+  HttpStatus,
+  HttpException
+} from '@nestjs/common';
 
 import { StatusCode } from '../../enums';
 
@@ -11,10 +19,12 @@ export class ParseBigIntPipe implements PipeTransform {
     options = options || {};
     const { exceptionFactory, errorHttpStatusCode = HttpStatus.BAD_REQUEST } = options;
 
-    this.exceptionFactory = exceptionFactory || ((error) => new HttpException({ code: StatusCode.IS_ALPHANUMERIC, message: error }, errorHttpStatusCode));
+    this.exceptionFactory =
+      exceptionFactory ||
+      ((error) => new HttpException({ code: StatusCode.IS_ALPHANUMERIC, message: error }, errorHttpStatusCode));
   }
 
-  transform(value: string, metadata: ArgumentMetadata) {
+  transform(value: string, _metadata: ArgumentMetadata) {
     if (!this.isNumeric(value)) {
       throw this.exceptionFactory('Validation failed (numeric string is expected)');
     }

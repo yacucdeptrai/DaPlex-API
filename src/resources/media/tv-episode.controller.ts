@@ -228,7 +228,7 @@ export class TVEpisodeController {
     @AuthUser() authUser: AuthUserDto,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Param('episode_id', ParseBigIntPipe) episodeId: bigint,
-    @FileUpload() file: Storage.MultipartFile,
+    @FileUpload() _file: Storage.MultipartFile,
     @RequestHeaders(HeadersDto) headers: HeadersDto
   ) {
     return this.mediaImagesService.deleteTVEpisodeStill(id, episodeId, headers, authUser);

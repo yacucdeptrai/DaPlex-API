@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
 
 import { MediaService } from './media.service';
 import { MediaCrudService } from './media-crud.service';
-import { MediaDetails, Media as MediaEntity } from './entities';
+import { MediaDetails } from './entities';
 import { CursorPaginated, Paginated } from '../../common/entities';
 import { CloudStorage, MediaPStatus, MediaVisibility, StatusCode } from '../../enums';
 
@@ -85,7 +84,7 @@ describe('MediaCrudService Slice-A read/list/search (characterization)', () => {
   // ---------------------------------------------------------------------------
   describe('findOne', () => {
     const findMediaDto = {} as any;
-    const baseDoc = {
+    const baseDoc: any = {
       _id: BigInt(1),
       type: 'movie',
       title: 'T',

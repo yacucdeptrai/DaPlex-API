@@ -12,7 +12,7 @@ export function convertToLanguage<T>(language: string, doc: T, options?: I18nOpt
       item._translated = false;
     }
   }
-  if (Array.isArray(options.populate)) convertPopulate<T>(language, item, options);
+  if (Array.isArray(options.populate)) convertPopulate(language, item, options);
   if (!options.keepTranslationsObject) item._translations = undefined;
   return item;
 }
@@ -31,14 +31,14 @@ export function convertToLanguageArray<T>(language: string, doc: T[], options?: 
         item._translated = false;
       }
     }
-    if (Array.isArray(options.populate)) convertPopulate<T>(language, item, options);
+    if (Array.isArray(options.populate)) convertPopulate(language, item, options);
     if (!options.keepTranslationsObject) item._translations = undefined;
     docs.push(item);
   }
   return docs;
 }
 
-function convertPopulate<T>(language: string, item: any, options?: I18nOptions) {
+function convertPopulate(language: string, item: any, options?: I18nOptions) {
   for (let i = 0; i < options.populate.length; i++) {
     const subItem = deepProperties(item, options.populate[i]);
     if (Array.isArray(subItem)) {

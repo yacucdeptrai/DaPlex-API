@@ -286,7 +286,7 @@ export class MediaStreamResultsService {
       });
   }
 
-  async handleMovieStreamQueueRetry(jobId: number | string, mediaQueueResultDto: MediaQueueResultDto) {
+  async handleMovieStreamQueueRetry(_jobId: number | string, mediaQueueResultDto: MediaQueueResultDto) {
     const source = await this.mediaStorageModel.findOne({ _id: mediaQueueResultDto._id }).populate('storage').exec();
     if (!source) return;
     const session = await this.mongooseConnection.startSession();
@@ -588,7 +588,7 @@ export class MediaStreamResultsService {
       });
   }
 
-  async handleTVEpisodeStreamQueueRetry(jobId: number | string, mediaQueueResultDto: MediaQueueResultDto) {
+  async handleTVEpisodeStreamQueueRetry(_jobId: number | string, mediaQueueResultDto: MediaQueueResultDto) {
     const source = await this.mediaStorageModel.findOne({ _id: mediaQueueResultDto._id }).populate('storage').exec();
     if (!source) return;
     const session = await this.mongooseConnection.startSession();

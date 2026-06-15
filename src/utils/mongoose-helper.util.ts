@@ -7,7 +7,7 @@ export function calculatePageSkip(page: number, limit: number) {
 
 export function convertToMongooseSort(sortSubject: string, sortEnum?: string[], parent?: string) {
   if (!sortSubject) return undefined;
-  const query = {};
+  const query: Record<string, number> = {};
   const items = sortSubject.match(/(?:asc|desc)\(\S*?\)/g);
   if (!items?.length) return undefined;
   if (sortEnum?.length) {
@@ -19,7 +19,8 @@ export function convertToMongooseSort(sortSubject: string, sortEnum?: string[], 
         }
       } else if (items[i].startsWith('desc(') && items[i].endsWith(')')) {
         const subItems = items[i].substring(5, items[i].length - 1).split(',');
-        for (let j = 0; j < subItems.length; j++) if (sortEnum.includes(subItems[j])) query[parent ? `${parent}.${subItems[j]}` : subItems[j]] = -1;
+        for (let j = 0; j < subItems.length; j++)
+          if (sortEnum.includes(subItems[j])) query[parent ? `${parent}.${subItems[j]}` : subItems[j]] = -1;
       }
     }
   } else {
@@ -38,7 +39,7 @@ export function convertToMongooseSort(sortSubject: string, sortEnum?: string[], 
 
 export function convertToMongooseFields(fieldSubject: string) {
   if (!fieldSubject) return undefined;
-  const fields = {};
+  const fields: Record<string, number> = {};
   const fieldType = fieldSubject.startsWith('incl:') ? 1 : fieldSubject.startsWith('excl:') ? 0 : -1;
   if (fieldType === -1) return undefined;
   const fieldList = uniqString(fieldSubject.substring(5).split(','));
@@ -47,7 +48,7 @@ export function convertToMongooseFields(fieldSubject: string) {
   return fields;
 }
 
-function uniqString(array) {
+function uniqString(array: string[]) {
   array = array.sort();
   let i = 0;
   while (i < array.length) {
@@ -61,10 +62,13 @@ function uniqString(array) {
 }
 
 export function applyMongoDBPatches() {
-  BigInt.prototype['toJSON'] = function () {
+  (BigInt.prototype as any)['toJSON'] = function () {
     return this.toString();
   };
-  mongoBson['resolveBSONOptions'] = function (options?: BSONSerializeOptions, parent?: { bsonOptions?: BSONSerializeOptions }): BSONSerializeOptions {
+  mongoBson['resolveBSONOptions'] = function (
+    options?: BSONSerializeOptions,
+    parent?: { bsonOptions?: BSONSerializeOptions }
+  ): BSONSerializeOptions {
     const parentOptions = parent?.bsonOptions;
     return {
       raw: options?.raw ?? parentOptions?.raw ?? false,
@@ -82,7 +86,7 @@ export function applyMongoDBPatches() {
 }
 
 export function applyBigIntPatches() {
-  BigInt.prototype['toJSON'] = function () {
+  (BigInt.prototype as any)['toJSON'] = function () {
     return this.toString();
   };
 }

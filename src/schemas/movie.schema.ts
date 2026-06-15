@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types, Schema as MongooseSchema } from 'mongoose';
+import { Types } from 'mongoose';
 
 import { MediaStorage } from './media-storage.schema';
 import { MediaFile, MediaFileSchema } from './media-file.schema';

@@ -1,4 +1,14 @@
-import { Controller, Post, Body, UseGuards, HttpCode, UseInterceptors, ClassSerializerInterceptor, Res, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  HttpCode,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+  Res,
+  Req
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -11,8 +21,7 @@ import {
   ApiOperation,
   ApiServiceUnavailableResponse,
   ApiTags,
-  ApiUnauthorizedResponse,
-  refs
+  ApiUnauthorizedResponse
 } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
@@ -64,7 +73,10 @@ export class AuthController {
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Generate new access token and refresh token, revoke the current refresh token' })
   @ApiOkResponse({ description: 'Returns new access token and refresh token', type: Jwt })
-  @ApiUnauthorizedResponse({ description: 'Not authorized, refresh token has been revoked, or login information has been changed', type: ErrorMessage })
+  @ApiUnauthorizedResponse({
+    description: 'Not authorized, refresh token has been revoked, or login information has been changed',
+    type: ErrorMessage
+  })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
   async refreshToken(@Req() request: FastifyRequest, @Res({ passthrough: true }) response: FastifyReply) {
     const refreshToken = request.cookies['refresh_token'];

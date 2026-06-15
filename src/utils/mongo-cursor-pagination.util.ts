@@ -121,14 +121,19 @@ export class MongooseCursorPagination {
     const sortValue = convertToMongooseSort(this.sortQuery, this.sortEnum);
     if (!isEmptyObject(sortValue)) this.sort = sortValue;
     const lookupPipeline = this.createLookupOnlyPipeline(options);
-    const aggregation: PipelineStage[] = [{ $match: { _id: id } }, { $lookup: lookupPipeline }, { $unwind: `$${options.as}` }, { $replaceRoot: { newRoot: `$${options.as}` } }];
+    const aggregation: PipelineStage[] = [
+      { $match: { _id: id } },
+      { $lookup: lookupPipeline },
+      { $unwind: `$${options.as}` },
+      { $replaceRoot: { newRoot: `$${options.as}` } }
+    ];
     return aggregation;
   }
 
   private createLookupOnlyPipeline(options: LookupOptions) {
     const [sortTarget, sortDirection] = this.parseSort();
-    let childrenLookupPipelines = [];
-    let childrenPostLookupPipelines = [];
+    let childrenLookupPipelines: any[] = [];
+    let childrenPostLookupPipelines: any[] = [];
     if (options.children) {
       const [preProjOptions, postProjOptions] = partition(options.children, function (o) {
         return !o.postProjection;
@@ -331,7 +336,7 @@ export function getPageQuery(value: string | number, navType: number, sortDirect
   }
 }
 
-export function parsePageToken(pageToken: string) {
+export function parsePageToken(pageToken: string): [number, string] {
   const tokenJson = Buffer.from(pageToken, 'base64url').toString();
   let tokenData: [number, string];
   try {

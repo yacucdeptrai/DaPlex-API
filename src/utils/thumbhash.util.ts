@@ -61,7 +61,8 @@ export function rgbaToThumbHash(w: number, h: number, rgba: ArrayLike<number> | 
       for (let cx = 0; cx * ny < nx * (ny - cy); cx++) {
         let f = 0;
         for (let x = 0; x < w; x++) fx[x] = cos((PI / w) * cx * (x + 0.5));
-        for (let y = 0; y < h; y++) for (let x = 0, fy = cos((PI / h) * cy * (y + 0.5)); x < w; x++) f += channel[x + y * w] * fx[x] * fy;
+        for (let y = 0; y < h; y++)
+          for (let x = 0, fy = cos((PI / h) * cy * (y + 0.5)); x < w; x++) f += channel[x + y * w] * fx[x] * fy;
         f /= w * h;
         if (cx || cy) {
           ac.push(f);
@@ -81,15 +82,22 @@ export function rgbaToThumbHash(w: number, h: number, rgba: ArrayLike<number> | 
 
   // Write the constants
   const isLandscape = w > h;
-  const header24 = round(63 * l_dc) | (round(31.5 + 31.5 * p_dc) << 6) | (round(31.5 + 31.5 * q_dc) << 12) | (round(31 * l_scale) << 18) | ((<any>hasAlpha) << 23);
-  const header16 = (isLandscape ? ly : lx) | (round(63 * p_scale) << 3) | (round(63 * q_scale) << 9) | ((<any>isLandscape) << 15);
+  const header24 =
+    round(63 * l_dc) |
+    (round(31.5 + 31.5 * p_dc) << 6) |
+    (round(31.5 + 31.5 * q_dc) << 12) |
+    (round(31 * l_scale) << 18) |
+    ((<any>hasAlpha) << 23);
+  const header16 =
+    (isLandscape ? ly : lx) | (round(63 * p_scale) << 3) | (round(63 * q_scale) << 9) | ((<any>isLandscape) << 15);
   const hash = [header24 & 255, (header24 >> 8) & 255, header24 >> 16, header16 & 255, header16 >> 8];
   const ac_start = hasAlpha ? 6 : 5;
   let ac_index = 0;
   if (hasAlpha) hash.push(round(15 * a_dc) | (round(15 * a_scale) << 4));
 
   // Write the varying factors
-  for (const ac of hasAlpha ? [l_ac, p_ac, q_ac, a_ac] : [l_ac, p_ac, q_ac]) for (const f of ac) hash[ac_start + (ac_index >> 1)] |= round(15 * f) << ((ac_index++ & 1) << 2);
+  for (const ac of hasAlpha ? [l_ac, p_ac, q_ac, a_ac] : [l_ac, p_ac, q_ac])
+    for (const f of ac) hash[ac_start + (ac_index >> 1)] |= round(15 * f) << ((ac_index++ & 1) << 2);
   return new Uint8Array(hash);
 }
 
@@ -121,9 +129,11 @@ export function thumbHashToRGBA(hash: ArrayLike<number>): { w: number; h: number
   // Read the varying factors (boost saturation by 1.25x to compensate for quantization)
   const ac_start = hasAlpha ? 6 : 5;
   let ac_index = 0;
-  const decodeChannel = (nx, ny, scale) => {
+  const decodeChannel = (nx: number, ny: number, scale: number) => {
     const ac = [];
-    for (let cy = 0; cy < ny; cy++) for (let cx = cy ? 0 : 1; cx * ny < nx * (ny - cy); cx++) ac.push((((hash[ac_start + (ac_index >> 1)] >> ((ac_index++ & 1) << 2)) & 15) / 7.5 - 1) * scale);
+    for (let cy = 0; cy < ny; cy++)
+      for (let cx = cy ? 0 : 1; cx * ny < nx * (ny - cy); cx++)
+        ac.push((((hash[ac_start + (ac_index >> 1)] >> ((ac_index++ & 1) << 2)) & 15) / 7.5 - 1) * scale);
     return ac;
   };
   const l_ac = decodeChannel(lx, ly, l_scale);
@@ -150,7 +160,8 @@ export function thumbHashToRGBA(hash: ArrayLike<number>): { w: number; h: number
       for (let cy = 0, n = max(ly, hasAlpha ? 5 : 3); cy < n; cy++) fy[cy] = cos((PI / h) * (y + 0.5) * cy);
 
       // Decode L
-      for (let cy = 0, j = 0; cy < ly; cy++) for (let cx = cy ? 0 : 1, fy2 = fy[cy] * 2; cx * ly < lx * (ly - cy); cx++, j++) l += l_ac[j] * fx[cx] * fy2;
+      for (let cy = 0, j = 0; cy < ly; cy++)
+        for (let cx = cy ? 0 : 1, fy2 = fy[cy] * 2; cx * ly < lx * (ly - cy); cx++, j++) l += l_ac[j] * fx[cx] * fy2;
 
       // Decode P and Q
       for (let cy = 0, j = 0; cy < 3; cy++) {
@@ -162,7 +173,9 @@ export function thumbHashToRGBA(hash: ArrayLike<number>): { w: number; h: number
       }
 
       // Decode A
-      if (hasAlpha) for (let cy = 0, j = 0; cy < 5; cy++) for (let cx = cy ? 0 : 1, fy2 = fy[cy] * 2; cx < 5 - cy; cx++, j++) a += a_ac[j] * fx[cx] * fy2;
+      if (hasAlpha)
+        for (let cy = 0, j = 0; cy < 5; cy++)
+          for (let cx = cy ? 0 : 1, fy2 = fy[cy] * 2; cx < 5 - cy; cx++, j++) a += a_ac[j] * fx[cx] * fy2;
 
       // Convert to RGB
       const b = l - (2 / 3) * p;
@@ -276,7 +289,8 @@ export function rgbaToDataURL(w: number, h: number, rgba: ArrayLike<number> | Bu
     1
   ];
   const table = [
-    0, 498536548, 997073096, 651767980, 1994146192, 1802195444, 1303535960, 1342533948, -306674912, -267414716, -690576408, -882789492, -1687895376, -2032938284, -1609899400, -1111625188
+    0, 498536548, 997073096, 651767980, 1994146192, 1802195444, 1303535960, 1342533948, -306674912, -267414716,
+    -690576408, -882789492, -1687895376, -2032938284, -1609899400, -1111625188
   ];
   let a = 1,
     b = 0;

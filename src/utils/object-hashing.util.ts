@@ -10,7 +10,7 @@ export function hashObject(o: any, l: any) {
     c,
     r = [];
   for (i = 0; i < l; i++) r.push(i * 268803292);
-  function stringify(o) {
+  function stringify(o: any): string {
     let i, r;
     if (o === null) return 'n';
     if (o === true) return 't';

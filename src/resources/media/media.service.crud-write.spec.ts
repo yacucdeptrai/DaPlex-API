@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
-import { MediaService } from './media.service';
 import { MediaCrudService } from './media-crud.service';
 import { MediaDetails } from './entities';
-import { MediaType, StatusCode, MediaPStatus } from '../../enums';
+import { MediaType, StatusCode } from '../../enums';
 
 /**
  * Characterization net for the 7.1 Slice-B MediaCrudService extraction

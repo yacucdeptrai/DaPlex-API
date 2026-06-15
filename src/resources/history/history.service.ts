@@ -1,6 +1,6 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, FilterQuery, Model, PipelineStage } from 'mongoose';
+import { ClientSession, FilterQuery, Model } from 'mongoose';
 import { plainToClassFromExist } from 'class-transformer';
 
 import { History, HistoryDocument, TVEpisode } from '../../schemas';
@@ -21,7 +21,18 @@ export class HistoryService {
   ) {}
 
   async findAll(cursorPageHistoryDto: CursorPageHistoryDto, headers: HeadersDto, authUser: AuthUserDto) {
-    const { pageToken, limit, startDate, endDate, mediaIds, mediaType, mediaOriginalLanguage, mediaYear, mediaAdult, mediaGenres } = cursorPageHistoryDto;
+    const {
+      pageToken,
+      limit,
+      startDate,
+      endDate,
+      mediaIds,
+      mediaType,
+      mediaOriginalLanguage,
+      mediaYear,
+      mediaAdult,
+      mediaGenres
+    } = cursorPageHistoryDto;
     const fields: { [key: string]: any } = { _id: 1, media: 1, episode: 1, time: 1, date: 1, paused: 1, watched: 1 };
     const mediaFields: { [key: string]: any } = {
       _id: 1,
@@ -88,12 +99,19 @@ export class HistoryService {
       }
     ];
     const pipeline = aggregation.buildLookup(lookupOptions);
-    // Workaround to add group by date field
-    pipeline[2]['$facet']['stage2'].push({
+    // Workaround to add group by date field. The $facet stage is built dynamically;
+    // reach into its stage2 branch through a loosely-typed view of the stage.
+    const facetStage2: any[] = (pipeline[2] as any)['$facet']['stage2'];
+    facetStage2.push({
       $addFields: { groupByDate: { $dateToString: { date: '$date', format: '%Y-%m-%d' } } }
     });
     // Workaround to filter media
-    const hasMediaFilters = mediaAdult != undefined || mediaGenres != undefined || mediaOriginalLanguage != undefined || mediaType != undefined || mediaYear != undefined;
+    const hasMediaFilters =
+      mediaAdult != undefined ||
+      mediaGenres != undefined ||
+      mediaOriginalLanguage != undefined ||
+      mediaType != undefined ||
+      mediaYear != undefined;
     if (hasMediaFilters) {
       const mediaFilters: { [key: string]: any } = {};
       mediaType != undefined && (mediaFilters['media.type'] = mediaType);
@@ -103,12 +121,14 @@ export class HistoryService {
       if (Array.isArray(mediaGenres)) mediaFilters['media.genres'] = { $all: mediaGenres };
       else if (mediaGenres != undefined) mediaFilters['media.genres'] = mediaGenres;
       // Insert media filters
-      const lookupMediaIndex = pipeline[2]['$facet']['stage2'].findIndex((p: PipelineStage) => p.hasOwnProperty('$lookup') && p['$lookup']['from'] === 'media');
-      pipeline[2]['$facet']['stage2'].splice(lookupMediaIndex + 2, 0, { $match: mediaFilters });
+      const lookupMediaIndex = facetStage2.findIndex(
+        (p: any) => p.hasOwnProperty('$lookup') && p['$lookup']['from'] === 'media'
+      );
+      facetStage2.splice(lookupMediaIndex + 2, 0, { $match: mediaFilters });
       // Move limit pipeline to below
-      const lookupLimitIndex = pipeline[2]['$facet']['stage2'].findIndex((p: PipelineStage) => p.hasOwnProperty('$limit'));
-      const [limitPipeline] = pipeline[2]['$facet']['stage2'].splice(lookupLimitIndex, 1);
-      pipeline[2]['$facet']['stage2'].splice(lookupMediaIndex + 2, 0, limitPipeline);
+      const lookupLimitIndex = facetStage2.findIndex((p: any) => p.hasOwnProperty('$limit'));
+      const [limitPipeline] = facetStage2.splice(lookupLimitIndex, 1);
+      facetStage2.splice(lookupMediaIndex + 2, 0, limitPipeline);
     }
     const [data] = await this.historyModel.aggregate(pipeline).exec();
     let historyList = new CursorPaginated<HistoryGroupable>();
@@ -131,14 +151,22 @@ export class HistoryService {
   async findOneWatchTime(findWatchTimeDto: FindWatchTimeDto, authUser: AuthUserDto) {
     const findHistoryFilters: { [key: string]: any } = { user: authUser._id, media: findWatchTimeDto.media };
     if (findWatchTimeDto.episode) findHistoryFilters.episode = findWatchTimeDto.episode;
-    const history = await this.historyModel.findOne(findHistoryFilters, { _id: 1, time: 1, date: 1, paused: 1, watched: 1 }).lean().exec();
+    const history = await this.historyModel
+      .findOne(findHistoryFilters, { _id: 1, time: 1, date: 1, paused: 1, watched: 1 })
+      .lean()
+      .exec();
     return history;
   }
 
   async update(id: bigint, updateHistoryDto: UpdateHistoryDto, authUser: AuthUserDto) {
-    if (!Object.keys(updateHistoryDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (!Object.keys(updateHistoryDto).length)
+      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const history = await this.historyModel.findOne({ _id: id, user: authUser._id }, { paused: 1, watched: 1 }).exec();
-    if (!history) throw new HttpException({ code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' }, HttpStatus.NOT_FOUND);
+    if (!history)
+      throw new HttpException(
+        { code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' },
+        HttpStatus.NOT_FOUND
+      );
     if (updateHistoryDto.paused != undefined) history.paused = updateHistoryDto.paused;
     if (updateHistoryDto.watched === 1) history.watched += 1;
     else if (updateHistoryDto.watched === 0) history.watched = 0;
@@ -152,7 +180,11 @@ export class HistoryService {
 
   async remove(id: bigint, authUser: AuthUserDto) {
     const deletedHistory = await this.historyModel.findOneAndDelete({ _id: id, user: authUser._id }).lean().exec();
-    if (!deletedHistory) throw new HttpException({ code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' }, HttpStatus.NOT_FOUND);
+    if (!deletedHistory)
+      throw new HttpException(
+        { code: StatusCode.HISTORY_NOT_FOUND, message: 'History not found' },
+        HttpStatus.NOT_FOUND
+      );
   }
 
   async updateWatchTime(updateWatchTimeDto: UpdateWatchTimeDto, authUser: AuthUserDto) {
@@ -164,26 +196,36 @@ export class HistoryService {
       createdAt: 1,
       updatedAt: 1
     });
-    if (!media) throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
+    if (!media)
+      throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
     const findHistoryFilters: { [key: string]: any } = { user: authUser._id, media: updateWatchTimeDto.media };
     let episode: TVEpisode;
     let runtime = media.runtime;
     if (media.type === MediaType.TV) {
-      if (updateWatchTimeDto.episode == undefined) throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
+      if (updateWatchTimeDto.episode == undefined)
+        throw new HttpException(
+          { code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' },
+          HttpStatus.NOT_FOUND
+        );
       episode = await this.mediaService.findOneTVEpisodeById(updateWatchTimeDto.media, updateWatchTimeDto.episode, {
         _id: 1,
         episode: 1,
         createdAt: 1,
         updatedAt: 1
       });
-      if (!episode) throw new HttpException({ code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' }, HttpStatus.NOT_FOUND);
+      if (!episode)
+        throw new HttpException(
+          { code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' },
+          HttpStatus.NOT_FOUND
+        );
       findHistoryFilters.episode = episode._id;
       runtime = episode.runtime;
     }
     let history = await this.historyModel.findOne(findHistoryFilters).exec();
     if (history?.paused) return history.toObject();
     const historyPercentLimit = authUser.settings.history.limit || 90;
-    const calculatedTime = (updateWatchTimeDto.time / runtime) * 100 >= historyPercentLimit ? runtime : updateWatchTimeDto.time;
+    const calculatedTime =
+      (updateWatchTimeDto.time / runtime) * 100 >= historyPercentLimit ? runtime : updateWatchTimeDto.time;
     if (!history) {
       const newHistory = new this.historyModel({
         _id: await createSnowFlakeId(),

@@ -456,7 +456,12 @@ export class PlaylistsService {
     return playlists;
   }
 
-  async updateItem(id: bigint, itemId: bigint, updatePlaylistItemDto: UpdatePlaylistItemDto, authUser: AuthUserDto) {}
+  async updateItem(
+    _id: bigint,
+    _itemId: bigint,
+    _updatePlaylistItemDto: UpdatePlaylistItemDto,
+    _authUser: AuthUserDto
+  ) {}
 
   async removeItem(id: bigint, deletePlaylistItemDto: DeletePlaylistItemDto, authUser: AuthUserDto) {
     const playlist = await this.playlistModel.findOne({ _id: id }).exec();

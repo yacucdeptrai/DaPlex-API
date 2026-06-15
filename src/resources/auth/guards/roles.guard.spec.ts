@@ -15,7 +15,7 @@ describe('RolesGuard', () => {
   const run = (options: PermissionOptions | undefined, user: unknown) => {
     const reflector = { get: jest.fn().mockReturnValue(options) } as unknown as Reflector;
     const context = {
-      getHandler: () => () => undefined,
+      getHandler: () => (): void => undefined,
       switchToHttp: () => ({ getRequest: () => ({ user }) })
     } as unknown as ExecutionContext;
     const guard = new RolesGuard(reflector);

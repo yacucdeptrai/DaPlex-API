@@ -1,4 +1,4 @@
-export function isEmptyObject(value: Object): boolean {
+export function isEmptyObject(value: Record<string, any>): boolean {
   if (!value) return true;
   for (const key in value) {
     if (value[key] != null) return false;
@@ -6,7 +6,11 @@ export function isEmptyObject(value: Object): boolean {
   return true;
 }
 
-export function isEqualShallow(value: object, other: object, options: { strict: boolean } = { strict: false }) {
+export function isEqualShallow(
+  value: Record<string, any>,
+  other: Record<string, any>,
+  options: { strict: boolean } = { strict: false }
+) {
   if (value === other) return true;
   for (const key in value) {
     if (value[key] !== other[key]) {
@@ -23,14 +27,19 @@ export function isEqualShallow(value: object, other: object, options: { strict: 
   return true;
 }
 
-export function arrayEqualShallow(value: (number | string | boolean | object)[], other: (number | string | boolean | object)[]) {
+export function arrayEqualShallow(
+  value: (number | string | boolean | object)[],
+  other: (number | string | boolean | object)[]
+) {
   if (value.length !== other.length) return false;
   for (let i = 0; i < value.length; i++) {
     const v = value[i];
     const o = other[i];
     if (typeof v === 'object' && typeof o === 'object') {
-      for (const key in v) {
-        if (v[key] !== o[key]) {
+      const vObj = v as Record<string, any>;
+      const oObj = o as Record<string, any>;
+      for (const key in vObj) {
+        if (vObj[key] !== oObj[key]) {
           return false;
         }
       }

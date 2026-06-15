@@ -13,7 +13,6 @@ import {
   MovieExtendedRecord,
   PaginatedResponse,
   SearchResult,
-  SeasonBaseRecord,
   SeriesCompany,
   SeriesExtendedRecord,
   Trailer,
@@ -423,7 +422,7 @@ export class TvdbScannerService {
     }
   }
 
-  async movieImages(id: string, language: string) {
+  async movieImages(id: string, _language: string) {
     try {
       await this.refreshToken();
       const response = await firstValueFrom(

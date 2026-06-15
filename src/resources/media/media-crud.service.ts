@@ -959,7 +959,7 @@ export class MediaCrudService {
     return [fields, filters];
   }
 
-  resolveStoragePublicUrl(kind: number, url: string, folderId?: string): string {
+  resolveStoragePublicUrl(kind: number, url: string, _folderId?: string): string {
     let serviceUrl = url;
     switch (kind) {
       case CloudStorage.S3:

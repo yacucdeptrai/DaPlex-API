@@ -389,16 +389,6 @@ export class S3Service {
     return kSigning;
   }
 
-  private getXmlValue(xml: string, ...keys: string[]): string | null {
-    let current = xml;
-    for (const key of keys) {
-      const match = current.match(new RegExp(`<${key}>([\\s\\S]*?)</${key}>`));
-      if (!match) return null;
-      current = match[1];
-    }
-    return current;
-  }
-
   resolvePublicUrl(url: string) {
     return url.replace(':service_path', 's3');
   }

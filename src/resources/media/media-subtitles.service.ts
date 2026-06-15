@@ -95,7 +95,7 @@ export class MediaSubtitlesService {
     return serializedSubtitles;
   }
 
-  async findAllMovieSubtitles(id: bigint, authUser: AuthUserDto) {
+  async findAllMovieSubtitles(id: bigint, authUser: AuthUserDto): Promise<MediaFile[]> {
     const media = await this.mediaModel
       .findOne(
         { _id: id, type: MediaType.MOVIE },
@@ -249,7 +249,7 @@ export class MediaSubtitlesService {
     return serializedSubtitles;
   }
 
-  async findAllTVEpisodeSubtitles(id: bigint, episodeId: bigint, authUser: AuthUserDto) {
+  async findAllTVEpisodeSubtitles(id: bigint, episodeId: bigint, authUser: AuthUserDto): Promise<MediaFile[]> {
     const episode = await this.tvEpisodeModel
       .findOne(
         { _id: episodeId, media: <any>id },
@@ -367,7 +367,7 @@ export class MediaSubtitlesService {
         { code: StatusCode.IS_NOT_EMPTY, message: 'Language is required' },
         HttpStatus.BAD_REQUEST
       );
-    const language = file.fields.language['value'];
+    const language = (file.fields.language as { value: string })['value'];
     if (!ISO6391.validate(language))
       throw new HttpException(
         { code: StatusCode.IS_ISO6391, message: 'Language must be an ISO6391 code' },

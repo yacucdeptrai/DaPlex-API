@@ -1,8 +1,16 @@
 import { Controller, Get, Param, Query, UseGuards, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiForbiddenResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse
+} from '@nestjs/swagger';
 
 import { MediaScannerService } from './media-scanner.service';
-import { SearchMediaDto, MediaDetailsDto, MediaLanguageDto, FindTVEpisodeDto } from './dto';
+import { SearchMediaDto, MediaDetailsDto, FindTVEpisodeDto } from './dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ErrorMessage } from '../auth';
@@ -48,7 +56,12 @@ export class MediaScannerController {
   @UseGuards(AuthGuard, RolesGuard)
   @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA] })
   @ApiBearerAuth()
-  findOneEpisode(@Param('id') id: string, @Param('season_number') seasonNumber: string, @Param('episode_number') episodeNumber: string, @Query() findTVEpisodeDto: FindTVEpisodeDto) {
+  findOneEpisode(
+    @Param('id') id: string,
+    @Param('season_number') seasonNumber: string,
+    @Param('episode_number') episodeNumber: string,
+    @Query() findTVEpisodeDto: FindTVEpisodeDto
+  ) {
     return this.mediaScannerService.findOneEpisode(id, seasonNumber, episodeNumber, findTVEpisodeDto);
   }
 }

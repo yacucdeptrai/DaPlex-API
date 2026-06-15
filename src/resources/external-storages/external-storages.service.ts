@@ -1,12 +1,10 @@
-import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron } from '@nestjs/schedule';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { ClientSession, Connection, Model } from 'mongoose';
 
 import { ExternalStorage, ExternalStorageDocument } from '../../schemas';
-import { OnedriveService } from '../../common/modules/onedrive/onedrive.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { SettingsService } from '../settings/settings.service';
 import { AddStorageDto, UpdateStorageDto } from './dto';
@@ -18,20 +16,22 @@ import { EXTERNAL_STORAGE_LIMIT } from '../../config';
 
 @Injectable()
 export class ExternalStoragesService {
-  private readonly logger = new Logger(ExternalStoragesService.name);
-
   constructor(
-    @InjectModel(ExternalStorage.name, MongooseConnection.DATABASE_A) private externalStorageModel: Model<ExternalStorageDocument>,
+    @InjectModel(ExternalStorage.name, MongooseConnection.DATABASE_A)
+    private externalStorageModel: Model<ExternalStorageDocument>,
     @InjectConnection(MongooseConnection.DATABASE_A) private mongooseConnection: Connection,
     private auditLogService: AuditLogService,
-    @Inject(forwardRef(() => OnedriveService)) private onedriveService: OnedriveService,
     @Inject(forwardRef(() => SettingsService)) private settingsService: SettingsService,
     private configService: ConfigService
   ) {}
 
   async create(addStorageDto: AddStorageDto, authUser: AuthUserDto) {
     const totalStorage = await this.externalStorageModel.estimatedDocumentCount().exec();
-    if (totalStorage >= EXTERNAL_STORAGE_LIMIT) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_LIMIT, message: 'External storage limit reached' }, HttpStatus.BAD_REQUEST);
+    if (totalStorage >= EXTERNAL_STORAGE_LIMIT)
+      throw new HttpException(
+        { code: StatusCode.EXTERNAL_STORAGE_LIMIT, message: 'External storage limit reached' },
+        HttpStatus.BAD_REQUEST
+      );
     const stringCrypto = new StringCrypto(this.configService.get('CRYPTO_SECRET_KEY'));
     const storage = new this.externalStorageModel({
       _id: await createSnowFlakeId(),
@@ -43,7 +43,12 @@ export class ExternalStoragesService {
     addStorageDto.accessToken !== undefined && (storage.accessToken = addStorageDto.accessToken);
     addStorageDto.refreshToken !== undefined && (storage.refreshToken = addStorageDto.refreshToken);
     addStorageDto.expiry !== undefined && (storage.expiry = addStorageDto.expiry);
-    const auditLog = new AuditLogBuilder(authUser._id, storage._id, ExternalStorage.name, AuditLogType.EXTERNAL_STORAGE_CREATE);
+    const auditLog = new AuditLogBuilder(
+      authUser._id,
+      storage._id,
+      ExternalStorage.name,
+      AuditLogType.EXTERNAL_STORAGE_CREATE
+    );
     auditLog.appendChange('name', addStorageDto.name);
     auditLog.appendChange('kind', addStorageDto.kind);
     auditLog.appendChange('clientId', addStorageDto.clientId);
@@ -68,13 +73,23 @@ export class ExternalStoragesService {
   }
 
   async findAll() {
-    const storages = await this.externalStorageModel.find({}, { _id: 1, name: 1, kind: 1, folderName: 1, publicUrl: 1, secondPublicUrl: 1, files: 1 }).lean().exec();
+    const storages = await this.externalStorageModel
+      .find({}, { _id: 1, name: 1, kind: 1, folderName: 1, publicUrl: 1, secondPublicUrl: 1, files: 1 })
+      .lean()
+      .exec();
     return plainToInstance(ExternalStorageEntity, storages);
   }
 
   async findOne(id: bigint) {
-    const storage = await this.externalStorageModel.findOne({ _id: id }, { _id: 1, name: 1, kind: 1, folderName: 1, publicUrl: 1, files: 1 }).lean().exec();
-    if (!storage) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
+    const storage = await this.externalStorageModel
+      .findOne({ _id: id }, { _id: 1, name: 1, kind: 1, folderName: 1, publicUrl: 1, files: 1 })
+      .lean()
+      .exec();
+    if (!storage)
+      throw new HttpException(
+        { code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' },
+        HttpStatus.NOT_FOUND
+      );
     // Decrypt client secret
     const stringCrypto = new StringCrypto(this.configService.get('CRYPTO_SECRET_KEY'));
     storage.clientSecret = await stringCrypto.decrypt(storage.clientSecret);
@@ -82,10 +97,20 @@ export class ExternalStoragesService {
   }
 
   async update(id: bigint, updateStorageDto: UpdateStorageDto, authUser: AuthUserDto) {
-    if (!Object.keys(updateStorageDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (!Object.keys(updateStorageDto).length)
+      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const storage = await this.externalStorageModel.findOne({ _id: id }).exec();
-    if (!storage) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
-    const auditLog = new AuditLogBuilder(authUser._id, storage._id, ExternalStorage.name, AuditLogType.EXTERNAL_STORAGE_UPDATE);
+    if (!storage)
+      throw new HttpException(
+        { code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' },
+        HttpStatus.NOT_FOUND
+      );
+    const auditLog = new AuditLogBuilder(
+      authUser._id,
+      storage._id,
+      ExternalStorage.name,
+      AuditLogType.EXTERNAL_STORAGE_UPDATE
+    );
     const stringCrypto = new StringCrypto(this.configService.get('CRYPTO_SECRET_KEY'));
     if (updateStorageDto.name != undefined && storage.name !== updateStorageDto.name) {
       auditLog.appendChange('name', updateStorageDto.name, storage.name);
@@ -99,7 +124,8 @@ export class ExternalStoragesService {
       auditLog.appendChange('clientId', updateStorageDto.clientId, storage.clientId);
       storage.clientId = updateStorageDto.clientId;
     }
-    updateStorageDto.clientSecret !== undefined && (storage.clientSecret = await stringCrypto.encrypt(updateStorageDto.clientSecret));
+    updateStorageDto.clientSecret !== undefined &&
+      (storage.clientSecret = await stringCrypto.encrypt(updateStorageDto.clientSecret));
     updateStorageDto.accessToken !== undefined && (storage.accessToken = updateStorageDto.accessToken);
     updateStorageDto.refreshToken != undefined && (storage.refreshToken = updateStorageDto.refreshToken);
     updateStorageDto.expiry !== undefined && (storage.expiry = updateStorageDto.expiry);
@@ -130,14 +156,30 @@ export class ExternalStoragesService {
     await session
       .withTransaction(async () => {
         const storage = await this.externalStorageModel.findOneAndDelete({ _id: id }, { session }).lean();
-        if (!storage) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' }, HttpStatus.NOT_FOUND);
-        if (storage.files?.length) throw new HttpException({ code: StatusCode.EXTERNAL_STORAGE_FILES_EXIST, message: 'You cannot delete a storage that contains files' }, HttpStatus.FORBIDDEN);
+        if (!storage)
+          throw new HttpException(
+            { code: StatusCode.EXTERNAL_STORAGE_NOT_FOUND, message: 'Storage not found' },
+            HttpStatus.NOT_FOUND
+          );
+        if (storage.files?.length)
+          throw new HttpException(
+            {
+              code: StatusCode.EXTERNAL_STORAGE_FILES_EXIST,
+              message: 'You cannot delete a storage that contains files'
+            },
+            HttpStatus.FORBIDDEN
+          );
         switch (storage.inStorage) {
           case MediaStorageType.SOURCE:
             await this.settingsService.deleteMediaSourceStorage(storage._id, session);
             break;
         }
-        await this.auditLogService.createLog(authUser._id, storage._id, ExternalStorage.name, AuditLogType.EXTERNAL_STORAGE_DELETE);
+        await this.auditLogService.createLog(
+          authUser._id,
+          storage._id,
+          ExternalStorage.name,
+          AuditLogType.EXTERNAL_STORAGE_DELETE
+        );
       })
       .finally(() => session.endSession().catch(() => {}));
   }
@@ -225,15 +267,24 @@ export class ExternalStoragesService {
   }
 
   deleteSettingStorages(ids: bigint[], session: ClientSession) {
-    if (ids?.length) return this.externalStorageModel.updateMany({ _id: { $in: ids } }, { $unset: { inStorage: 1 } }, { session });
+    if (ids?.length)
+      return this.externalStorageModel.updateMany({ _id: { $in: ids } }, { $unset: { inStorage: 1 } }, { session });
   }
 
   addFileToStorage(id: bigint, fileId: bigint, fileSize: number, session: ClientSession) {
-    return this.externalStorageModel.updateOne({ _id: id }, { $push: { files: fileId }, $inc: { used: fileSize } }, { session });
+    return this.externalStorageModel.updateOne(
+      { _id: id },
+      { $push: { files: fileId }, $inc: { used: fileSize } },
+      { session }
+    );
   }
 
   deleteFileFromStorage(id: bigint, fileId: bigint, fileSize: number, session: ClientSession) {
-    return this.externalStorageModel.updateOne({ _id: id }, { $pull: { files: fileId }, $inc: { used: -fileSize } }, { session });
+    return this.externalStorageModel.updateOne(
+      { _id: id },
+      { $pull: { files: fileId }, $inc: { used: -fileSize } },
+      { session }
+    );
   }
 
   updateStorageSize(id: bigint, fileSize: number, session: ClientSession) {
