@@ -31,7 +31,8 @@ export class HistoryService {
       mediaOriginalLanguage,
       mediaYear,
       mediaAdult,
-      mediaGenres
+      mediaGenres,
+      inProgress
     } = cursorPageHistoryDto;
     const fields: { [key: string]: any } = { _id: 1, media: 1, episode: 1, time: 1, date: 1, paused: 1, watched: 1 };
     const mediaFields: { [key: string]: any } = {
@@ -78,6 +79,11 @@ export class HistoryService {
       if (Array.isArray(mediaIds)) filters.media = { $in: mediaIds };
       else filters.media = mediaIds;
     }
+    // In-progress: exclude finished (watched is a finish count) and not-started
+    if (inProgress) {
+      filters.watched = { $lt: 1 };
+      filters.time = { $gt: 0 };
+    }
     const typeMap = new Map<string, any>([['date', Date]]);
     const aggregation = new MongooseCursorPagination({ pageToken, limit, sort, filters, fields, typeMap });
     const lookupOptions: LookupOptions[] = [
@@ -101,10 +107,13 @@ export class HistoryService {
     const pipeline = aggregation.buildLookup(lookupOptions);
     // Workaround to add group by date field. The $facet stage is built dynamically;
     // reach into its stage2 branch through a loosely-typed view of the stage.
+    // Skipped for the in-progress resume list, which stays a flat recency list.
     const facetStage2: any[] = (pipeline[2] as any)['$facet']['stage2'];
-    facetStage2.push({
-      $addFields: { groupByDate: { $dateToString: { date: '$date', format: '%Y-%m-%d' } } }
-    });
+    if (!inProgress) {
+      facetStage2.push({
+        $addFields: { groupByDate: { $dateToString: { date: '$date', format: '%Y-%m-%d' } } }
+      });
+    }
     // Workaround to filter media
     const hasMediaFilters =
       mediaAdult != undefined ||

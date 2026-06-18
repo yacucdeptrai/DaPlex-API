@@ -1,6 +1,6 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsDate, IsIn, IsInt, IsOptional } from 'class-validator';
+import { IsBoolean, IsDate, IsIn, IsInt, IsOptional } from 'class-validator';
 import { CursorPaginateDto } from '../../../common/dto';
 
 import { IsISO6391 } from '../../../decorators/is-iso-6391.decorator';
@@ -93,4 +93,19 @@ export class CursorPageHistoryDto extends OmitType(CursorPaginateDto, ['search',
   @Transform(({ value }) => transformBigInt(value), { toClassOnly: true })
   @IsOptional()
   mediaGenres: bigint | bigint[];
+
+  @ApiProperty({
+    type: Boolean,
+    description: 'Only return in-progress media (not finished, not unstarted), as a flat resume list',
+    required: false
+  })
+  @Transform(
+    ({ value }) => {
+      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
+    },
+    { toClassOnly: true }
+  )
+  @IsOptional()
+  @IsBoolean({ context: { code: StatusCode.IS_BOOLEAN } })
+  inProgress: boolean;
 }

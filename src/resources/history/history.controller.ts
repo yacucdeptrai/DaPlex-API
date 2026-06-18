@@ -35,7 +35,10 @@ export class HistoryController {
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'View recently watched media' })
+  @ApiOperation({
+    summary: 'View recently watched media',
+    description: 'Date-grouped by default. With inProgress=true, returns a flat recency-sorted resume list of unfinished, started media.'
+  })
   @ApiOkResponse({
     description: 'Return a list of recently watched media',
     schema: {
