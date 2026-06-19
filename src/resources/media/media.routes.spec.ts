@@ -2,7 +2,7 @@ import { UserPermission } from '../../enums';
 import { MEDIA_CONTROLLERS, resolveClassPrefixes, resolveRoutes, RouteRecord } from './media-routes.fixture';
 
 // Characterization net for the Phase 7.2 controller split. These assertions
-// pin the CURRENT route surface of MediaController (52 handlers) so that moving
+// pin the CURRENT route surface of MediaController (53 handlers) so that moving
 // handlers into 5 domain controllers is provably behavior-preserving: any drift
 // in HTTP method, declared path, guard set/order, @RolesGuardOptions,
 // @AuthGuardOptions, or @HttpCode fails loudly. All expectations are read from
@@ -67,7 +67,11 @@ const EXPECTED: Record<string, Expected> = {
   findAllTVEpisodeChapters: { method: 'GET', path: ':id/tv/episodes/:episode_id/chapters', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: true, requireOwner: false }, authGuardOptions: { anonymous: true } },
   updateTVEpisodeChapter: { method: 'PATCH', path: ':id/tv/episodes/:episode_id/chapters/:chapter_id', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   deleteTVEpisodeChapter: { method: 'DELETE', path: ':id/tv/episodes/:episode_id/chapters/:chapter_id', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
-  deleteTVEpisodeChapters: { method: 'DELETE', path: ':id/tv/episodes/:episode_id/chapters', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null }
+  deleteTVEpisodeChapters: { method: 'DELETE', path: ':id/tv/episodes/:episode_id/chapters', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
+  // Added after the split: the polled live transcode-progress endpoint. Admin-only
+  // GET (AuthGuard+RolesGuard+MANAGE_MEDIA), not anonymous; the 'progress' throttler
+  // it toggles is class/method metadata the fixture does not reflect.
+  getTranscodeProgress: { method: 'GET', path: ':id/progress', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null }
 };
 
 // Module-level @Controller() prefix MUST stay empty: the /api/media prefix is
@@ -80,7 +84,7 @@ describe('Media route metadata (Phase 7.2 characterization)', () => {
   const routes = resolveRoutes();
   const expectedNames = Object.keys(EXPECTED);
 
-  it('exposes exactly the 52 expected handlers, no more no less', () => {
+  it('exposes exactly the 53 expected handlers, no more no less', () => {
     expect(Object.keys(routes).sort()).toEqual(expectedNames.sort());
   });
 

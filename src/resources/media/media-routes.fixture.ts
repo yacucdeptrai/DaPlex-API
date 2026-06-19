@@ -217,15 +217,30 @@ export const resolveDelegations = (): Record<string, DelegationRecord[]> => {
       const fn = instance[name] as (...args: unknown[]) => unknown;
       // Over-supply sentinel args (handlers ignore extras); covers the widest
       // signature (saveTVEpisodeSource takes 6 positional params).
-      fn.call(
-        instance,
-        HANDLER_ARG_SENTINELS.authUser,
-        HANDLER_ARG_SENTINELS.id,
-        HANDLER_ARG_SENTINELS.param2,
-        HANDLER_ARG_SENTINELS.param3,
-        HANDLER_ARG_SENTINELS.headers,
-        HANDLER_ARG_SENTINELS.body
-      );
+      // A non-delegating handler may do real work on its args before forwarding
+      // (e.g. getTranscodeProgress parses the opaque sentinel via BigInt) and
+      // throw on these tokens. The sink already holds any delegation recorded
+      // before the throw, so a non-delegating handler surfaces as an empty
+      // record. Swallow BOTH a synchronous throw AND an async rejection — an
+      // `async` handler that throws before its first await rejects the returned
+      // promise rather than throwing synchronously, and an unhandled rejection
+      // would crash the Jest worker under the full parallel run.
+      try {
+        const ret = fn.call(
+          instance,
+          HANDLER_ARG_SENTINELS.authUser,
+          HANDLER_ARG_SENTINELS.id,
+          HANDLER_ARG_SENTINELS.param2,
+          HANDLER_ARG_SENTINELS.param3,
+          HANDLER_ARG_SENTINELS.headers,
+          HANDLER_ARG_SENTINELS.body
+        );
+        if (ret && typeof (ret as Promise<unknown>).then === 'function') {
+          (ret as Promise<unknown>).catch(() => undefined);
+        }
+      } catch {
+        // handler threw synchronously on sentinel args — keep what it recorded.
+      }
       result[name] = sink;
     }
   }

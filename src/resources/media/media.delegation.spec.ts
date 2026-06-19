@@ -87,6 +87,12 @@ const EXPECTED: Record<string, Expected> = {
   deleteTVEpisodeChapters: { service: 'mediaChaptersService', method: 'deleteTVEpisodeChapters' }
 };
 
+// Handlers that intentionally do NOT forward to one of the 6 media services.
+// getTranscodeProgress reads a Redis snapshot and returns it (200-empty when
+// idle) — it routes to RedisCacheService, not a media service, so it produces
+// zero delegation records and is excluded from the single-forward contract.
+const NON_DELEGATING = ['getTranscodeProgress'];
+
 describe('Media handler delegation (Phase 7.2 characterization)', () => {
   const delegations = resolveDelegations();
   const expectedNames = Object.keys(EXPECTED);
@@ -104,8 +110,13 @@ describe('Media handler delegation (Phase 7.2 characterization)', () => {
     ]);
   });
 
-  it('covers exactly the 52 route handlers, no more no less', () => {
-    expect(Object.keys(delegations).sort()).toEqual(expectedNames.sort());
+  it('covers exactly the 53 route handlers, no more no less', () => {
+    expect(Object.keys(delegations).sort()).toEqual([...expectedNames, ...NON_DELEGATING].sort());
+  });
+
+  it.each(NON_DELEGATING)('%s forwards to no media service (non-delegating)', (name) => {
+    // Reads Redis + returns a snapshot; it must record zero media-service calls.
+    expect(delegations[name]).toEqual([]);
   });
 
   it.each(expectedNames)('%s delegates to exactly one service method', (name) => {
