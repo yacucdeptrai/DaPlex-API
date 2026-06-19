@@ -156,7 +156,7 @@ export class TmdbScannerService {
         name: p.name,
         country: p.origin_country
       }));
-      result.tags = data.keywords.keywords.map((k) => apStyleTitleCase(k.name));
+      result.tags = data.keywords.keywords.map((k) => apStyleTitleCase(k.name)).slice(0, 15);
       result.videos = data.videos.results
         .filter((v) => v.site === 'YouTube' && ['Teaser', 'Trailer'].includes(v.type))
         .map<MediaVideo>((v) => ({
@@ -232,7 +232,7 @@ export class TmdbScannerService {
         name: p.name,
         country: p.origin_country
       }));
-      result.tags = data.keywords.results.map((k) => apStyleTitleCase(k.name));
+      result.tags = data.keywords.results.map((k) => apStyleTitleCase(k.name)).slice(0, 15);
       result.videos = data.videos.results
         .filter((v) => v.site === 'YouTube' && ['Teaser', 'Trailer'].includes(v.type))
         .map<MediaVideo>((v) => ({

@@ -11,7 +11,7 @@ export class Genre {
   @Prop({ type: () => BigInt, required: true })
   _id: bigint;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string;
 
   @Prop({ type: [{ type: MongooseSchema.Types.Mixed, ref: 'Media' }] })
@@ -26,6 +26,8 @@ export class Genre {
 }
 
 export const GenreSchema = SchemaFactory.createForClass(Genre);
+
+GenreSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 GenreSchema.index({ '_translations.vi.name': 1 }, { unique: true, sparse: true });
 

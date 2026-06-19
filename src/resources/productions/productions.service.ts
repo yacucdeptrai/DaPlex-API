@@ -5,7 +5,13 @@ import { instanceToInstance, plainToClassFromExist, plainToInstance } from 'clas
 import pLimit from 'p-limit';
 
 import { Production, ProductionDocument } from '../../schemas';
-import { CreateProductionDto, CursorPageMediaDto, CursorPageProductionsDto, RemoveProductionsDto, UpdateProductionDto } from './dto';
+import {
+  CreateProductionDto,
+  CursorPageMediaDto,
+  CursorPageProductionsDto,
+  RemoveProductionsDto,
+  UpdateProductionDto
+} from './dto';
 import { Production as ProductionEntity, ProductionDetails } from './entities';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AuthUserDto } from '../users';
@@ -15,8 +21,24 @@ import { MediaService } from '../media/media.service';
 import { Media as MediaEntity } from '../media';
 import { HeadersDto } from '../../common/dto';
 import { CursorPaginated, Paginated } from '../../common/entities';
-import { StatusCode, AuditLogType, MongooseConnection, SocketRoom, SocketMessage, MediaVisibility, MediaPStatus } from '../../enums';
-import { MongooseOffsetPagination, escapeRegExp, createSnowFlakeId, AuditLogBuilder, MongooseCursorPagination, LookupOptions, convertToLanguageArray } from '../../utils';
+import {
+  StatusCode,
+  AuditLogType,
+  MongooseConnection,
+  SocketRoom,
+  SocketMessage,
+  MediaVisibility,
+  MediaPStatus
+} from '../../enums';
+import {
+  MongooseOffsetPagination,
+  escapeRegExp,
+  createSnowFlakeId,
+  AuditLogBuilder,
+  MongooseCursorPagination,
+  LookupOptions,
+  convertToLanguageArray
+} from '../../utils';
 
 @Injectable()
 export class ProductionsService {
@@ -30,7 +52,11 @@ export class ProductionsService {
 
   async create(createProductionDto: CreateProductionDto, headers: HeadersDto, authUser: AuthUserDto) {
     const checkProduction = await this.productionModel.findOne({ name: createProductionDto.name });
-    if (checkProduction) throw new HttpException({ code: StatusCode.PRODUCTION_EXIST, message: 'Name has already been used' }, HttpStatus.BAD_REQUEST);
+    if (checkProduction)
+      throw new HttpException(
+        { code: StatusCode.PRODUCTION_EXIST, message: 'Name has already been used' },
+        HttpStatus.BAD_REQUEST
+      );
     const production = new this.productionModel();
     production._id = await createSnowFlakeId();
     production.name = createProductionDto.name;
@@ -39,7 +65,8 @@ export class ProductionsService {
     auditLog.appendChange('name', createProductionDto.name);
     auditLog.appendChange('country', createProductionDto.country);
     await Promise.all([production.save(), this.auditLogService.createLogFromBuilder(auditLog)]);
-    const ioEmitter = (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter =
+      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
     ioEmitter.to(SocketRoom.ADMIN_PRODUCTION_LIST).emit(SocketMessage.REFRESH_PRODUCTIONS);
     return production.toObject();
   }
@@ -75,20 +102,36 @@ export class ProductionsService {
   }
 
   async findOne(id: bigint) {
-    const production = await this.productionModel.findOne({ _id: id }, { _id: 1, name: 1, country: 1, createdAt: 1, updatedAt: 1 }).lean().exec();
-    if (!production) throw new HttpException({ code: StatusCode.PRODUCTION_NOT_FOUND, message: 'Production not found' }, HttpStatus.NOT_FOUND);
+    const production = await this.productionModel
+      .findOne({ _id: id }, { _id: 1, name: 1, country: 1, createdAt: 1, updatedAt: 1 })
+      .lean()
+      .exec();
+    if (!production)
+      throw new HttpException(
+        { code: StatusCode.PRODUCTION_NOT_FOUND, message: 'Production not found' },
+        HttpStatus.NOT_FOUND
+      );
     return plainToInstance(ProductionDetails, production);
   }
 
   async update(id: bigint, updateProductionDto: UpdateProductionDto, headers: HeadersDto, authUser: AuthUserDto) {
-    if (!Object.keys(updateProductionDto).length) throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
+    if (!Object.keys(updateProductionDto).length)
+      throw new HttpException({ code: StatusCode.EMPTY_BODY, message: 'Nothing to update' }, HttpStatus.BAD_REQUEST);
     const { name, country } = updateProductionDto;
     const production = await this.productionModel.findOne({ _id: id }).exec();
-    if (!production) throw new HttpException({ code: StatusCode.PRODUCTION_NOT_FOUND, message: 'Production not found' }, HttpStatus.NOT_FOUND);
+    if (!production)
+      throw new HttpException(
+        { code: StatusCode.PRODUCTION_NOT_FOUND, message: 'Production not found' },
+        HttpStatus.NOT_FOUND
+      );
     const auditLog = new AuditLogBuilder(authUser._id, production._id, Production.name, AuditLogType.PRODUCTION_UPDATE);
     if (name && name !== production.name) {
       const checkProduction = await this.productionModel.findOne({ name });
-      if (checkProduction) throw new HttpException({ code: StatusCode.PRODUCTION_EXIST, message: 'Name has already been used' }, HttpStatus.BAD_REQUEST);
+      if (checkProduction)
+        throw new HttpException(
+          { code: StatusCode.PRODUCTION_EXIST, message: 'Name has already been used' },
+          HttpStatus.BAD_REQUEST
+        );
       auditLog.appendChange('name', name, production.name);
       production.name = name;
     }
@@ -98,11 +141,14 @@ export class ProductionsService {
     }
     await Promise.all([production.save(), this.auditLogService.createLogFromBuilder(auditLog)]);
     const serializedProduction = instanceToInstance(plainToInstance(ProductionDetails, production.toObject()));
-    const ioEmitter = (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
-    ioEmitter.to([SocketRoom.ADMIN_PRODUCTION_LIST, `${SocketRoom.ADMIN_PRODUCTION_DETAILS}:${serializedProduction._id}`]).emit(SocketMessage.REFRESH_PRODUCTIONS, {
-      productionId: serializedProduction._id,
-      production: serializedProduction
-    });
+    const ioEmitter =
+      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    ioEmitter
+      .to([SocketRoom.ADMIN_PRODUCTION_LIST, `${SocketRoom.ADMIN_PRODUCTION_DETAILS}:${serializedProduction._id}`])
+      .emit(SocketMessage.REFRESH_PRODUCTIONS, {
+        productionId: serializedProduction._id,
+        production: serializedProduction
+      });
     return serializedProduction;
   }
 
@@ -112,18 +158,30 @@ export class ProductionsService {
     await session
       .withTransaction(async () => {
         deletedProduction = await this.productionModel.findOneAndDelete({ _id: id }, { session }).lean();
-        if (!deletedProduction) throw new HttpException({ code: StatusCode.PRODUCTION_NOT_FOUND, message: 'Production not found' }, HttpStatus.NOT_FOUND);
+        if (!deletedProduction)
+          throw new HttpException(
+            { code: StatusCode.PRODUCTION_NOT_FOUND, message: 'Production not found' },
+            HttpStatus.NOT_FOUND
+          );
         await Promise.all([
           this.mediaService.deleteProductionMedia(id, <bigint[]>(<unknown>deletedProduction.media), session),
-          this.auditLogService.createLog(authUser._id, deletedProduction._id, Production.name, AuditLogType.PRODUCTION_DELETE)
+          this.auditLogService.createLog(
+            authUser._id,
+            deletedProduction._id,
+            Production.name,
+            AuditLogType.PRODUCTION_DELETE
+          )
         ]);
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter = (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
-    ioEmitter.to([SocketRoom.ADMIN_PRODUCTION_LIST, `${SocketRoom.ADMIN_PRODUCTION_DETAILS}:${deletedProduction._id}`]).emit(SocketMessage.REFRESH_PRODUCTIONS, {
-      productionId: deletedProduction._id,
-      deleted: true
-    });
+    const ioEmitter =
+      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    ioEmitter
+      .to([SocketRoom.ADMIN_PRODUCTION_LIST, `${SocketRoom.ADMIN_PRODUCTION_DETAILS}:${deletedProduction._id}`])
+      .emit(SocketMessage.REFRESH_PRODUCTIONS, {
+        productionId: deletedProduction._id,
+        deleted: true
+      });
   }
 
   async removeMany(removeProductionsDto: RemoveProductionsDto, headers: HeadersDto, authUser: AuthUserDto) {
@@ -138,18 +196,32 @@ export class ProductionsService {
         deleteProductionIds = productions.map((g) => g._id);
         await Promise.all([
           this.productionModel.deleteMany({ _id: { $in: deleteProductionIds } }, { session }),
-          this.auditLogService.createManyLogs(authUser._id, deleteProductionIds, Production.name, AuditLogType.PRODUCTION_DELETE)
+          this.auditLogService.createManyLogs(
+            authUser._id,
+            deleteProductionIds,
+            Production.name,
+            AuditLogType.PRODUCTION_DELETE
+          )
         ]);
         const deleteProductionMediaLimit = pLimit(5);
-        await Promise.all(productions.map((production) => deleteProductionMediaLimit(() => this.mediaService.deleteProductionMedia(production._id, <bigint[]>(<unknown>production.media), session))));
+        await Promise.all(
+          productions.map((production) =>
+            deleteProductionMediaLimit(() =>
+              this.mediaService.deleteProductionMedia(production._id, <bigint[]>(<unknown>production.media), session)
+            )
+          )
+        );
       })
       .finally(() => session.endSession().catch(() => {}));
-    const ioEmitter = (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
+    const ioEmitter =
+      (headers.socketId && this.wsAdminGateway.server.sockets.get(headers.socketId)) || this.wsAdminGateway.server;
     const productionDetailsRooms = deleteProductionIds.map((id) => `${SocketRoom.ADMIN_PRODUCTION_DETAILS}:${id}`);
-    ioEmitter.to([SocketRoom.ADMIN_PRODUCTION_LIST, ...productionDetailsRooms]).emit(SocketMessage.REFRESH_PRODUCTIONS, {
-      productionIds: deleteProductionIds,
-      deleted: true
-    });
+    ioEmitter
+      .to([SocketRoom.ADMIN_PRODUCTION_LIST, ...productionDetailsRooms])
+      .emit(SocketMessage.REFRESH_PRODUCTIONS, {
+        productionIds: deleteProductionIds,
+        deleted: true
+      });
   }
 
   async findAllMedia(id: bigint, cursorPageMediaDto: CursorPageMediaDto, headers: HeadersDto, authUser: AuthUserDto) {
@@ -235,13 +307,18 @@ export class ProductionsService {
         this.productionModel.findOneAndUpdate(
           { name: productions[i].name },
           { $setOnInsert: { _id: await createSnowFlakeId(), country: productions[i].country } },
-          { new: true, upsert: true, lean: true, rawResult: true, session }
+          { new: true, upsert: true, lean: true, rawResult: true, session, collation: { locale: 'en', strength: 2 } }
         )
       ));
       if (!createProductionRes.lastErrorObject?.updatedExisting) newProductionIds.push(createProductionRes.value._id);
       createdProductions.push(createProductionRes.value);
     }
-    await this.auditLogService.createManyLogs(creatorId, newProductionIds, Production.name, AuditLogType.PRODUCTION_CREATE);
+    await this.auditLogService.createManyLogs(
+      creatorId,
+      newProductionIds,
+      Production.name,
+      AuditLogType.PRODUCTION_CREATE
+    );
     return createdProductions;
   }
 
@@ -250,32 +327,44 @@ export class ProductionsService {
   }
 
   addMediaStudios(media: bigint, ids: bigint[], session?: ClientSession) {
-    if (ids.length) return this.productionModel.updateMany({ _id: { $in: ids } }, { $push: { studioMedia: media } }, { session });
+    if (ids.length)
+      return this.productionModel.updateMany({ _id: { $in: ids } }, { $push: { studioMedia: media } }, { session });
   }
 
   addMediaProductions(media: bigint, ids: bigint[], session?: ClientSession) {
-    if (ids.length) return this.productionModel.updateMany({ _id: { $in: ids } }, { $push: { media: media } }, { session });
+    if (ids.length)
+      return this.productionModel.updateMany({ _id: { $in: ids } }, { $push: { media: media } }, { session });
   }
 
   deleteMediaStudios(media: bigint, ids: bigint[], session?: ClientSession) {
-    if (ids.length) return this.productionModel.updateMany({ _id: { $in: ids } }, { $pull: { studioMedia: media } }, { session });
+    if (ids.length)
+      return this.productionModel.updateMany({ _id: { $in: ids } }, { $pull: { studioMedia: media } }, { session });
   }
 
   deleteMediaProductions(media: bigint, ids: bigint[], session?: ClientSession) {
-    if (ids.length) return this.productionModel.updateMany({ _id: { $in: ids } }, { $pull: { media: media } }, { session });
+    if (ids.length)
+      return this.productionModel.updateMany({ _id: { $in: ids } }, { $pull: { media: media } }, { session });
   }
 
   updateMediaStudios(mediaId: bigint, newIds: bigint[], oldIds: bigint[], session?: ClientSession) {
     const writes: Parameters<typeof this.productionModel.bulkWrite>[0] = [];
-    if (oldIds.length) writes.push({ updateMany: { filter: { _id: { $in: <any>oldIds } }, update: { $pull: { studioMedia: mediaId } } } });
-    if (newIds.length) writes.push({ updateMany: { filter: { _id: { $in: <any>newIds } }, update: { $push: { studioMedia: mediaId } } } });
+    if (oldIds.length)
+      writes.push({
+        updateMany: { filter: { _id: { $in: <any>oldIds } }, update: { $pull: { studioMedia: mediaId } } }
+      });
+    if (newIds.length)
+      writes.push({
+        updateMany: { filter: { _id: { $in: <any>newIds } }, update: { $push: { studioMedia: mediaId } } }
+      });
     return this.productionModel.bulkWrite(writes, { session });
   }
 
   updateMediaProductions(mediaId: bigint, newIds: bigint[], oldIds: bigint[], session?: ClientSession) {
     const writes: Parameters<typeof this.productionModel.bulkWrite>[0] = [];
-    if (oldIds.length) writes.push({ updateMany: { filter: { _id: { $in: <any>oldIds } }, update: { $pull: { media: mediaId } } } });
-    if (newIds.length) writes.push({ updateMany: { filter: { _id: { $in: <any>newIds } }, update: { $push: { media: mediaId } } } });
+    if (oldIds.length)
+      writes.push({ updateMany: { filter: { _id: { $in: <any>oldIds } }, update: { $pull: { media: mediaId } } } });
+    if (newIds.length)
+      writes.push({ updateMany: { filter: { _id: { $in: <any>newIds } }, update: { $push: { media: mediaId } } } });
     return this.productionModel.bulkWrite(writes, { session });
   }
 }

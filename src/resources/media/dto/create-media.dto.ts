@@ -1,6 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Length, Max, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayUnique,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Max,
+  Min,
+  ValidateNested
+} from 'class-validator';
 
 import { ShortDate } from '../../../common/entities';
 import { MediaExternalIds } from '../entities/media-external-ids.entity';
@@ -75,6 +87,7 @@ export class CreateMediaDto {
   })
   @Type(() => String)
   @IsOptional()
+  @IsString({ each: true, context: { code: StatusCode.IS_STRING_ARRAY } })
   @IsArray({ context: { code: StatusCode.IS_ARRAY } })
   @ArrayUnique((value) => value, { context: { code: StatusCode.ARRAY_UNIQUE } })
   studios: string[];

@@ -154,7 +154,7 @@ export class TvdbScannerService {
       result.genres = data.genres.map((g) => g.name);
       result.studios = this.mapCompanies(data.companies.studio);
       result.productions = this.mapCompanies(data.companies.production);
-      result.tags = data.tagOptions?.map((k) => k.name) || [];
+      result.tags = (data.tagOptions?.map((k) => k.name) || []).slice(0, 15);
       result.videos = this.mapVideos(data.trailers);
       result.runtime = data.runtime * 60 || 0;
       result.status = data.status.id === 5 ? 'Released' : 'Upcoming';
@@ -237,7 +237,7 @@ export class TvdbScannerService {
       result.genres = data.genres.map((g) => g.name);
       result.studios = this.mapCompanies(data.companies?.filter((c) => c.companyType?.companyTypeId === 2)); // Type 2: Studio
       result.productions = this.mapCompanies(data.companies?.filter((c) => c.companyType?.companyTypeId === 1)); // Type 1: Production
-      result.tags = data.tags?.map((k) => k.name) || [];
+      result.tags = (data.tags?.map((k) => k.name) || []).slice(0, 15);
       result.videos = this.mapVideos(data.trailers);
       result.runtime = data.averageRuntime * 60 || 0;
       result.status = data.status.id === 1 ? 'Airing' : data.status.id === 2 ? 'Aired' : 'Upcoming';

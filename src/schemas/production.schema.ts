@@ -10,7 +10,7 @@ export class Production {
   @Prop({ type: () => BigInt, required: true })
   _id: bigint;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string;
 
   @Prop()
@@ -28,3 +28,5 @@ export class Production {
 }
 
 export const ProductionSchema = SchemaFactory.createForClass(Production);
+
+ProductionSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });

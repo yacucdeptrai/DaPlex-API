@@ -11,7 +11,7 @@ export class MediaTag {
   @Prop({ type: () => BigInt, required: true })
   _id: bigint;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   name: string;
 
   @Prop({ type: [{ type: MongooseSchema.Types.Mixed, ref: 'Media' }] })
@@ -26,6 +26,8 @@ export class MediaTag {
 }
 
 export const MediaTagSchema = SchemaFactory.createForClass(MediaTag);
+
+MediaTagSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 MediaTagSchema.index({ '_translations.vi.name': 1 }, { unique: true, sparse: true });
 
