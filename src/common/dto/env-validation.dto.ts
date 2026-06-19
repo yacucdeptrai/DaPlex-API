@@ -73,6 +73,20 @@ class EnvironmentVariables {
   @IsString()
   SCANNER_HTTP_PROXY: string;
 
+  // Automatic WARP fallback for scanner egress (default ON). When no SCANNER_HTTP_PROXY is
+  // set, the scanner probes TMDB directly; if the ISP blocks it, the Cloudflare WARP SOCKS5
+  // proxy is auto-enabled and only scanner traffic is routed through it. Set to the string
+  // 'false' to disable. Reuses WARP_CLI_PATH for warp-cli discovery.
+  @IsOptional()
+  @IsString()
+  SCANNER_AUTO_WARP: string;
+
+  // Override the WARP SOCKS5 listening port used by the scanner fallback (default 40000).
+  // Defaults to the same port as MONGO_WARP_PORT so both coalesce on one proxy listener.
+  @IsOptional()
+  @IsInt()
+  SCANNER_WARP_PORT: number;
+
   @IsNotEmpty()
   ACCESS_TOKEN_SECRET: string;
 
