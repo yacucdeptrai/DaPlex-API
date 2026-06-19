@@ -346,5 +346,66 @@ describe('TvdbScannerService', () => {
         expect(readTvdb(result.externalIds)).toBe(TVDB_TV_ID);
       });
     });
+
+    // DEC-4 — scanned keyword→tag list is capped at 15. TVDB maps tag NAMES raw (no
+    // apStyleTitleCase, unlike TMDB). The `withTmdbRemoteId=false` path is used so the
+    // TMDB cross-ref never runs and the local TVDB tag list is the sole source — that
+    // local list (movie: tagOptions[].name, tv: tags[].name) is what the cap must trim.
+    // The >15 cases are RED on the unchanged (uncapped) code; the ≤15 cases stay GREEN.
+    describe('DEC-4 keyword cap (15)', () => {
+      // movie tags come from data.tagOptions[].name
+      function movieWithTagCount(count: number): any {
+        return {
+          ...movieExtendedData(false),
+          tagOptions: Array.from({ length: count }, (_v, i) => ({ name: `tvdb-mtag-${i}` }))
+        };
+      }
+      // tv tags come from data.tags[].name
+      function tvWithTagCount(count: number): any {
+        return {
+          ...tvExtendedData(false),
+          tags: Array.from({ length: count }, (_v, i) => ({ name: `tvdb-ttag-${i}` }))
+        };
+      }
+
+      describe('movieDetails', () => {
+        it('TDD: 20 provider keywords are capped to 15', async () => {
+          httpService.get.mockReturnValue(of({ data: { data: movieWithTagCount(20) } }));
+
+          const result = await service.movieDetails('289', 'en');
+
+          expect(result.tags).toHaveLength(15);
+        });
+
+        it('CHARACTERIZATION: 10 provider keywords stay 10 (under the cap, names unchanged & unstyled)', async () => {
+          httpService.get.mockReturnValue(of({ data: { data: movieWithTagCount(10) } }));
+
+          const result = await service.movieDetails('289', 'en');
+
+          expect(result.tags).toHaveLength(10);
+          // TVDB does NOT title-case — the raw provider name survives verbatim.
+          expect(result.tags![0]).toBe('tvdb-mtag-0');
+        });
+      });
+
+      describe('tvDetails', () => {
+        it('TDD: 20 provider keywords are capped to 15', async () => {
+          httpService.get.mockReturnValue(of({ data: { data: tvWithTagCount(20) } }));
+
+          const result = await service.tvDetails('12345', 'en');
+
+          expect(result.tags).toHaveLength(15);
+        });
+
+        it('CHARACTERIZATION: 10 provider keywords stay 10 (under the cap, names unchanged & unstyled)', async () => {
+          httpService.get.mockReturnValue(of({ data: { data: tvWithTagCount(10) } }));
+
+          const result = await service.tvDetails('12345', 'en');
+
+          expect(result.tags).toHaveLength(10);
+          expect(result.tags![0]).toBe('tvdb-ttag-0');
+        });
+      });
+    });
   });
 });
