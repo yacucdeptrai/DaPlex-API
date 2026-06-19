@@ -4,8 +4,10 @@ import { Job } from 'bullmq';
 import { plainToInstance } from 'class-transformer';
 
 import { MediaStreamResultsService } from './media-stream-results.service';
+import { RedisCacheService } from '../../common/modules/redis-cache/redis-cache.service';
 import { TaskQueue } from '../../enums';
-import { MediaQueueResultDto } from './dto';
+import { MediaProgressDto, MediaQueueResultDto } from './dto';
+import { buildProgressKey, PROGRESS_TTL } from './media-progress.util';
 
 type JobNameType =
   | 'update-source'
@@ -15,18 +17,29 @@ type JobNameType =
   | 'finished-encoding'
   | 'cancelled-encoding'
   | 'retry-encoding'
-  | 'failed-encoding';
+  | 'failed-encoding'
+  | 'progress';
 
 @Processor(TaskQueue.VIDEO_TRANSCODE_RESULT, { concurrency: 1 })
 export class MediaResultConsumer extends WorkerHost {
   private readonly logger = new Logger(MediaResultConsumer.name);
 
-  constructor(private readonly mediaStreamResultsService: MediaStreamResultsService) {
+  constructor(
+    private readonly mediaStreamResultsService: MediaStreamResultsService,
+    private readonly redisCacheService: RedisCacheService
+  ) {
     super();
   }
 
   async process(job: Job<MediaQueueResultDto, Record<string, never>, JobNameType>): Promise<Record<string, never>> {
     try {
+      // Progress ticks carry their own shape (percent/eta/status), not the stream
+      // metadata MediaQueueResultDto.progress means — read job.data directly and
+      // never coerce through plainToInstance.
+      if (job.name === 'progress') {
+        await this.writeProgressSnapshot(job.data as unknown as Record<string, unknown>);
+        return {};
+      }
       const jobData = plainToInstance(MediaQueueResultDto, { jobId: job.id, ...job.data });
       switch (job.name) {
         case 'update-source': {
@@ -75,6 +88,7 @@ export class MediaResultConsumer extends WorkerHost {
           break;
         }
         case 'finished-encoding': {
+          await this.redisCacheService.del(buildProgressKey(jobData.media, jobData.episode));
           if (jobData.episode) {
             this.logger.log(`Finished encoding media ${jobData.media}, episode ${jobData.episode}`);
             await this.mediaStreamResultsService.handleTVEpisodeStreamQueueDone(jobData.jobId, jobData);
@@ -85,6 +99,7 @@ export class MediaResultConsumer extends WorkerHost {
           break;
         }
         case 'cancelled-encoding': {
+          await this.redisCacheService.del(buildProgressKey(jobData.media, jobData.episode));
           if (jobData.episode) {
             this.logger.log(`Cancelled encoding media ${jobData.media}, episode ${jobData.episode}`);
             await this.mediaStreamResultsService.handleTVEpisodeStreamQueueCancel(jobData.jobId, jobData);
@@ -105,6 +120,7 @@ export class MediaResultConsumer extends WorkerHost {
           break;
         }
         case 'failed-encoding': {
+          await this.redisCacheService.del(buildProgressKey(jobData.media, jobData.episode));
           if (jobData.episode) {
             this.logger.error(`Failed encoding media ${jobData.media}, episode ${jobData.episode}`);
             await this.mediaStreamResultsService.handleTVEpisodeStreamQueueError(jobData.jobId, jobData);
@@ -120,6 +136,21 @@ export class MediaResultConsumer extends WorkerHost {
       throw e;
     }
     return {};
+  }
+
+  // Writes the live-progress snapshot to Redis under the shared key with a bounded
+  // TTL. ids arrive as raw numbers from the producer; stringify them for the wire.
+  private async writeProgressSnapshot(data: Record<string, unknown>): Promise<void> {
+    const media = data.media as string | number;
+    const episode = data.episode as string | number | undefined;
+    const snapshot: MediaProgressDto = {
+      mediaId: String(media),
+      episodeId: episode != null ? String(episode) : undefined,
+      status: 'PROCESSING',
+      percent: Number(data.percent ?? 0),
+      eta: data.eta != null ? Number(data.eta) : undefined
+    };
+    await this.redisCacheService.set(buildProgressKey(media, episode), snapshot, PROGRESS_TTL);
   }
 
   @OnWorkerEvent('active')

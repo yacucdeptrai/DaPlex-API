@@ -24,9 +24,11 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse
 } from '@nestjs/swagger';
+import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 import { MediaService } from './media.service';
 import { MediaVideosService } from './media-videos.service';
@@ -38,8 +40,11 @@ import {
   DeleteMediaVideosDto,
   EncodeMediaSourceDto,
   AddLinkedMediaSourceDto,
-  FindMediaStreamsDto
+  FindMediaStreamsDto,
+  MediaProgressDto
 } from './dto';
+import { buildProgressKey } from './media-progress.util';
+import { RedisCacheService } from '../../common/modules/redis-cache/redis-cache.service';
 import { AuthUserDto } from '../users';
 import { Media, MediaDetails, MediaUploadSession, MediaVideo, MediaStream } from './entities';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -56,11 +61,18 @@ import { FastifyRequest } from 'fastify';
 
 @ApiTags('Media')
 @ApiExtraModels(Media)
+// ThrottlerGuard sits at the class so it never appears in any handler's own guard
+// metadata. SkipThrottle must name the registered 'progress' throttler (a bare
+// @SkipThrottle() only skips one named 'default'), so every route opts OUT and only
+// the progress route re-enables it with @Throttle — no other route is rate-limited.
+@UseGuards(ThrottlerGuard)
+@SkipThrottle({ progress: true })
 @Controller()
 export class MediaVideoController {
   constructor(
     private readonly mediaService: MediaService,
-    private readonly mediaVideosService: MediaVideosService
+    private readonly mediaVideosService: MediaVideosService,
+    private readonly redisCacheService: RedisCacheService
   ) {}
 
   @Post(':id/videos')
@@ -234,6 +246,33 @@ export class MediaVideoController {
   ) {
     const baseUrl = req.protocol + '://' + req.hostname;
     return this.mediaService.encodeMovieSource(id, encodeMediaSourceDto, baseUrl, authUser);
+  }
+
+  @Get(':id/progress')
+  // Re-enable the class-skipped 'progress' throttler for THIS route only.
+  @SkipThrottle({ progress: false })
+  @Throttle({ progress: { ttl: 60_000, limit: 30 } })
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA] })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', type: String })
+  @ApiQuery({ name: 'episode', type: String, required: false })
+  @ApiOperation({
+    summary: `Poll live transcode progress of a media/episode (permissions: ${UserPermission.MANAGE_MEDIA})`
+  })
+  @ApiOkResponse({ description: 'Live progress snapshot, or an empty body when idle', type: MediaProgressDto })
+  @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
+  @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
+  async getTranscodeProgress(
+    @AuthUser() authUser: AuthUserDto,
+    @Param('id', ParseBigIntPipe) id: bigint,
+    @Query('episode') episode?: string
+  ): Promise<MediaProgressDto | Record<string, never>> {
+    // episode is an optional query, so parse it inline rather than via a pipe.
+    const episodeId = episode != null && episode !== '' ? BigInt(episode) : undefined;
+    const snapshot = await this.redisCacheService.get<MediaProgressDto>(buildProgressKey(id, episodeId));
+    // Idle: 200-empty so the FE chip falls back to coarse status without a toast.
+    return snapshot ?? {};
   }
 
   @Post(':id/movie/source/:session_id')

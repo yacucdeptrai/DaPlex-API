@@ -13,6 +13,7 @@ export * from './encode-media-source.dto';
 export * from './find-media-streams.dto';
 export * from './find-media.dto';
 export * from './find-tv-episodes.dto';
+export * from './media-progress.dto';
 export * from './media-queue-advanced.dto';
 export * from './media-queue-data.dto';
 export * from './media-queue-result.dto';

@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import Redis from 'ioredis';
 
 import {
@@ -36,6 +37,7 @@ import { FilerModule } from '../../common/modules/filer/filer.module';
 import { S3Module } from '../../common/modules/s3/s3.module';
 import { HttpEmailModule } from '../../common/modules/http-email/http-email.module';
 import { LocalCacheModule } from '../../common/modules/local-cache/local-cache.module';
+import { RedisCacheModule } from '../../common/modules/redis-cache/redis-cache.module';
 import { RedisPubSubModule } from '../../common/modules/redis-pubsub';
 import { IsISO6391Constraint } from '../../decorators/is-iso-6391.decorator';
 import { AuthModule } from '../auth/auth.module';
@@ -75,6 +77,9 @@ const TRANSCODE_JOB_OPTIONS = {
     S3Module,
     HttpEmailModule,
     LocalCacheModule,
+    RedisCacheModule,
+    // Route-scoped only: ThrottlerGuard is applied at the progress endpoint, not globally.
+    ThrottlerModule.forRoot([{ name: 'progress', ttl: 60_000, limit: 30 }]),
     ExternalStoragesModule,
     SettingsModule,
     WsAdminModule,
