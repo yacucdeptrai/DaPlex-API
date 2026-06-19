@@ -11,6 +11,9 @@ export class MediaExternalIds {
   tmdb: number;
 
   @Prop()
+  tvdb: number;
+
+  @Prop()
   aniList: number;
 
   @Prop()

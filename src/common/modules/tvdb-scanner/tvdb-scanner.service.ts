@@ -25,6 +25,7 @@ import {
   Media,
   MediaAltTitle,
   MediaDetails,
+  MediaExternalIds,
   MediaImageItem,
   MediaImages,
   MediaTranslation,
@@ -159,7 +160,8 @@ export class TvdbScannerService {
       result.status = data.status.id === 5 ? 'Released' : 'Upcoming';
       result.releaseDate = data.first_release.date;
       result.adult = false;
-      result.externalIds = movieDetailsFromTMDB?.externalIds;
+      result.externalIds = movieDetailsFromTMDB?.externalIds ?? new MediaExternalIds();
+      result.externalIds.tvdb = data.id;
       if (!result.tags?.length) result.tags = movieDetailsFromTMDB?.tags;
       result.translations = [];
       I18N_LANGUAGES.forEach((i18nLang) => {
@@ -241,7 +243,8 @@ export class TvdbScannerService {
       result.status = data.status.id === 1 ? 'Airing' : data.status.id === 2 ? 'Aired' : 'Upcoming';
       result.releaseDate = data.firstAired;
       result.adult = false;
-      result.externalIds = tvDetailsFromTMDB?.externalIds;
+      result.externalIds = tvDetailsFromTMDB?.externalIds ?? new MediaExternalIds();
+      result.externalIds.tvdb = data.id;
       if (!result.tags?.length) result.tags = tvDetailsFromTMDB?.tags;
       result.firstAirDate = data.firstAired;
       result.lastAirDate = data.lastAired;

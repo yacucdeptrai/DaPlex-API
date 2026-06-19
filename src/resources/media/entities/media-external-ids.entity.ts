@@ -26,6 +26,16 @@ export class MediaExternalIds {
 
   @ApiProperty({
     type: Number,
+    description: 'TheTVDB id'
+  })
+  @Type(() => Number)
+  @IsOptional()
+  @IsInt({ context: { code: StatusCode.IS_INT } })
+  @Min(0, { context: { code: StatusCode.MIN_NUMBER } })
+  tvdb: number;
+
+  @ApiProperty({
+    type: Number,
     description: 'AniList id (anime only)'
   })
   @Type(() => Number)
