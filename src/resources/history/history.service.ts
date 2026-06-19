@@ -9,7 +9,7 @@ import { HistoryGroupable } from './entities';
 import { AuthUserDto } from '../users';
 import { MediaService } from '../media/media.service';
 import { convertToLanguageArray, createSnowFlakeId, LookupOptions, MongooseCursorPagination } from '../../utils';
-import { MediaType, MongooseConnection, StatusCode } from '../../enums';
+import { MediaPStatus, MediaType, MediaVisibility, MongooseConnection, StatusCode } from '../../enums';
 import { CursorPaginated } from '../../common/entities';
 import { HeadersDto } from '../../common/dto';
 
@@ -142,6 +142,20 @@ export class HistoryService {
     const [data] = await this.historyModel.aggregate(pipeline).exec();
     let historyList = new CursorPaginated<HistoryGroupable>();
     if (data) {
+      // Resume rail also surfaces the next episode of a series the user just
+      // finished. Resolved after the aggregation (the finished rows are excluded
+      // by the watched filter above) and merged back into the recency list.
+      if (inProgress) {
+        // Skip series already present as a genuine in-progress row — that row has
+        // the real resume point (time > 0); the resurfaced N+1 would just duplicate it.
+        const inProgressMedia = new Set<bigint>(data.results.map((r: any) => r.media?._id ?? r.media));
+        const resurfaced = await this.resolveNextEpisodes(authUser._id, episodeFields, inProgressMedia);
+        if (resurfaced.length) {
+          data.results = [...data.results, ...resurfaced].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+        }
+      }
       data.results = convertToLanguageArray<HistoryGroupable>(headers.acceptLanguage, data.results, {
         populate: ['media', 'episode'],
         ignoreRoot: true
@@ -155,6 +169,45 @@ export class HistoryService {
       });
     }
     return historyList;
+  }
+
+  // Resolve the "next episode up" for series the user just finished. Returns rows
+  // shaped like the in-progress aggregation output (episode = N+1 @ time 0), so the
+  // caller can merge them straight into the recency list. Bounded by RESUME_RAIL_CANDIDATES.
+  private async resolveNextEpisodes(user: bigint, episodeFields: { [key: string]: any }, inProgressMedia: Set<bigint>) {
+    const RESUME_RAIL_CANDIDATES = 12;
+    const finishedRows: any[] = await this.historyModel
+      .find({ user, watched: { $gt: 0 } }, { _id: 1, media: 1, episode: 1, time: 1, date: 1, paused: 1, watched: 1 })
+      .sort({ date: -1 })
+      .limit(RESUME_RAIL_CANDIDATES)
+      .lean()
+      .exec();
+    // Most-recently-watched per series: rows arrive date-desc, keep the first per media.
+    // Skip series already surfaced as an in-progress row (avoids a duplicate card).
+    const latestPerMedia = new Map<bigint, any>();
+    for (const row of finishedRows) {
+      const mediaId = row.media?._id ?? row.media;
+      if (row.media?.type !== MediaType.TV || row.episode?.epNumber == undefined) continue;
+      if (inProgressMedia.has(mediaId) || latestPerMedia.has(mediaId)) continue;
+      latestPerMedia.set(mediaId, row);
+    }
+    // One resolve per candidate series (never one per in-progress row). A single
+    // lookup failure must never take down the whole rail — isolate per candidate.
+    const fields = { ...episodeFields, pStatus: 1 };
+    const resolved = await Promise.all(
+      [...latestPerMedia.values()].map(async (row) => {
+        const mediaId = row.media?._id ?? row.media;
+        const nextEp = await this.mediaService
+          .findOneTVEpisodeByNumber(mediaId, row.episode.epNumber + 1, fields)
+          .catch(() => undefined);
+        if (!nextEp) return undefined;
+        if (nextEp.visibility !== MediaVisibility.PUBLIC || nextEp.pStatus !== MediaPStatus.DONE) return undefined;
+        const { pStatus, ...episode } = nextEp as any;
+        // The N+1 episode is unstarted: reset the finished row's resume flags.
+        return { ...row, episode, time: 0, watched: 0, paused: false };
+      })
+    );
+    return resolved.filter((row): row is NonNullable<typeof row> => row != undefined);
   }
 
   async findOneWatchTime(findWatchTimeDto: FindWatchTimeDto, authUser: AuthUserDto) {
