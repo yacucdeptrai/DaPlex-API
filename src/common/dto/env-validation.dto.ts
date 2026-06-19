@@ -66,6 +66,13 @@ class EnvironmentVariables {
   @IsInt()
   MONGO_PROXY_PORT: number;
 
+  // Optional SOCKS5 proxy for scanner (TMDB/TVDB) HTTP egress only — a socks5://host:port
+  // URL. When set the scanner HttpModule tunnels through it; unset means a direct
+  // connection. Scoped to the scanner clients, never a process-wide proxy.
+  @IsOptional()
+  @IsString()
+  SCANNER_HTTP_PROXY: string;
+
   @IsNotEmpty()
   ACCESS_TOKEN_SECRET: string;
 

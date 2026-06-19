@@ -38,6 +38,7 @@ import { StatusCode } from '../../../enums';
 import { languageCodeHelper } from '../../../utils';
 import { I18N_LANGUAGES } from '../../../config';
 import { SeasonExtendedRecord } from './interfaces/season-extended-record.interface';
+import { toScannerHttpException } from '../scanner-error';
 
 type SearchType = 'movie' | 'series';
 
@@ -101,17 +102,7 @@ export class TvdbScannerService {
       }
       return results;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -194,17 +185,7 @@ export class TvdbScannerService {
       });
       return result;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -324,17 +305,7 @@ export class TvdbScannerService {
       });
       return result;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -408,17 +379,7 @@ export class TvdbScannerService {
       });
       return result;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -438,17 +399,7 @@ export class TvdbScannerService {
       const data = response.data.data;
       return this.parseTVDbImageList(data.artworks);
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -469,17 +420,7 @@ export class TvdbScannerService {
       const data = response.data.data;
       return this.parseTVDbImageList(data.artworks);
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 

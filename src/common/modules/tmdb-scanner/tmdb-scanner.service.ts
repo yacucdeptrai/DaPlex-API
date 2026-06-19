@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 
 import { Paginated } from '../../entities/paginated.entity';
@@ -34,9 +34,9 @@ import {
   CollectionDetails,
   MediaKeyword
 } from './interfaces';
-import { StatusCode } from '../../../enums';
 import { apStyleTitleCase } from '../../../utils';
 import { I18N_LANGUAGES } from '../../../config';
+import { toScannerHttpException } from '../scanner-error';
 
 @Injectable()
 export class TmdbScannerService {
@@ -79,17 +79,7 @@ export class TmdbScannerService {
       }
       return results;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -120,17 +110,7 @@ export class TmdbScannerService {
       }
       return results;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -208,17 +188,7 @@ export class TmdbScannerService {
         );
       return result;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -308,17 +278,7 @@ export class TmdbScannerService {
         );
       return result;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -360,17 +320,7 @@ export class TmdbScannerService {
         );
       return result;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -407,17 +357,7 @@ export class TmdbScannerService {
         }));
       return result;
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -432,17 +372,7 @@ export class TmdbScannerService {
       const data = response.data;
       return this.parseTMDbImageList(data);
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
@@ -457,17 +387,7 @@ export class TmdbScannerService {
       const data = response.data;
       return this.parseTMDbImageList(data);
     } catch (e) {
-      if (e.isAxiosError && e.response) {
-        this.logger.error(e.response);
-        throw new HttpException(
-          {
-            code: StatusCode.THRID_PARTY_REQUEST_FAILED,
-            message: `Received ${e.response.status} ${e.response.statusText} error from third party api`
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      throw e;
+      throw toScannerHttpException(e, this.logger);
     }
   }
 
