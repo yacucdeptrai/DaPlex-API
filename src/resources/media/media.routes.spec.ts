@@ -52,7 +52,7 @@ const EXPECTED: Record<string, Expected> = {
   findOneTVEpisode: { method: 'GET', path: ':id/tv/episodes/:episode_id', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: true, requireOwner: false }, authGuardOptions: { anonymous: true } },
   updateTVEpisode: { method: 'PATCH', path: ':id/tv/episodes/:episode_id', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   deleteTVEpisode: { method: 'DELETE', path: ':id/tv/episodes/:episode_id', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
-  updateTVEpisodeStill: { method: 'PATCH', path: ':id/tv/episodes/:episode_id/still', guards: ['AuthGuard'], httpCode: null, rolesGuardOptions: null, authGuardOptions: null },
+  updateTVEpisodeStill: { method: 'PATCH', path: ':id/tv/episodes/:episode_id/still', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   deleteTVEpisodeStill: { method: 'DELETE', path: ':id/tv/episodes/:episode_id/still', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   updateTVEpisodeSubtitle: { method: 'POST', path: ':id/tv/episodes/:episode_id/subtitles', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   findAllTVEpisodeSubtitles: { method: 'GET', path: ':id/tv/episodes/:episode_id/subtitles', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: true, requireOwner: false }, authGuardOptions: { anonymous: true } },
@@ -105,18 +105,10 @@ describe('Media route metadata (Phase 7.2 characterization)', () => {
 
   it('protects every write route with [AuthGuard, RolesGuard] and MANAGE_MEDIA', () => {
     for (const [name, exp] of Object.entries(EXPECTED)) {
-      if (name === 'updateTVEpisodeStill') continue;
       const isWrite = exp.method !== 'GET';
       if (!isWrite) continue;
       expect(routes[name].guards).toEqual(['AuthGuard', 'RolesGuard']);
       expect(routes[name].rolesGuardOptions).toMatchObject({ permissions: MANAGE, optional: false });
-    }
-  });
-
-  it('keeps the one intentionally guard-light route on AuthGuard ONLY (no RolesGuard)', () => {
-    for (const name of ['updateTVEpisodeStill']) {
-      expect(routes[name].guards).toEqual(['AuthGuard']);
-      expect(routes[name].rolesGuardOptions).toBeNull();
     }
   });
 

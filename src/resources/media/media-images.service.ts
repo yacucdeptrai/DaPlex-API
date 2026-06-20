@@ -179,60 +179,64 @@ export class MediaImagesService {
     headers: HeadersDto,
     authUser: AuthUserDto
   ) {
-    const episode = await this.tvEpisodeModel
-      .findOne(
-        { _id: episodeId, media: id },
-        { epNumber: 1, name: 1, overview: 1, runtime: 1, still: 1, airDate: 1, visibility: 1 }
-      )
-      .exec();
-    if (!episode)
-      throw new HttpException(
-        { code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' },
-        HttpStatus.NOT_FOUND
+    try {
+      const episode = await this.tvEpisodeModel
+        .findOne(
+          { _id: episodeId, media: id },
+          { epNumber: 1, name: 1, overview: 1, runtime: 1, still: 1, airDate: 1, visibility: 1 }
+        )
+        .exec();
+      if (!episode)
+        throw new HttpException(
+          { code: StatusCode.EPISODE_NOT_FOUND, message: 'Episode not found' },
+          HttpStatus.NOT_FOUND
+        );
+      const stillId = await createSnowFlakeId();
+      const trimmedFilename = trimSlugFilename(file.filename);
+      const saveFile = `${stillId}/${trimmedFilename}`;
+      const image = await this.cloudflareR2Service.upload(
+        CloudflareR2Container.STILLS,
+        saveFile,
+        file.filepath,
+        file.detectedMimetype
       );
-    const stillId = await createSnowFlakeId();
-    const trimmedFilename = trimSlugFilename(file.filename);
-    const saveFile = `${stillId}/${trimmedFilename}`;
-    const image = await this.cloudflareR2Service.upload(
-      CloudflareR2Container.STILLS,
-      saveFile,
-      file.filepath,
-      file.detectedMimetype
-    );
-    const session = await this.mongooseConnection.startSession();
-    await session
-      .withTransaction(async () => {
-        if (episode.still) await this.deleteMediaImage(episode.still, CloudflareR2Container.STILLS);
-        const still = new MediaFile();
-        still._id = stillId;
-        still.type = MediaFileType.STILL;
-        still.name = trimmedFilename;
-        still.color = file.color;
-        still.placeholder = file.thumbhash;
-        still.size = image.size;
-        still.mimeType = file.detectedMimetype;
-        episode.still = still;
-        try {
-          await Promise.all([
-            episode.save({ session }),
-            this.auditLogService.createLog(authUser._id, episode._id, TVEpisode.name, AuditLogType.EPISODE_STILL_UPDATE)
-          ]);
-        } catch (e) {
-          await this.cloudflareR2Service.delete(CloudflareR2Container.STILLS, saveFile);
-          throw e;
-        }
-      })
-      .finally(() => session.endSession().catch(() => {}));
-    const serializedEpisode = instanceToPlain(plainToInstance(TVEpisodeEntity, episode.toObject()));
-    const ioEmitter = this.resolveIoEmitter(headers.socketId);
-    ioEmitter
-      .to([`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`, `${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`])
-      .emit(SocketMessage.REFRESH_TV_EPISODE, {
-        mediaId: id,
-        episodeId: episodeId,
-        episode: serializedEpisode
-      });
-    return serializedEpisode;
+      const session = await this.mongooseConnection.startSession();
+      await session
+        .withTransaction(async () => {
+          if (episode.still) await this.deleteMediaImage(episode.still, CloudflareR2Container.STILLS);
+          const still = new MediaFile();
+          still._id = stillId;
+          still.type = MediaFileType.STILL;
+          still.name = trimmedFilename;
+          still.color = file.color;
+          still.placeholder = file.thumbhash;
+          still.size = image.size;
+          still.mimeType = file.detectedMimetype;
+          episode.still = still;
+          try {
+            await Promise.all([
+              episode.save({ session }),
+              this.auditLogService.createLog(authUser._id, episode._id, TVEpisode.name, AuditLogType.EPISODE_STILL_UPDATE)
+            ]);
+          } catch (e) {
+            await this.cloudflareR2Service.delete(CloudflareR2Container.STILLS, saveFile);
+            throw e;
+          }
+        })
+        .finally(() => session.endSession().catch(() => {}));
+      const serializedEpisode = instanceToPlain(plainToInstance(TVEpisodeEntity, episode.toObject()));
+      const ioEmitter = this.resolveIoEmitter(headers.socketId);
+      ioEmitter
+        .to([`${SocketRoom.ADMIN_MEDIA_DETAILS}:${id}`, `${SocketRoom.ADMIN_EPISODE_DETAILS}:${episodeId}`])
+        .emit(SocketMessage.REFRESH_TV_EPISODE, {
+          mediaId: id,
+          episodeId: episodeId,
+          episode: serializedEpisode
+        });
+      return serializedEpisode;
+    } finally {
+      if (file.isUrl) await fs.promises.unlink(file.filepath).catch(() => {});
+    }
   }
 
   async deleteTVEpisodeStill(id: bigint, episodeId: bigint, headers: HeadersDto, authUser: AuthUserDto) {

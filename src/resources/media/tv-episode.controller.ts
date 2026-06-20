@@ -173,7 +173,8 @@ export class TVEpisodeController {
   }
 
   @Patch(':id/tv/episodes/:episode_id/still')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA] })
   @UseInterceptors(
     new UploadImageInterceptor({
       maxSize: UPLOAD_STILL_MAX_SIZE,
@@ -181,7 +182,8 @@ export class TVEpisodeController {
       minHeight: UPLOAD_STILL_MIN_HEIGHT,
       mimeTypes: UPLOAD_MEDIA_IMAGE_TYPES,
       ratio: UPLOAD_STILL_RATIO,
-      autoResize: true
+      autoResize: true,
+      allowUrl: true
     })
   )
   @ApiBearerAuth()
@@ -192,8 +194,15 @@ export class TVEpisodeController {
     description: `Limit: ${UPLOAD_STILL_MAX_SIZE} Bytes<br/>Min resolution: ${UPLOAD_STILL_MIN_WIDTH}x${UPLOAD_STILL_MIN_HEIGHT}<br/>
     Mime types: ${UPLOAD_MEDIA_IMAGE_TYPES.join(', ')}<br/>Aspect ratio: ${UPLOAD_STILL_RATIO.join(':')}`
   })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiBody({
+    schema: {
+      oneOf: [
+        { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+        { type: 'object', properties: { url: { type: 'string', format: 'uri' } } }
+      ]
+    }
+  })
   @ApiOkResponse({ description: 'Return still url' })
   @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   @ApiBadRequestResponse({ description: 'Validation error.', type: ErrorMessage })
