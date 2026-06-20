@@ -215,7 +215,8 @@ export class MovieController {
       minWidth: UPLOAD_POSTER_MIN_WIDTH,
       minHeight: UPLOAD_POSTER_MIN_HEIGHT,
       ratio: UPLOAD_POSTER_RATIO,
-      autoResize: true
+      autoResize: true,
+      allowUrl: true
     })
   )
   @ApiBearerAuth()
@@ -225,8 +226,15 @@ export class MovieController {
     description: `Limit: ${UPLOAD_POSTER_MAX_SIZE} Bytes<br/>Min resolution: ${UPLOAD_POSTER_MIN_WIDTH}x${UPLOAD_POSTER_MIN_HEIGHT}<br/>
     Mime types: ${UPLOAD_MEDIA_IMAGE_TYPES.join(', ')}<br/>Aspect ratio: ${UPLOAD_POSTER_RATIO.join(':')}`
   })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiBody({
+    schema: {
+      oneOf: [
+        { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+        { type: 'object', properties: { url: { type: 'string', format: 'uri' } } }
+      ]
+    }
+  })
   @ApiOkResponse({ description: 'Return poster url' })
   @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   @ApiBadRequestResponse({ description: 'Validation error.', type: ErrorMessage })
@@ -264,7 +272,8 @@ export class MovieController {
   }
 
   @Patch(':id/backdrop')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_MEDIA] })
   @UseInterceptors(
     new UploadImageInterceptor({
       maxSize: UPLOAD_BACKDROP_MAX_SIZE,
@@ -272,7 +281,8 @@ export class MovieController {
       minWidth: UPLOAD_BACKDROP_MIN_WIDTH,
       minHeight: UPLOAD_BACKDROP_MIN_HEIGHT,
       ratio: UPLOAD_BACKDROP_RATIO,
-      autoResize: true
+      autoResize: true,
+      allowUrl: true
     })
   )
   @ApiBearerAuth()
@@ -282,8 +292,15 @@ export class MovieController {
     description: `Limit: ${UPLOAD_BACKDROP_MAX_SIZE} Bytes<br/>Min resolution: ${UPLOAD_BACKDROP_MIN_WIDTH}x${UPLOAD_BACKDROP_MIN_HEIGHT}<br/>
     Mime types: ${UPLOAD_MEDIA_IMAGE_TYPES.join(', ')}<br/>Aspect ratio: ${UPLOAD_BACKDROP_RATIO.join(':')}`
   })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiBody({
+    schema: {
+      oneOf: [
+        { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+        { type: 'object', properties: { url: { type: 'string', format: 'uri' } } }
+      ]
+    }
+  })
   @ApiOkResponse({ description: 'Return backdrop url' })
   @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   @ApiBadRequestResponse({ description: 'Validation error.', type: ErrorMessage })

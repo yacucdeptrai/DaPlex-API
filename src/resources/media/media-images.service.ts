@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { instanceToPlain, plainToInstance } from 'class-transformer';
+import fs from 'fs';
 
 import { AuthUserDto } from '../users/dto/auth-user.dto';
 import { Media, MediaDocument, MediaFile, TVEpisode, TVEpisodeDocument } from '../../schemas';
@@ -47,43 +48,47 @@ export class MediaImagesService {
     const media = await this.mediaModel.findOne({ _id: id }, { poster: 1 }).exec();
     if (!media)
       throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
-    const posterId = await createSnowFlakeId();
-    const trimmedFilename = trimSlugFilename(file.filename);
-    const saveFile = `${posterId}/${trimmedFilename}`;
-    const image = await this.cloudflareR2Service.upload(
-      CloudflareR2Container.POSTERS,
-      saveFile,
-      file.filepath,
-      file.detectedMimetype
-    );
-    if (media.poster) await this.deleteMediaImage(media.poster, CloudflareR2Container.POSTERS);
-    const poster = new MediaFile();
-    poster._id = posterId;
-    poster.type = MediaFileType.POSTER;
-    poster.name = trimmedFilename;
-    poster.color = file.color;
-    poster.placeholder = file.thumbhash;
-    poster.size = image.size;
-    poster.mimeType = file.detectedMimetype;
-    media.poster = poster;
     try {
-      await Promise.all([
-        media.save({ timestamps: false }),
-        this.auditLogService.createLog(authUser._id, media._id, Media.name, AuditLogType.MEDIA_POSTER_UPDATE)
-      ]);
-    } catch (e) {
-      await this.cloudflareR2Service.delete(CloudflareR2Container.POSTERS, saveFile);
-      throw e;
+      const posterId = await createSnowFlakeId();
+      const trimmedFilename = trimSlugFilename(file.filename);
+      const saveFile = `${posterId}/${trimmedFilename}`;
+      const image = await this.cloudflareR2Service.upload(
+        CloudflareR2Container.POSTERS,
+        saveFile,
+        file.filepath,
+        file.detectedMimetype
+      );
+      if (media.poster) await this.deleteMediaImage(media.poster, CloudflareR2Container.POSTERS);
+      const poster = new MediaFile();
+      poster._id = posterId;
+      poster.type = MediaFileType.POSTER;
+      poster.name = trimmedFilename;
+      poster.color = file.color;
+      poster.placeholder = file.thumbhash;
+      poster.size = image.size;
+      poster.mimeType = file.detectedMimetype;
+      media.poster = poster;
+      try {
+        await Promise.all([
+          media.save({ timestamps: false }),
+          this.auditLogService.createLog(authUser._id, media._id, Media.name, AuditLogType.MEDIA_POSTER_UPDATE)
+        ]);
+      } catch (e) {
+        await this.cloudflareR2Service.delete(CloudflareR2Container.POSTERS, saveFile);
+        throw e;
+      }
+      const serializedMedia = instanceToPlain(plainToInstance(MediaDetails, media.toObject()));
+      const ioEmitter = this.resolveIoEmitter(headers.socketId);
+      ioEmitter
+        .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`])
+        .emit(SocketMessage.REFRESH_MEDIA, {
+          mediaId: media._id,
+          media: serializedMedia
+        });
+      return serializedMedia;
+    } finally {
+      if (file.isUrl) await fs.promises.unlink(file.filepath).catch(() => {});
     }
-    const serializedMedia = instanceToPlain(plainToInstance(MediaDetails, media.toObject()));
-    const ioEmitter = this.resolveIoEmitter(headers.socketId);
-    ioEmitter
-      .to([SocketRoom.ADMIN_MEDIA_LIST, `${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`])
-      .emit(SocketMessage.REFRESH_MEDIA, {
-        mediaId: media._id,
-        media: serializedMedia
-      });
-    return serializedMedia;
   }
 
   async deleteMediaPoster(id: bigint, headers: HeadersDto, authUser: AuthUserDto) {
@@ -109,41 +114,45 @@ export class MediaImagesService {
     const media = await this.mediaModel.findOne({ _id: id }, { backdrop: 1 }).exec();
     if (!media)
       throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
-    const backdropId = await createSnowFlakeId();
-    const trimmedFilename = trimSlugFilename(file.filename);
-    const saveFile = `${backdropId}/${trimmedFilename}`;
-    const image = await this.cloudflareR2Service.upload(
-      CloudflareR2Container.BACKDROPS,
-      saveFile,
-      file.filepath,
-      file.detectedMimetype
-    );
-    if (media.backdrop) await this.deleteMediaImage(media.backdrop, CloudflareR2Container.BACKDROPS);
-    const backdrop = new MediaFile();
-    backdrop._id = backdropId;
-    backdrop.type = MediaFileType.BACKDROP;
-    backdrop.name = trimmedFilename;
-    backdrop.color = file.color;
-    backdrop.placeholder = file.thumbhash;
-    backdrop.size = image.size;
-    backdrop.mimeType = file.detectedMimetype;
-    media.backdrop = backdrop;
     try {
-      await Promise.all([
-        media.save({ timestamps: false }),
-        this.auditLogService.createLog(authUser._id, media._id, Media.name, AuditLogType.MEDIA_BACKDROP_UPDATE)
-      ]);
-    } catch (e) {
-      await this.cloudflareR2Service.delete(CloudflareR2Container.BACKDROPS, saveFile);
-      throw e;
+      const backdropId = await createSnowFlakeId();
+      const trimmedFilename = trimSlugFilename(file.filename);
+      const saveFile = `${backdropId}/${trimmedFilename}`;
+      const image = await this.cloudflareR2Service.upload(
+        CloudflareR2Container.BACKDROPS,
+        saveFile,
+        file.filepath,
+        file.detectedMimetype
+      );
+      if (media.backdrop) await this.deleteMediaImage(media.backdrop, CloudflareR2Container.BACKDROPS);
+      const backdrop = new MediaFile();
+      backdrop._id = backdropId;
+      backdrop.type = MediaFileType.BACKDROP;
+      backdrop.name = trimmedFilename;
+      backdrop.color = file.color;
+      backdrop.placeholder = file.thumbhash;
+      backdrop.size = image.size;
+      backdrop.mimeType = file.detectedMimetype;
+      media.backdrop = backdrop;
+      try {
+        await Promise.all([
+          media.save({ timestamps: false }),
+          this.auditLogService.createLog(authUser._id, media._id, Media.name, AuditLogType.MEDIA_BACKDROP_UPDATE)
+        ]);
+      } catch (e) {
+        await this.cloudflareR2Service.delete(CloudflareR2Container.BACKDROPS, saveFile);
+        throw e;
+      }
+      const serializedMedia = instanceToPlain(plainToInstance(MediaDetails, media.toObject()));
+      const ioEmitter = this.resolveIoEmitter(headers.socketId);
+      ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MEDIA, {
+        mediaId: media._id,
+        media: serializedMedia
+      });
+      return serializedMedia;
+    } finally {
+      if (file.isUrl) await fs.promises.unlink(file.filepath).catch(() => {});
     }
-    const serializedMedia = instanceToPlain(plainToInstance(MediaDetails, media.toObject()));
-    const ioEmitter = this.resolveIoEmitter(headers.socketId);
-    ioEmitter.to(`${SocketRoom.ADMIN_MEDIA_DETAILS}:${media._id}`).emit(SocketMessage.REFRESH_MEDIA, {
-      mediaId: media._id,
-      media: serializedMedia
-    });
-    return serializedMedia;
   }
 
   async deleteMediaBackdrop(id: bigint, headers: HeadersDto, authUser: AuthUserDto) {

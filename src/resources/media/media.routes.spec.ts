@@ -29,7 +29,8 @@ const EXPECTED: Record<string, Expected> = {
   deleteMediaVideos: { method: 'DELETE', path: ':id/videos', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   updatePoster: { method: 'PATCH', path: ':id/poster', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   deletePoster: { method: 'DELETE', path: ':id/poster', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
-  updateBackdrop: { method: 'PATCH', path: ':id/backdrop', guards: ['AuthGuard'], httpCode: null, rolesGuardOptions: null, authGuardOptions: null },
+  // Tightened to match the poster + backdrop DELETE: admin-only image store.
+  updateBackdrop: { method: 'PATCH', path: ':id/backdrop', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   deleteBackdrop: { method: 'DELETE', path: ':id/backdrop', guards: ['AuthGuard', 'RolesGuard'], httpCode: 204, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   updateMovieSubtitle: { method: 'POST', path: ':id/movie/subtitles', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: false, requireOwner: false }, authGuardOptions: null },
   findAllMovieSubtitles: { method: 'GET', path: ':id/movie/subtitles', guards: ['AuthGuard', 'RolesGuard'], httpCode: null, rolesGuardOptions: { permissions: MANAGE, optional: true, requireOwner: false }, authGuardOptions: { anonymous: true } },
@@ -104,7 +105,7 @@ describe('Media route metadata (Phase 7.2 characterization)', () => {
 
   it('protects every write route with [AuthGuard, RolesGuard] and MANAGE_MEDIA', () => {
     for (const [name, exp] of Object.entries(EXPECTED)) {
-      if (name === 'updateBackdrop' || name === 'updateTVEpisodeStill') continue;
+      if (name === 'updateTVEpisodeStill') continue;
       const isWrite = exp.method !== 'GET';
       if (!isWrite) continue;
       expect(routes[name].guards).toEqual(['AuthGuard', 'RolesGuard']);
@@ -112,8 +113,8 @@ describe('Media route metadata (Phase 7.2 characterization)', () => {
     }
   });
 
-  it('keeps the two intentionally guard-light routes on AuthGuard ONLY (no RolesGuard)', () => {
-    for (const name of ['updateBackdrop', 'updateTVEpisodeStill']) {
+  it('keeps the one intentionally guard-light route on AuthGuard ONLY (no RolesGuard)', () => {
+    for (const name of ['updateTVEpisodeStill']) {
       expect(routes[name].guards).toEqual(['AuthGuard']);
       expect(routes[name].rolesGuardOptions).toBeNull();
     }

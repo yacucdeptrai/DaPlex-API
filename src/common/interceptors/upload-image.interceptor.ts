@@ -13,10 +13,19 @@ import mimeTypes from 'mime-types';
 import { Observable } from 'rxjs';
 import sharp from 'sharp';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { randomUUID } from 'crypto';
+import dns from 'dns';
+import { Agent, fetch } from 'undici';
 
 import { appendToFilename, getScaledSizes, rgbToDec, rgbaToThumbHash, thumbHashToAverageRGBA } from '../../utils';
 import { StatusCode } from '../../enums';
 import { DEFAULT_UPLOAD_SIZE } from '../../config';
+import { isBlockedIp, validateImageUrl } from './image-url-allowlist';
+
+const FETCH_TIMEOUT_MS = 10000;
+const MAX_REDIRECTS = 3;
 
 @Injectable()
 export class UploadImageInterceptor implements NestInterceptor {
@@ -145,6 +154,15 @@ export class UploadImageInterceptor implements NestInterceptor {
     } else if (this.allowUrl && (<any>req.body)?.url) {
       const url = (<any>req.body).url;
       const imageBuffer = await this.getImageFromUrl(url);
+      const filename = url.split('/').pop().split('#')[0].split('?')[0];
+      req.incomingFile = {
+        filepath: '',
+        fieldname: 'file',
+        filename,
+        encoding: '7bit',
+        mimetype: 'application/octet-stream',
+        fields: {} as any
+      };
       try {
         //const result = await getAverageColor(url);
         var info = await sharp(imageBuffer, { pages: 1 }).metadata();
@@ -183,12 +201,15 @@ export class UploadImageInterceptor implements NestInterceptor {
           HttpStatus.BAD_REQUEST
         );
       const thumbhashResult = await this.createThumbhash(imageBuffer, info.width, info.height);
-      req.incomingFile.filepath = url;
+      // R2 reads a disk path (fs.stat + createReadStream), so write the validated
+      // buffer to a random-named tmpdir file — never an attacker-influenced name.
+      const tempFilePath = path.join(os.tmpdir(), `daplex-fetch-${randomUUID()}`);
+      await fs.promises.writeFile(tempFilePath, imageBuffer);
+      req.incomingFile.filepath = tempFilePath;
       req.incomingFile.mimetype = detectedMimetype;
       req.incomingFile.detectedMimetype = detectedMimetype;
       req.incomingFile.color = thumbhashResult.averageColorDec;
       req.incomingFile.thumbhash = thumbhashResult.b64;
-      req.incomingFile.filename = url.split('/').pop().split('#')[0].split('?')[0];
       req.incomingFile.isUrl = true;
     } else {
       throw new HttpException(
@@ -213,10 +234,99 @@ export class UploadImageInterceptor implements NestInterceptor {
     return { b64, averageColorDec };
   }
 
-  private async getImageFromUrl(url: string) {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+  private async getImageFromUrl(url: string): Promise<Buffer> {
+    let current = this.validateOrReject(url);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+        const { dispatcher, address } = await this.pinDispatcher(current.hostname);
+        let response: Awaited<ReturnType<typeof fetch>>;
+        try {
+          response = await fetch(current.href, { dispatcher, signal: controller.signal, redirect: 'manual' });
+        } catch (e) {
+          this.logger.warn(`Provider image fetch failed: ${(e as Error).message}`);
+          throw new HttpException(
+            { code: StatusCode.THRID_PARTY_REQUEST_FAILED, message: 'Failed to fetch the image' },
+            HttpStatus.BAD_GATEWAY
+          );
+        }
+        if (response.status >= 300 && response.status < 400) {
+          const location = response.headers.get('location');
+          if (!location) break;
+          // Re-run the FULL allowlist + scheme + IP validation on the hop target;
+          // never auto-follow to an unvalidated host.
+          current = this.validateOrReject(new URL(location, current.href).href);
+          continue;
+        }
+        const contentLength = Number(response.headers.get('content-length'));
+        if (Number.isFinite(contentLength) && contentLength > this.maxSize)
+          throw new HttpException(
+            { code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' },
+            HttpStatus.BAD_REQUEST
+          );
+        this.logger.debug(`Fetching provider image from ${current.hostname} (${address})`);
+        return await this.readCappedBody(response);
+      }
+      this.reject('host-not-allowed');
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  /** Parse + allowlist-check the URL; throw URL_HOST_NOT_ALLOWED on any rejection. */
+  private validateOrReject(url: string): URL {
+    const result = validateImageUrl(url);
+    if (!result.ok) this.reject(result.reason);
+    return result.parsed;
+  }
+
+  private reject(reason: string): never {
+    this.logger.warn(`Rejected provider image URL (${reason})`);
+    throw new HttpException(
+      { code: StatusCode.URL_HOST_NOT_ALLOWED, message: 'URL host is not allowed' },
+      HttpStatus.BAD_REQUEST
+    );
+  }
+
+  /**
+   * Resolve the host ONCE, reject if any address is private/loopback/link-local/
+   * metadata, and pin the validated IP onto an undici Agent so fetch dials that
+   * exact address (no second resolution → no DNS-rebinding/TOCTOU).
+   */
+  private async pinDispatcher(hostname: string): Promise<{ dispatcher: Agent; address: string }> {
+    const addresses = await new Promise<Array<{ address: string; family: number }>>((resolve, reject) => {
+      dns.lookup(hostname, { all: true }, (err, addrs) => (err ? reject(err) : resolve(addrs as any)));
+    }).catch(() => [] as Array<{ address: string; family: number }>);
+    const safe = addresses.find((a) => !isBlockedIp(a.address));
+    if (!safe) this.reject('private-ip');
+    const dispatcher = new Agent({
+      connect: {
+        // undici's connect.lookup wants the array form, not Node-core's (addr, family).
+        lookup: (_host, _opts, cb: any) => cb(null, [{ address: safe.address, family: safe.family }])
+      }
+    });
+    return { dispatcher, address: safe.address };
+  }
+
+  /** Stream the body with a running-byte cap; never buffers past maxSize. */
+  private async readCappedBody(response: Awaited<ReturnType<typeof fetch>>): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    // undici ReadableStreams are async-iterable at runtime; the type omits the
+    // iterator, so iterate through a widened reference.
+    const body = response.body as unknown as AsyncIterable<Uint8Array> | null;
+    if (!body) return Buffer.alloc(0);
+    for await (const chunk of body) {
+      total += chunk.byteLength;
+      if (total > this.maxSize)
+        throw new HttpException(
+          { code: StatusCode.FILE_TOO_LARGE, message: 'File is too large' },
+          HttpStatus.BAD_REQUEST
+        );
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
   }
 }
 
