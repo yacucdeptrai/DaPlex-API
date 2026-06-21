@@ -1,10 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { HttpStatus } from '@nestjs/common';
 
 import { HistoryService } from './history.service';
 import { MediaService } from '../media/media.service';
-import { MediaPStatus, MediaType, MediaVisibility, MongooseConnection } from '../../enums';
+import { MediaPStatus, MediaType, MediaVisibility, MongooseConnection, StatusCode } from '../../enums';
 import { History } from '../../schemas';
+
+// markWatched / updateWatchTime create rows via `new this.historyModel({ _id: await createSnowFlakeId(), ... })`.
+// The real createSnowFlakeId pulls in `../config` (env-coupled) and a Snowflake instance; stub it to a fixed
+// id so the create specs are deterministic and the config side-effects stay out of the unit run. Everything
+// else in the utils barrel keeps its real implementation. The literal is inlined in the factory because
+// jest.mock is hoisted above module-scope consts (a referenced const would hit the TDZ).
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  createSnowFlakeId: jest.fn().mockResolvedValue(BigInt('900000000000000001'))
+}));
+const FIXED_SNOWFLAKE = BigInt('900000000000000001');
 
 // Walks the built pipeline and pulls out the parts the inProgress filter touches.
 function inspectPipeline(pipeline: any[]) {
@@ -19,12 +31,39 @@ describe('HistoryService', () => {
   let service: HistoryService;
   let aggregate: jest.Mock;
   let exec: jest.Mock;
-  let mediaService: { findOneTVEpisodeByNumber: jest.Mock };
+  let findOne: jest.Mock;
+  // Records every document constructed via `new this.historyModel(...)` so the create
+  // specs can assert the constructor args + that .save() was called on the new doc.
+  let createdDocs: any[];
+  let mediaService: {
+    findOneTVEpisodeByNumber: jest.Mock;
+    findOneById: jest.Mock;
+    findOneTVEpisodeById: jest.Mock;
+  };
 
   const headers: any = { acceptLanguage: ['en'] };
   const authUser: any = { _id: BigInt(1) };
+  // updateWatchTime reads authUser.settings.history.{paused,limit}; supply the nested
+  // shape its consumers expect (not-paused, default 90% finish threshold).
+  const watchAuthUser: any = { _id: BigInt(1), settings: { history: { paused: false, limit: 90 } } };
+
+  // Build a mongoose doc-double for findOne()/new-model results: carries the given
+  // fields plus jest-spied save()/toObject(). save() resolves to the doc; toObject()
+  // returns a shallow copy (mirrors lean output the service returns to callers).
+  function makeDoc(fields: Record<string, any>) {
+    const doc: any = {
+      ...fields,
+      save: jest.fn().mockResolvedValue(undefined),
+      toObject: jest.fn(function (this: any) {
+        const { save, toObject, ...rest } = this;
+        return { ...rest };
+      })
+    };
+    return doc;
+  }
 
   beforeEach(async () => {
+    createdDocs = [];
     exec = jest.fn().mockResolvedValue([undefined]);
     aggregate = jest.fn().mockReturnValue({ exec });
     // Finished-candidate query: the surgeon may reach for it via either a second
@@ -37,9 +76,27 @@ describe('HistoryService', () => {
       exec: jest.fn().mockResolvedValue([])
     };
     const find = jest.fn().mockReturnValue(findChain);
-    const historyModel = { aggregate, find };
+    // findOne(...).exec() / .lean().exec() — single-record reads (update/findOneWatchTime/
+    // updateWatchTime/markWatched). Each spec overrides the resolved value per case.
+    findOne = jest.fn();
+    // historyModel must be callable as a constructor (`new this.historyModel({...})`) AND
+    // expose the static query helpers the service reaches through. A jest.fn() satisfies
+    // both: existing findAll specs read .aggregate/.find unchanged; the create path uses
+    // the constructor body to record + return a spied doc.
+    const historyModel: any = jest.fn(function (this: any, init: Record<string, any>) {
+      const doc = makeDoc(init);
+      createdDocs.push(doc);
+      return doc;
+    });
+    historyModel.aggregate = aggregate;
+    historyModel.find = find;
+    historyModel.findOne = findOne;
 
-    mediaService = { findOneTVEpisodeByNumber: jest.fn() };
+    mediaService = {
+      findOneTVEpisodeByNumber: jest.fn(),
+      findOneById: jest.fn(),
+      findOneTVEpisodeById: jest.fn()
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -51,6 +108,18 @@ describe('HistoryService', () => {
 
     service = module.get<HistoryService>(HistoryService);
   });
+
+  // findOne(...) resolves a record (or null) through both the `.exec()` and the
+  // `.lean().exec()` chain shapes the history service uses, so a spec can arrange a
+  // record without knowing which read path the method took.
+  function arrangeFindOne(record: any) {
+    const chain: any = {
+      exec: jest.fn().mockResolvedValue(record),
+      lean: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(record) })
+    };
+    findOne.mockReturnValue(chain);
+    return chain;
+  }
 
   it('should be defined', () => {
     expect(service).toBeDefined();
@@ -549,6 +618,269 @@ describe('HistoryService', () => {
       expect(row.watched).toBe(0);
       expect(row.paused).toBe(false);
       expect(row.time).toBe(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // CHARACTERIZATION — update() / updateWatchTime() / findOneWatchTime(). These
+  // lock the CURRENT behaviour of the methods the W0.9 surgeon must NOT perturb
+  // while adding markWatched(). MUST stay green on the unchanged service.
+  // ---------------------------------------------------------------------------
+  describe('update (characterization)', () => {
+    it('throws EMPTY_BODY 400 when the dto is empty', async () => {
+      await expect(service.update(BigInt(5), {} as any, authUser)).rejects.toMatchObject({
+        response: { code: StatusCode.EMPTY_BODY },
+        status: HttpStatus.BAD_REQUEST
+      });
+      // No record read attempted on an empty body.
+      expect(findOne).not.toHaveBeenCalled();
+    });
+
+    it('throws HISTORY_NOT_FOUND 404 when no record matches', async () => {
+      arrangeFindOne(null);
+      await expect(service.update(BigInt(5), { watched: 1 } as any, authUser)).rejects.toMatchObject({
+        response: { code: StatusCode.HISTORY_NOT_FOUND },
+        status: HttpStatus.NOT_FOUND
+      });
+    });
+
+    it('reads the record scoped to BOTH the record id and the user (no IDOR)', async () => {
+      arrangeFindOne(makeDoc({ paused: false, watched: 0 }));
+      await service.update(BigInt(5), { watched: 1 } as any, authUser);
+      expect(findOne.mock.calls[0][0]).toEqual({ _id: BigInt(5), user: authUser._id });
+    });
+
+    it('watched===1 increments the finish count (watched += 1) and saves', async () => {
+      const doc = makeDoc({ paused: false, watched: 2 });
+      arrangeFindOne(doc);
+      await service.update(BigInt(5), { watched: 1 } as any, authUser);
+      expect(doc.watched).toBe(3);
+      expect(doc.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('watched===0 resets the finish count to 0 and saves', async () => {
+      const doc = makeDoc({ paused: true, watched: 4 });
+      arrangeFindOne(doc);
+      await service.update(BigInt(5), { watched: 0 } as any, authUser);
+      expect(doc.watched).toBe(0);
+      expect(doc.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('updateWatchTime (characterization)', () => {
+    it('early-returns (no media lookup, no create) when the user has history paused', async () => {
+      const paused: any = { _id: BigInt(1), settings: { history: { paused: true, limit: 90 } } };
+      const result = await service.updateWatchTime({ media: BigInt(50), time: 100 } as any, paused);
+      expect(result).toBeUndefined();
+      expect(mediaService.findOneById).not.toHaveBeenCalled();
+      expect(createdDocs.length).toBe(0);
+    });
+
+    it('throws MEDIA_NOT_FOUND 404 when the media does not exist', async () => {
+      mediaService.findOneById.mockResolvedValue(null);
+      await expect(
+        service.updateWatchTime({ media: BigInt(50), time: 100 } as any, watchAuthUser)
+      ).rejects.toMatchObject({ response: { code: StatusCode.MEDIA_NOT_FOUND }, status: HttpStatus.NOT_FOUND });
+    });
+
+    it('requires an episode for a TV media — throws EPISODE_NOT_FOUND when omitted', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: BigInt(50), type: MediaType.TV, runtime: 1200 });
+      await expect(
+        service.updateWatchTime({ media: BigInt(50), time: 100 } as any, watchAuthUser)
+      ).rejects.toMatchObject({ response: { code: StatusCode.EPISODE_NOT_FOUND }, status: HttpStatus.NOT_FOUND });
+    });
+
+    it('creates a new MOVIE row with watched:0 when none exists (partial progress)', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: BigInt(50), type: MediaType.MOVIE, runtime: 6000 });
+      arrangeFindOne(null);
+      await service.updateWatchTime({ media: BigInt(50), time: 100 } as any, watchAuthUser);
+      expect(createdDocs.length).toBe(1);
+      const init = historyModelInit();
+      expect(init._id).toBe(FIXED_SNOWFLAKE);
+      expect(init.user).toBe(watchAuthUser._id);
+      expect(init.media).toBe(BigInt(50));
+      // Partial progress (time < runtime) is not a finish — watched stays 0.
+      expect(init.watched).toBe(0);
+      expect(createdDocs[0].save).toHaveBeenCalledTimes(1);
+    });
+
+    it('marks watched (watched += 1, paused = true) when calculatedTime reaches the runtime', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: BigInt(50), type: MediaType.MOVIE, runtime: 6000 });
+      const doc = makeDoc({ paused: false, watched: 0, time: 100 });
+      arrangeFindOne(doc);
+      // time === runtime → calculatedTime === runtime → finish.
+      await service.updateWatchTime({ media: BigInt(50), time: 6000 } as any, watchAuthUser);
+      expect(doc.watched).toBe(1);
+      expect(doc.paused).toBe(true);
+      expect(doc.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findOneWatchTime (characterization)', () => {
+    it('reads user-scoped {user, media} and returns the lean record', async () => {
+      const record = { _id: BigInt(7), time: 300, date: new Date(), paused: false, watched: 0 };
+      arrangeFindOne(record);
+      const result = await service.findOneWatchTime({ media: BigInt(50) } as any, authUser);
+      expect(result).toBe(record);
+      expect(findOne.mock.calls[0][0]).toEqual({ user: authUser._id, media: BigInt(50) });
+    });
+
+    it('includes the episode in the filter when one is supplied', async () => {
+      arrangeFindOne(null);
+      const result = await service.findOneWatchTime({ media: BigInt(50), episode: BigInt(60) } as any, authUser);
+      expect(result).toBeNull();
+      expect(findOne.mock.calls[0][0]).toEqual({ user: authUser._id, media: BigInt(50), episode: BigInt(60) });
+    });
+  });
+
+  // findAll inProgress shape-smoke — guards the resume-path contract is not broken
+  // by the markWatched addition (the deep next-episode-up behaviour is covered above).
+  describe('findAll inProgress contract smoke (characterization)', () => {
+    it('returns a CursorPaginated-shaped result with a results array on the resume path', async () => {
+      const data = {
+        totalResults: 1,
+        results: [
+          {
+            _id: BigInt(11),
+            media: { _id: BigInt(100), type: MediaType.TV, runtime: 1200 },
+            episode: { _id: BigInt(1001), epNumber: 2, runtime: 1200 },
+            time: 500,
+            date: new Date('2026-06-12T00:00:00Z'),
+            paused: false,
+            watched: 0
+          }
+        ],
+        hasNextPage: false,
+        nextPageToken: null,
+        prevPageToken: null
+      };
+      aggregate.mockReturnValue({ exec: jest.fn().mockResolvedValue([data]) });
+      const result: any = await service.findAll({ inProgress: true } as any, headers, authUser);
+      expect(Array.isArray(result.results)).toBe(true);
+      expect(result.totalResults).toBe(1);
+      expect(result.results.some((r: any) => r.media?._id === BigInt(100))).toBe(true);
+    });
+  });
+
+  // Pull the constructor init args of the first `new this.historyModel(...)` call.
+  function historyModelInit() {
+    const model: any = (service as any)['historyModel'];
+    return model.mock.calls[0][0];
+  }
+
+  // ---------------------------------------------------------------------------
+  // TDD — NEW behaviour: markWatched(). Expected RED until the surgeon implements
+  // the service method. These bind the locked contract from the analyst brief.
+  // ---------------------------------------------------------------------------
+  describe('markWatched (TDD — RED until surgeon)', () => {
+    const MEDIA = BigInt(50);
+    const EPISODE = BigInt(60);
+
+    // Call markWatched through an any-typed view of the service. The method does not
+    // exist yet, so this RED-fails at runtime (TypeError) until the surgeon adds it —
+    // but the spec file still type-checks (ts-jest would otherwise fail the WHOLE file
+    // to compile, hiding the Block-A characterization specs above it).
+    const markWatched = (media: bigint, dto: any, user: any) => (service as any).markWatched(media, dto, user);
+
+    it('mark + absent row → creates {watched:1, time:0, paused:false} with a snowflake _id, user-scoped', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: MEDIA, type: MediaType.MOVIE, runtime: 6000 });
+      arrangeFindOne(null);
+
+      const result: any = await markWatched(MEDIA, { watched: 1 } as any, watchAuthUser);
+
+      expect(createdDocs.length).toBe(1);
+      const init = historyModelInit();
+      expect(init._id).toBe(FIXED_SNOWFLAKE);
+      expect(init.user).toBe(watchAuthUser._id);
+      expect(init.media).toBe(MEDIA);
+      expect(init.watched).toBe(1);
+      expect(init.time).toBe(0);
+      expect(init.paused).toBe(false);
+      expect(init.date).toBeInstanceOf(Date);
+      expect(createdDocs[0].save).toHaveBeenCalledTimes(1);
+      // Returns the created record (watched surfaced so the FE knows the post-toggle state).
+      expect(result.watched).toBe(1);
+    });
+
+    it('mark + existing row → watched += 1, saves, NO new doc created', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: MEDIA, type: MediaType.MOVIE, runtime: 6000 });
+      const doc = makeDoc({ user: watchAuthUser._id, media: MEDIA, time: 0, paused: false, watched: 1 });
+      arrangeFindOne(doc);
+
+      await markWatched(MEDIA, { watched: 1 } as any, watchAuthUser);
+
+      expect(doc.watched).toBe(2);
+      expect(doc.save).toHaveBeenCalledTimes(1);
+      expect(createdDocs.length).toBe(0);
+    });
+
+    it('unmark + existing row → watched = 0 and saves', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: MEDIA, type: MediaType.MOVIE, runtime: 6000 });
+      const doc = makeDoc({ user: watchAuthUser._id, media: MEDIA, time: 0, paused: false, watched: 3 });
+      arrangeFindOne(doc);
+
+      const result: any = await markWatched(MEDIA, { watched: 0 } as any, watchAuthUser);
+
+      expect(doc.watched).toBe(0);
+      expect(doc.save).toHaveBeenCalledTimes(1);
+      expect(result.watched).toBe(0);
+    });
+
+    it('unmark + absent row → returns null, NO create and NO save', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: MEDIA, type: MediaType.MOVIE, runtime: 6000 });
+      arrangeFindOne(null);
+
+      const result = await markWatched(MEDIA, { watched: 0 } as any, watchAuthUser);
+
+      expect(result).toBeNull();
+      expect(createdDocs.length).toBe(0);
+    });
+
+    it('media not found → throws MEDIA_NOT_FOUND 404', async () => {
+      mediaService.findOneById.mockResolvedValue(null);
+
+      await expect(markWatched(MEDIA, { watched: 1 } as any, watchAuthUser)).rejects.toMatchObject({
+        response: { code: StatusCode.MEDIA_NOT_FOUND },
+        status: HttpStatus.NOT_FOUND
+      });
+      // Never touches the history collection when the media is missing.
+      expect(findOne).not.toHaveBeenCalled();
+      expect(createdDocs.length).toBe(0);
+    });
+
+    it('TV media with episode OMITTED → allowed (media-level), does NOT throw EPISODE_NOT_FOUND', async () => {
+      // The one divergence from updateWatchTime: AC8 marks at media level for the grid card.
+      mediaService.findOneById.mockResolvedValue({ _id: MEDIA, type: MediaType.TV, runtime: 1200 });
+      arrangeFindOne(null);
+
+      const result: any = await markWatched(MEDIA, { watched: 1 } as any, watchAuthUser);
+
+      // Created/found a media-level row (no episode in the key).
+      expect(createdDocs.length).toBe(1);
+      const init = historyModelInit();
+      expect(init.media).toBe(MEDIA);
+      expect(init.episode).toBeUndefined();
+      expect(result.watched).toBe(1);
+    });
+
+    it('keys on the episode when supplied — filter carries {user, media, episode}', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: MEDIA, type: MediaType.TV, runtime: 1200 });
+      arrangeFindOne(null);
+
+      await markWatched(MEDIA, { episode: EPISODE, watched: 1 } as any, watchAuthUser);
+
+      expect(findOne.mock.calls[0][0]).toEqual({ user: watchAuthUser._id, media: MEDIA, episode: EPISODE });
+      const init = historyModelInit();
+      expect(init.episode).toBe(EPISODE);
+    });
+
+    it('every query is user-scoped (IDOR guard) — find filter carries user: authUser._id', async () => {
+      mediaService.findOneById.mockResolvedValue({ _id: MEDIA, type: MediaType.MOVIE, runtime: 6000 });
+      arrangeFindOne(null);
+
+      await markWatched(MEDIA, { watched: 1 } as any, watchAuthUser);
+
+      expect(findOne.mock.calls[0][0]).toMatchObject({ user: watchAuthUser._id, media: MEDIA });
     });
   });
 });

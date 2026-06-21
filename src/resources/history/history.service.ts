@@ -4,7 +4,7 @@ import { ClientSession, FilterQuery, Model } from 'mongoose';
 import { plainToClassFromExist } from 'class-transformer';
 
 import { History, HistoryDocument, TVEpisode } from '../../schemas';
-import { UpdateHistoryDto, CursorPageHistoryDto, FindWatchTimeDto, UpdateWatchTimeDto } from './dto';
+import { UpdateHistoryDto, CursorPageHistoryDto, FindWatchTimeDto, MarkWatchedDto, UpdateWatchTimeDto } from './dto';
 import { HistoryGroupable } from './entities';
 import { AuthUserDto } from '../users';
 import { MediaService } from '../media/media.service';
@@ -308,6 +308,35 @@ export class HistoryService {
     }
     await history.save();
     history.__v = undefined;
+    return history.toObject();
+  }
+
+  async markWatched(media: bigint, markWatchedDto: MarkWatchedDto, authUser: AuthUserDto) {
+    const mediaDoc = await this.mediaService.findOneById(media, { _id: 1, type: 1 });
+    if (!mediaDoc)
+      throw new HttpException({ code: StatusCode.MEDIA_NOT_FOUND, message: 'Media not found' }, HttpStatus.NOT_FOUND);
+    // Media-level row by default; key on the episode only when one was sent (no TV episode requirement).
+    const findHistoryFilters: { [key: string]: any } = { user: authUser._id, media };
+    if (markWatchedDto.episode != undefined) findHistoryFilters.episode = markWatchedDto.episode;
+    let history = await this.historyModel.findOne(findHistoryFilters).exec();
+    if (markWatchedDto.watched === 1) {
+      if (!history)
+        history = new this.historyModel({
+          _id: await createSnowFlakeId(),
+          ...findHistoryFilters,
+          date: new Date(),
+          time: 0,
+          paused: false,
+          watched: 1
+        });
+      else history.watched += 1;
+    } else if (markWatchedDto.watched === 0) {
+      if (!history) return null;
+      history.watched = 0;
+    } else {
+      return null;
+    }
+    await history.save();
     return history.toObject();
   }
 

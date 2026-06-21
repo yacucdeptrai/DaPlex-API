@@ -1,6 +1,19 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors, Delete, Param, Patch, HttpCode } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  Delete,
+  Param,
+  Patch,
+  HttpCode
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiExtraModels,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -13,7 +26,7 @@ import {
   getSchemaPath
 } from '@nestjs/swagger';
 
-import { UpdateHistoryDto, CursorPageHistoryDto, FindWatchTimeDto, UpdateWatchTimeDto } from './dto';
+import { UpdateHistoryDto, CursorPageHistoryDto, FindWatchTimeDto, MarkWatchedDto, UpdateWatchTimeDto } from './dto';
 import { CursorPaginated } from '../../common/entities';
 import { HeadersDto } from '../../common/dto';
 import { ParseBigIntPipe } from '../../common/pipes';
@@ -37,7 +50,8 @@ export class HistoryController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'View recently watched media',
-    description: 'Date-grouped by default. With inProgress=true, returns a flat recency-sorted resume list of unfinished, started media.'
+    description:
+      'Date-grouped by default. With inProgress=true, returns a flat recency-sorted resume list of unfinished, started media.'
   })
   @ApiOkResponse({
     description: 'Return a list of recently watched media',
@@ -49,7 +63,10 @@ export class HistoryController {
             results: {
               type: 'array',
               items: {
-                allOf: [{ $ref: getSchemaPath(HistoryGroup) }, { properties: { historyList: { type: 'array', items: { $ref: getSchemaPath(History) } } } }]
+                allOf: [
+                  { $ref: getSchemaPath(HistoryGroup) },
+                  { properties: { historyList: { type: 'array', items: { $ref: getSchemaPath(History) } } } }
+                ]
               }
             }
           }
@@ -59,7 +76,11 @@ export class HistoryController {
   })
   @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
-  findAll(@AuthUser() authUser: AuthUserDto, @RequestHeaders(HeadersDto) headers: HeadersDto, @Query() cursorPageHistoryDto: CursorPageHistoryDto) {
+  findAll(
+    @AuthUser() authUser: AuthUserDto,
+    @RequestHeaders(HeadersDto) headers: HeadersDto,
+    @Query() cursorPageHistoryDto: CursorPageHistoryDto
+  ) {
     return this.historyService.findAll(cursorPageHistoryDto, headers, authUser);
   }
 
@@ -71,7 +92,11 @@ export class HistoryController {
   @ApiOkResponse({ description: 'History record has been updated' })
   @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   @ApiNotFoundResponse({ description: 'The rating could not be found', type: ErrorMessage })
-  update(@AuthUser() authUser: AuthUserDto, @Param('id', ParseBigIntPipe) id: bigint, @Body() updateHistoryDto: UpdateHistoryDto) {
+  update(
+    @AuthUser() authUser: AuthUserDto,
+    @Param('id', ParseBigIntPipe) id: bigint,
+    @Body() updateHistoryDto: UpdateHistoryDto
+  ) {
     return this.historyService.update(id, updateHistoryDto, authUser);
   }
 
@@ -93,6 +118,23 @@ export class HistoryController {
   @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   updateWatchTime(@AuthUser() authUser: AuthUserDto, @Body() updateWatchTimeDto: UpdateWatchTimeDto) {
     return this.historyService.updateWatchTime(updateWatchTimeDto, authUser);
+  }
+
+  @Patch(':mediaId/watched')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'mediaId', type: String })
+  @ApiBody({ type: MarkWatchedDto })
+  @ApiOperation({ summary: 'Mark a media as watched or unwatched' })
+  @ApiOkResponse({ description: 'History record has been updated' })
+  @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
+  @ApiNotFoundResponse({ description: 'The media could not be found', type: ErrorMessage })
+  markWatched(
+    @AuthUser() authUser: AuthUserDto,
+    @Param('mediaId', ParseBigIntPipe) mediaId: bigint,
+    @Body() markWatchedDto: MarkWatchedDto
+  ) {
+    return this.historyService.markWatched(mediaId, markWatchedDto, authUser);
   }
 
   @Delete(':id')
