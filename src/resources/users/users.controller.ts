@@ -55,7 +55,10 @@ export class UsersController {
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
-  @ApiOperation({ summary: 'Find all users' })
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_USERS] })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: `Find all users (permissions: ${UserPermission.MANAGE_USERS})` })
   @ApiOkResponse({
     description: 'Return a list of users',
     schema: {
@@ -84,7 +87,9 @@ export class UsersController {
       ]
     }
   })
+  @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
   @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
+  @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
   findAll(@Query() paginateDto: PaginateDto) {
     return this.usersService.findAll(paginateDto);
   }
