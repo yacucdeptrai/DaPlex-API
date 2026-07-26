@@ -45,6 +45,10 @@ export enum AuditLogType {
   SETTINGS_UPDATE = 5001,
   SETTINGS_DELETE = 5002,
   USER_UPDATE = 6000,
+  // Appended above the x000/x001/x002 convention: USER_UPDATE = 6000 is already
+  // written into stored audit rows and renumbering it would relabel history.
+  USER_CREATE = 6001,
+  USER_DELETE = 6002,
   COLLECTION_CREATE = 7000,
   COLLECTION_UPDATE = 7001,
   COLLECTION_DELETE = 7002,

@@ -7,6 +7,16 @@ import { MaxShortDate } from '../../../decorators/max-short-date.decorator';
 import { ShortDate } from '../../../common/entities';
 import { RegexPattern, StatusCode } from '../../../enums';
 
+/**
+ * Accepts a real boolean or its string form and leaves anything else untouched, so @IsBoolean can reject it. The old
+ * transform folded every unrecognised value into `false`, which turned a typo'd `banned` into a silent unban with a 200.
+ */
+const coerceBoolean = (value: unknown) => {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return value;
+};
+
 export class UpdateUserDto {
   @ApiProperty({
     type: String,
@@ -93,14 +103,9 @@ export class UpdateUserDto {
     description: "Generate a random password and send a reset password link to user's email (restore user account)",
     required: false
   })
-  @Transform(
-    ({ value }) => {
-      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-    },
-    { toClassOnly: true }
-  )
+  @Transform(({ value }) => coerceBoolean(value), { toClassOnly: true })
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ context: { code: StatusCode.IS_BOOLEAN } })
   restoreAccount: boolean;
 
   @ApiProperty({
@@ -108,12 +113,8 @@ export class UpdateUserDto {
     description: 'Account ban status, for users with granted permissions',
     required: false
   })
-  @Transform(
-    ({ value }) => {
-      return value != undefined ? [true, 'true'].indexOf(value) > -1 : value;
-    },
-    { toClassOnly: true }
-  )
+  @Transform(({ value }) => coerceBoolean(value), { toClassOnly: true })
   @IsOptional()
+  @IsBoolean({ context: { code: StatusCode.IS_BOOLEAN } })
   banned: boolean;
 }

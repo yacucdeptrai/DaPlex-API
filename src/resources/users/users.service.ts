@@ -1,12 +1,12 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model, ProjectionType } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Connection, Model, ProjectionType } from 'mongoose';
 import { nanoid } from 'nanoid/async';
 import { plainToInstance, plainToClassFromExist } from 'class-transformer';
 
-import { User, UserDocument, UserFile } from '../../schemas';
-import { AuthUserDto, UpdateUserDto, UpdateUserSettingsDto } from './dto';
+import { DriveSession, DriveSessionDocument, History, HistoryDocument, Notification, NotificationDocument, Playlist, PlaylistDocument, Rating, RatingDocument, Role, RoleDocument, User, UserDocument, UserFile } from '../../schemas';
+import { AuthUserDto, CreateUserDto, UpdateUserDto, UpdateUserRolesDto, UpdateUserSettingsDto } from './dto';
 import { Avatar, User as UserEntity, UserDetails } from './entities';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AuthService } from '../auth/auth.service';
@@ -20,8 +20,17 @@ import { MongooseOffsetPagination, LookupOptions, createCloudflareR2Url, createC
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectModel(User.name, MongooseConnection.DATABASE_A) private userModel: Model<UserDocument>,
+    @InjectModel(History.name, MongooseConnection.DATABASE_A) private historyModel: Model<HistoryDocument>,
+    @InjectModel(Rating.name, MongooseConnection.DATABASE_A) private ratingModel: Model<RatingDocument>,
+    @InjectModel(Playlist.name, MongooseConnection.DATABASE_A) private playlistModel: Model<PlaylistDocument>,
+    @InjectModel(DriveSession.name, MongooseConnection.DATABASE_A) private driveSessionModel: Model<DriveSessionDocument>,
+    @InjectModel(Role.name, MongooseConnection.DATABASE_A) private roleModel: Model<RoleDocument>,
+    @InjectModel(Notification.name, MongooseConnection.DATABASE_B) private notificationModel: Model<NotificationDocument>,
+    @InjectConnection(MongooseConnection.DATABASE_A) private mongooseConnection: Connection,
     private authService: AuthService,
     private auditLogService: AuditLogService,
     private httpEmailService: HttpEmailService,
@@ -29,6 +38,29 @@ export class UsersService {
     private permissionsService: PermissionsService,
     private configService: ConfigService
   ) {}
+
+  async create(createUserDto: CreateUserDto, authUser: AuthUserDto) {
+    const { username, nickname, email, birthdate } = createUserDto;
+    // Invite flow: the credential is always generated here, persisted hashed through the shared creation path and never
+    // disclosed. The invitee sets their own with the recovery code, so the admin cannot choose someone else's password.
+    const [randomPassword, recoveryCode] = await Promise.all([nanoid(), nanoid(8)]);
+    // Only these fields are forwarded: roles, owner, banned and verified must never be settable from the request body,
+    // or this route becomes a privilege escalation primitive.
+    const signUpPayload = { username, nickname, email, birthdate, recoveryCode, password: randomPassword };
+    const newUser = await this.authService.createUser(signUpPayload);
+    await this.auditLogService.createLog(authUser._id, newUser._id, User.name, AuditLogType.USER_CREATE);
+    await this.httpEmailService.sendEmailSendGrid(newUser.email, newUser.username, 'An account has been created for you', SendgridTemplate.ACCOUNT_MANAGE_RESTORED, {
+      recipient_name: newUser.username,
+      username: newUser.username,
+      email: newUser.email,
+      nickname: newUser.nickname ?? 'Not set',
+      birthdate: `${newUser.birthdate.day}/${newUser.birthdate.month}/${newUser.birthdate.year}`,
+      // AuthService.resetPassword queries { _id: dto.id, recoveryCode }, so the link needs both params.
+      // The restoreAccount link omits `id` and can never resolve.
+      button_url: `${this.configService.get('WEBSITE_URL')}/reset-password?id=${newUser._id}&code=${recoveryCode}`
+    });
+    return plainToInstance(UserDetails, newUser);
+  }
 
   async findAll(paginateDto: PaginateDto) {
     const sortEnum = ['_id', 'username'];
@@ -247,6 +279,110 @@ export class UsersService {
     }
     await user.save();
     return user.settings;
+  }
+
+  async updateRoles(id: bigint, updateUserRolesDto: UpdateUserRolesDto, authUser: AuthUserDto) {
+    const user = await this.userModel.findOne({ _id: id }, { _id: 1, roles: 1 }).lean().exec();
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+    const { roleIds } = updateUserRolesDto;
+    // `roles` holds plain ids unless somebody populated it upstream, so normalise both shapes
+    const currentRoleIds: bigint[] = (<any[]>user.roles || []).map((role) => role?._id ?? role);
+    const addedRoleIds = roleIds.filter((roleId) => !currentRoleIds.includes(roleId));
+    const removedRoleIds = currentRoleIds.filter((roleId) => !roleIds.includes(roleId));
+    if (!addedRoleIds.length && !removedRoleIds.length) return { roles: roleIds };
+    if (roleIds.length) {
+      const roleCount = await this.roleModel.countDocuments({ _id: { $in: roleIds } }).exec();
+      if (roleCount < roleIds.length) throw new HttpException({ code: StatusCode.ROLE_NOT_FOUND, message: 'Cannot find all the required roles' }, HttpStatus.BAD_REQUEST);
+    }
+    const affectedRoleIds = [...addedRoleIds, ...removedRoleIds];
+    const affectedRoles = (await this.roleModel.find({ _id: { $in: affectedRoleIds } }, { _id: 1, name: 1, position: 1 }).lean().exec()).filter((role) => affectedRoleIds.includes(<any>role._id));
+    // Only the diff is authority checked, with the same rule the roles resource uses: nobody may grant or revoke a role
+    // sitting at or above their own highest one
+    for (const affectedRole of affectedRoles)
+      if (!this.permissionsService.canEditRole(authUser, affectedRole))
+        throw new HttpException({ code: StatusCode.ROLE_PRIORITY, message: 'You do not have permission to assign or remove this role' }, HttpStatus.FORBIDDEN);
+    const session = await this.mongooseConnection.startSession();
+    await session
+      .withTransaction(async () => {
+        // Atomic operators only, never a whole array assignment: two admins editing the same role at once must not lose
+        // each other's membership changes
+        if (addedRoleIds.length) {
+          await this.userModel.updateOne({ _id: id }, { $addToSet: { roles: { $each: addedRoleIds } } }, { session });
+          await this.roleModel.updateMany({ _id: { $in: addedRoleIds } }, { $addToSet: { users: id } }, { session });
+        }
+        if (removedRoleIds.length) {
+          await this.userModel.updateOne({ _id: id }, { $pull: { roles: { $in: removedRoleIds } } }, { session });
+          await this.roleModel.updateMany({ _id: { $in: removedRoleIds } }, { $pull: { users: id } }, { session });
+        }
+      })
+      .finally(() => session.endSession().catch(() => {}));
+    const auditLogs = [
+      ...addedRoleIds.map((roleId) => {
+        const auditLog = new AuditLogBuilder(authUser._id, roleId, Role.name, AuditLogType.ROLE_MEMBER_UPDATE);
+        auditLog.appendChange('users', id);
+        return auditLog;
+      }),
+      ...removedRoleIds.map((roleId) => {
+        const auditLog = new AuditLogBuilder(authUser._id, roleId, Role.name, AuditLogType.ROLE_MEMBER_UPDATE);
+        auditLog.appendChange('users', undefined, id);
+        return auditLog;
+      })
+    ];
+    await this.auditLogService.createManyLogsFromBuilder(auditLogs);
+    await this.authService.clearCachedAuthUser(id);
+    return { roles: roleIds };
+  }
+
+  async remove(id: bigint, authUser: AuthUserDto) {
+    const user = await this.userModel
+      .findOne({ _id: id }, { _id: 1, username: 1, owner: 1, roles: 1, avatar: 1, banner: 1 })
+      .populate('roles', { _id: 1, name: 1, position: 1 })
+      .lean()
+      .exec();
+    if (!user) throw new HttpException({ code: StatusCode.USER_NOT_FOUND, message: 'User not found' }, HttpStatus.NOT_FOUND);
+    if (authUser._id === id) throw new HttpException({ code: StatusCode.DELETE_USER_RESTRICTED, message: 'You cannot delete your own account' }, HttpStatus.FORBIDDEN);
+    if (user.owner)
+      throw new HttpException({ code: StatusCode.OWNER_DELETE_RESTRICTED, message: 'You cannot delete the owner of this instance, transfer the ownership first' }, HttpStatus.FORBIDDEN);
+    if (!authUser.owner) {
+      const userPosition = this.permissionsService.getHighestRolePosition(authUser);
+      const targetPosition = this.permissionsService.getHighestRolePosition(user);
+      if (targetPosition >= 0 && userPosition >= targetPosition)
+        throw new HttpException({ code: StatusCode.DELETE_USER_RESTRICTED, message: 'You do not have permission to delete this user' }, HttpStatus.FORBIDDEN);
+    }
+    const session = await this.mongooseConnection.startSession();
+    await session
+      .withTransaction(async () => {
+        // Sequential on purpose: a ClientSession cannot carry concurrent operations
+        await this.userModel.findOneAndDelete({ _id: id }, { session });
+        await this.historyModel.deleteMany({ user: id }, { session });
+        await this.ratingModel.deleteMany({ user: id }, { session });
+        // A playlist stores its owner as `author`, not `user`
+        await this.playlistModel.deleteMany({ author: id }, { session });
+        await this.driveSessionModel.deleteMany({ user: id }, { session });
+        await this.roleModel.updateMany({ users: id }, { $pull: { users: id } }, { session });
+      })
+      .finally(() => session.endSession().catch(() => {}));
+    // Notifications and audit logs live on the other connection, and the cache and object storage are not transactional
+    // at all, so none of this can join the transaction above. Every step is isolated: a failure here must never undo a
+    // committed delete. Audit rows referencing the deleted user are kept on purpose.
+    const cleanUp = [
+      this.bestEffort('notification cleanup', () => this.notificationModel.deleteMany({ user: id })),
+      this.bestEffort('audit log', () => this.auditLogService.createLog(authUser._id, id, User.name, AuditLogType.USER_DELETE)),
+      // Without this the deleted account's access token stays valid for the rest of the 300s auth cache window
+      this.bestEffort('auth cache clear', () => this.authService.clearCachedAuthUser(id))
+    ];
+    if (user.avatar) cleanUp.push(this.bestEffort('avatar cleanup', () => this.cloudflareR2Service.delete(CloudflareR2Container.AVATARS, `${user.avatar._id}/${user.avatar.name}`)));
+    if (user.banner) cleanUp.push(this.bestEffort('banner cleanup', () => this.cloudflareR2Service.delete(CloudflareR2Container.BANNERS, `${user.banner._id}/${user.banner.name}`)));
+    await Promise.all(cleanUp);
+  }
+
+  /** Runs a post-delete step that must never fail the request, but must never be silent either. */
+  private async bestEffort(step: string, task: () => unknown) {
+    try {
+      await task();
+    } catch (e) {
+      this.logger.error(`Failed to run ${step} after deleting a user: ${e}`);
+    }
   }
 
   async findOneAvatar(id: bigint) {

@@ -1,9 +1,10 @@
-import { Controller, Get, Body, Patch, Param, UseGuards, Query, UseInterceptors, Delete, HttpCode, ClassSerializerInterceptor, Res } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Post, UseGuards, Query, UseInterceptors, Delete, HttpCode, ClassSerializerInterceptor, Res } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -20,7 +21,7 @@ import {
 import { FastifyReply } from 'fastify';
 
 import { UsersService } from './users.service';
-import { AuthUserDto, UpdateUserDto, UpdateUserSettingsDto } from './dto';
+import { AuthUserDto, CreateUserDto, UpdateUserDto, UpdateUserRolesDto, UpdateUserSettingsDto } from './dto';
 import { User, UserDetails } from './entities';
 import { RateLimitInterceptor, UploadImageInterceptor } from '../../common/interceptors';
 import { Paginated } from '../../common/entities';
@@ -52,6 +53,22 @@ import { UserSettings } from './entities/user-settings.entity';
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  @UseInterceptors(ClassSerializerInterceptor, RateLimitInterceptor)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_USERS], optional: false })
+  @RateLimitOptions({ catchMode: 'success', ttl: 3600, limit: 30 })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: `Create a user account and email an invite (permissions: ${UserPermission.MANAGE_USERS})` })
+  @ApiCreatedResponse({ description: 'Return the created user', type: UserDetails })
+  @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
+  @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
+  @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
+  @ApiServiceUnavailableResponse({ description: 'Errors from third party API', type: ErrorMessage })
+  create(@AuthUser() authUser: AuthUserDto, @Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto, authUser);
+  }
 
   @Get()
   @UseInterceptors(ClassSerializerInterceptor)
@@ -148,6 +165,37 @@ export class UsersController {
   @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
   updateSettings(@AuthUser() authUser: AuthUserDto, @Param('id', ParseBigIntPipe) id: bigint, @Body() updateUserSettingsDto: UpdateUserSettingsDto) {
     return this.usersService.updateSettings(id, updateUserSettingsDto, authUser);
+  }
+
+  @Patch(':id/roles')
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_ROLES], optional: false })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', type: String })
+  @ApiOperation({ summary: `Update the roles of a user (permissions: ${UserPermission.MANAGE_ROLES})` })
+  @ApiOkResponse({ description: 'Return the new role list', type: UpdateUserRolesDto })
+  @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
+  @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
+  @ApiNotFoundResponse({ description: 'The resource could not be found', type: ErrorMessage })
+  @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
+  updateRoles(@AuthUser() authUser: AuthUserDto, @Param('id', ParseBigIntPipe) id: bigint, @Body() updateUserRolesDto: UpdateUserRolesDto) {
+    return this.usersService.updateRoles(id, updateUserRolesDto, authUser);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RolesGuardOptions({ permissions: [UserPermission.MANAGE_USERS], optional: false })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', type: String })
+  @ApiOperation({ summary: `Delete a user and everything they own (permissions: ${UserPermission.MANAGE_USERS})` })
+  @ApiNoContentResponse({ description: 'User has been deleted' })
+  @ApiUnauthorizedResponse({ description: 'You are not authorized', type: ErrorMessage })
+  @ApiBadRequestResponse({ description: 'Validation error', type: ErrorMessage })
+  @ApiNotFoundResponse({ description: 'The resource could not be found', type: ErrorMessage })
+  @ApiForbiddenResponse({ description: 'You do not have permission', type: ErrorMessage })
+  remove(@AuthUser() authUser: AuthUserDto, @Param('id', ParseBigIntPipe) id: bigint) {
+    return this.usersService.remove(id, authUser);
   }
 
   @Get(':id/avatar')

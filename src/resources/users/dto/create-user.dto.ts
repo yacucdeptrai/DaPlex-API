@@ -1,25 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, Length, Matches, ValidateIf, ValidateNested } from 'class-validator';
+import { IsEmail, IsOptional, Length, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { UsernameExist } from '../../../decorators/username-exist.decorator';
 import { EmailExist } from '../../../decorators/email-exist.decorator';
-import { PropertyMatches } from '../../../decorators/property-matches.decorator';
 import { IsShortDate } from '../../../decorators/is-short-date.decorator';
 import { MaxShortDate } from '../../../decorators/max-short-date.decorator';
 import { ShortDate } from '../../../common/entities';
-import { RegexPattern, StatusCode } from '../../../enums';
+import { StatusCode } from '../../../enums';
 
+/**
+ * Admin create is invite-only: identity fields and nothing else. No password field is
+ * declared, so `whitelist: true` strips one if it is ever sent and an admin can never
+ * choose another person's credential. roles/owner/banned/verified are absent for the
+ * same reason — declaring any of them turns this into a privilege-escalation primitive.
+ */
 export class CreateUserDto {
   @ApiProperty({
     type: String,
     description: 'An unique username',
     minLength: 3,
-    maxLength: 32,
-    required: false
+    maxLength: 32
   })
   @Type(() => String)
-  @IsOptional()
   @Length(3, 32, { context: { code: StatusCode.LENGTH } })
   @UsernameExist({ context: { code: StatusCode.USERNAME_EXIST } })
   username: string;
@@ -34,46 +37,16 @@ export class CreateUserDto {
   @Type(() => String)
   @IsOptional()
   @Length(3, 32, { context: { code: StatusCode.LENGTH } })
-  @UsernameExist({ context: { code: StatusCode.USERNAME_EXIST } })
   nickname: string;
 
   @ApiProperty({
     type: String,
-    description: 'A valid email',
-    required: false
+    description: 'A valid email'
   })
   @Type(() => String)
-  @IsOptional()
   @IsEmail(undefined, { context: { code: StatusCode.IS_EMAIL } })
   @EmailExist({ context: { code: StatusCode.EMAIL_EXIST } })
   email: string;
-
-  @ApiProperty({
-    type: String,
-    description: 'A valid password (matches regex ^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Zd]+$)',
-    minLength: 8,
-    maxLength: 128,
-    required: false
-  })
-  @Type(() => String)
-  @IsOptional()
-  @Length(8, 128, { context: { code: StatusCode.LENGTH } })
-  @Matches(RegexPattern.ACCOUNT_PASSWORD, { message: 'password must contain at least one uppercase letter, one lowercase letter and one number', context: { code: StatusCode.MATCHES_REGEX } })
-  password: string;
-
-  @ApiProperty({
-    type: String,
-    description: 'Enter your password again',
-    minLength: 8,
-    maxLength: 128,
-    required: false
-  })
-  @Type(() => String)
-  @IsOptional()
-  @ValidateIf((o) => !!o.password)
-  @Length(8, 128, { context: { code: StatusCode.LENGTH } })
-  @PropertyMatches('password', { context: { code: StatusCode.PASSWORDS_NOT_MATCH } })
-  confirmPassword: string;
 
   @ApiProperty({
     type: ShortDate,
