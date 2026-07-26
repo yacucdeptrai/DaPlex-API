@@ -86,11 +86,11 @@ export class RolesService {
           swapRoleAuditLog.appendChange('position', role.position, swapRole.position);
           swapRole.position = role.position;
           role.position = updateRoleDto.position;
-          await Promise.all([
-            swapRole.updateOne({ position: swapRole.position }, { session }),
-            role.updateOne({ position: role.position }, { session }),
-            this.auditLogService.createLogFromBuilder(swapRoleAuditLog)
-          ]);
+          // The two writes share one ClientSession, which cannot carry concurrent operations —
+          // racing them intermittently aborts the transaction as a bare 500.
+          await swapRole.updateOne({ position: swapRole.position }, { session });
+          await role.updateOne({ position: role.position }, { session });
+          await this.auditLogService.createLogFromBuilder(swapRoleAuditLog);
           await this.authService.clearCachedAuthUsers(<any[]>role.users);
           await session.commitTransaction();
         } catch (e) {
